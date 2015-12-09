@@ -6,6 +6,7 @@ import platform
 import os
 import subprocess
 import sys
+import time
 
 try:
     import multiprocessing.synchronize
@@ -65,9 +66,24 @@ def run_gyp(args):
         print 'Error running GYP'
         sys.exit(rc)
 
-if __name__ == '__main__':
-    args = sys.argv[1:]
+def which(program):
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if is_exe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            path = path.strip('"')
+            exe_file = os.path.join(path, program)
+            if is_exe(exe_file):
+                return exe_file
+
+    return None
+
+def gyp_generate(args):
     # GYP bug.
     # On msvs it will crash if it gets an absolute path.
     # On Mac/make it will crash if it doesn't get an absolute path.
@@ -132,3 +148,49 @@ if __name__ == '__main__':
     gyp_args = list(args)
     print gyp_args
     run_gyp(gyp_args)
+
+if __name__ == '__main__':
+    start = time.time()
+    args = sys.argv[1:]
+    generatorNames = ['gyp', 'gn']
+    builderNames = ['ninja', 'make']
+    generatorName = None
+    builderName = None
+    if '--generator' not in args:
+        for i in generatorNames:
+            if i == 'gyp':
+                generatorName = i
+                break
+            elif which(i):
+                generatorName = i
+                break
+    if '-f' not in args:
+        for i in builderNames:
+            if which(i):
+                builderName = i
+                break
+        args.extend(['-f', i])
+    else:
+        builderName = args[args.index('-f')+1]
+    print('generator: {0}, builder: {1}'.format(generatorName, builderName))
+
+    if(generatorName == 'gyp'):
+        gyp_generate(args)
+
+    print('generate time {0}'.format(time.time() - start))
+    print('build...')
+    start_build = time.time()
+
+    if builderName == 'ninja':
+        subprocess.call([builderName, '-C', 'out/Debug'])
+        print('build in {0}'.format(time.time() - start_build))
+        start_build = time.time()
+        subprocess.call([builderName, '-C', 'out/Release'])
+        print('build in {0}'.format(time.time() - start_build))
+    if builderName == 'make':
+        subprocess.call([builderName, '-C', 'out'])
+        print('build in {0}'.format(time.time() - start_build))
+    else:
+        print('unknown builder name {0}. Build it manually.'.format(builderName))
+        sys.exit(42)
+
