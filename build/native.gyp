@@ -19,7 +19,8 @@
                 '../src/handle.cc',
                 '../src/net.cc',
                 '../src/tcp.cc',
-                '../src/http.cc'
+                '../src/http.cc',
+                '../src/http/Server.cc',
             ],
             'direct_dependent_settings' : {
                 'include_dirs' : [

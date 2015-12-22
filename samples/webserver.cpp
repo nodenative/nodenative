@@ -30,7 +30,7 @@ namespace
             debug && std::cout<<"adding arg: "<<argStr<<"\n";
             geArgList().push_back(argStr);
         };
-        
+
         for(const char** envPtrTmp = envptr; *envPtrTmp != 0; ++envPtrTmp)
         {
             const char* envItemPtr = *envPtrTmp;
@@ -52,7 +52,7 @@ namespace
 
     int run_server()
     {
-        std::shared_ptr<http> server(new http);
+        std::shared_ptr<Server> server(new Server);
         int port = 8080;
 
         std::vector<std::string>::iterator portVarItem(std::find(geArgList().begin(), geArgList().end(), "-p"));

@@ -379,39 +379,6 @@ bool http::client_context::parse(std::function<void(request&, response&)> callba
 
     return true;
 }
-            
-http::http::http() : socket_(new native::net::tcp)
-{
-}
-
-http::http::~http()
-{
-    if(socket_)
-    {
-        socket_->close([](){});
-    }
-}
-
-bool http::http::listen(const std::string& ip, int port, std::function<void(request&, response&)> callback)
-{
-    if(!socket_->bind(ip, port)) {
-        return false;
-    }
-
-    if(!socket_->listen([=](native::error e) {
-        if(e)
-        {
-            // TODO: handle client connection error
-        }
-        else
-        {
-            auto client = new client_context(socket_.get());
-            client->parse(callback);
-        }
-    })) return false;
-
-    return true;
-}
 
 const char* http::get_error_name(error err)
 {
