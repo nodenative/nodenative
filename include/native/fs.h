@@ -1,5 +1,5 @@
-#ifndef __FS_H__
-#define __FS_H__
+#ifndef __NATIVE_FS_H__
+#define __NATIVE_FS_H__
 
 #include "base.h"
 #include <functional>
@@ -405,4 +405,4 @@ namespace native
     };
 }
 
-#endif
+#endif // __NATIVE_FS_H__

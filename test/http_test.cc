@@ -1,5 +1,4 @@
-#include "native/native.h"
-#include "gtest/gtest.h"
+#include "gmock/gmock.h"
 
 TEST(HttpTest, Basic)
 {
