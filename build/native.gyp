@@ -21,6 +21,7 @@
                 '../src/tcp.cc',
                 '../src/http.cc',
                 '../src/http/Server.cc',
+                '../src/crypto/PBKDF2.cc',
             ],
             'direct_dependent_settings' : {
                 'include_dirs' : [
