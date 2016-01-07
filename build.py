@@ -126,8 +126,23 @@ def gyp_generate(args):
     if not any(a.startswith('-Dtarget_arch=') for a in args):
         args.append('-Dtarget_arch=%s' % host_arch())
 
-    if not any(a.startswith('-Dnative_library=') for a in args):
-        args.append('-Dnative_library=static_library')
+    if not any(a.startswith('-Dnode_byteorder=') for a in args):
+        args.append('-Dnode_byteorder=%s' % sys.byteorder)
+
+    if not any(a.startswith('-Dnnative_use_openssl=') for a in args):
+        args.append('-Dnnative_use_openssl=true')
+
+    if not any(a.startswith('-Dnnative_shared_openssl=') for a in args):
+        args.append('-Dnnative_shared_openssl=false')
+
+    if not any(a.startswith('-Dopenssl_no_asm=') for a in args):
+        args.append('-Dopenssl_no_asm=false')
+
+    if not any(a.startswith('-Dopenssl_fips=') for a in args):
+        args.append('-Dopenssl_fips=""')
+
+    if not any(a.startswith('-Dnnative_target_type=') for a in args):
+        args.append('-Dnnative_target_type=static_library')
 
     if not any(a.startswith('-Duv_library=') for a in args):
         args.append('-Duv_library=static_library')
