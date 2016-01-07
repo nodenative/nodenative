@@ -32,6 +32,7 @@
             ],
             'sources' : [
                 '../test/basic_test.cc',
+                '../test/crypto_test.cc',
                 '../test/http_test.cc',
                 '../test/timer_test.cc',
             ]

@@ -6,7 +6,8 @@
             'type' : 'static_library',
             'dependencies': [
                 '../deps/libuv/uv.gyp:libuv',
-                '../deps/http-parser/http_parser.gyp:http_parser'
+                '../deps/http-parser/http_parser.gyp:http_parser',
+                '../deps/openssl/openssl.gyp:openssl'
             ],
             'include_dirs' : [
                 '../deps/libuv/include',
@@ -21,7 +22,9 @@
                 '../src/tcp.cc',
                 '../src/http.cc',
                 '../src/http/Server.cc',
+                '../src/crypto/utils.cc',
                 '../src/crypto/PBKDF2.cc',
+                '../src/crypto.cc',
             ],
             'direct_dependent_settings' : {
                 'include_dirs' : [
