@@ -76,6 +76,9 @@
                         ]
                     }
                 }],
+                ['OS=="linux"', {
+                    'defines': [ '_GNU_SOURCE' ],
+                }],
                 ['nnative_use_openssl=="true"', {
                     'defines': [ 'HAVE_OPENSSL=1' ],
                     'sources': [

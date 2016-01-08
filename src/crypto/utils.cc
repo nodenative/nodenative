@@ -16,7 +16,7 @@ namespace {
     */
 }
 
-void initCrypto() {
+void native::crypto::initCrypto() {
     // TODO: make in thread safe
     static bool initiated = false;
     if(initiated) {

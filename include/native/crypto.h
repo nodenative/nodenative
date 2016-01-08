@@ -2,7 +2,7 @@
 #define __NATIVE_CRYPTO_H__
 
 #include "crypto/PBKDF2.h"
-#include "crypto/SecureContext.h"
+//#include "crypto/SecureContext.h"
 
 namespace native {
 namespace crypto {

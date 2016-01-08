@@ -139,7 +139,7 @@ def gyp_generate(args):
         args.append('-Dopenssl_no_asm=false')
 
     if not any(a.startswith('-Dopenssl_fips=') for a in args):
-        args.append('-Dopenssl_fips=""')
+        args.append('-Dopenssl_fips=')
 
     if not any(a.startswith('-Dnnative_target_type=') for a in args):
         args.append('-Dnnative_target_type=static_library')
@@ -202,7 +202,7 @@ if __name__ == '__main__':
         start_build = time.time()
         subprocess.call([builderName, '-C', 'out/Release'])
         print('build in {0}'.format(time.time() - start_build))
-    if builderName == 'make':
+    elif builderName == 'make':
         subprocess.call([builderName, '-C', 'out'])
         print('build in {0}'.format(time.time() - start_build))
     else:

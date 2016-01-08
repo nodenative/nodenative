@@ -22,6 +22,9 @@
         ['exclude', 'store/.*$']
       ],
       'conditions': [
+        ['OS=="linux"', {
+          'defines': [ '_GNU_SOURCE' ],
+        }],
         # FIPS
         ['openssl_fips != ""', {
           'defines': [
