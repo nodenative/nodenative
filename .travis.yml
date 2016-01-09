@@ -3,6 +3,7 @@ compiler:
   - clang
   - gcc
 before_install:
+  - echo $TRAVIS_OS_NAME
   - echo $LANG
   - echo $LC_ALL
   - $CXX --version
@@ -23,6 +24,9 @@ before_install:
           sudo apt-get -qq install g++-5;
           export CXX='g++-5';
         fi
+    fi
+  - if [ $TRAVIS_OS_NAME == "osx" ]; then
+      brew install ninja
     fi
   - $CXX --version
 before_script: ls
