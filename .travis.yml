@@ -26,7 +26,7 @@ before_install:
         fi
     fi
   - if [ $TRAVIS_OS_NAME == "osx" ]; then
-      brew install ninja
+      brew install ninja;
     fi
   - $CXX --version
 before_script: ls
