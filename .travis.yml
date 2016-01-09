@@ -2,6 +2,10 @@ language: cpp
 compiler:
   - clang
   - gcc
+matrix:
+  include:
+    - os: osx
+      env: xcode7
 before_install:
   - echo $TRAVIS_OS_NAME
   - echo $LANG
