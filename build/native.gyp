@@ -41,7 +41,7 @@
                 ]
             },
             'cflags':[
-                '-std=c++14'
+                '-std=c++1y'
             ],
             'conditions' : [
                 ['OS=="mac"', {
