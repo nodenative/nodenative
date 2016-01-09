@@ -5,9 +5,13 @@ compiler:
 matrix:
   exclude:
     - os: osx
-      compiler: gcc
   include:
     - os: osx
+    env: COMPILER=clang++-3.6
+      addons: &clang36
+        apt:
+          packages: ["clang-3.6", "valgrind"]
+          sources: *sources
       env: xcode7
 before_install:
   - echo $TRAVIS_OS_NAME
