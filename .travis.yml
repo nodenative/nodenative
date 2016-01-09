@@ -1,4 +1,3 @@
-language: cpp
 install: make python2 gyp
 compiler:
   - clang
@@ -7,7 +6,10 @@ before_install:
   - echo "$LANG"
   - echo "$LC_ALL"
   - git submodule update --init
-script: python2 build.py && out/Debug/test
+script:
+  - python2 build.py
+  - out/Debug/test
+  - out/Release/test
 branches:
   only:
     - master
