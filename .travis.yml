@@ -1,0 +1,18 @@
+nstall: make python2 gyp
+compiler:
+  - clang
+  - gcc
+before_install:
+  - echo $LANG
+  - echo $LC_ALL
+  - git submodule update --init
+script: python2 build.py && out/Debug/test
+branches:
+  only:
+    - master
+env:
+  global:
+    - LANG="en_US.UTF-8"
+os:
+  - linux
+  - osx
