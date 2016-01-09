@@ -30,7 +30,7 @@ before_install:
         if [$CXX == "clang++"]; then
           brew install llvm --with-clang --with-asan;
         else
-          brew install homebrew/versions/gcc49
+          brew install homebrew/versions/gcc49;
           export CXX='g++-4.9';
         fi
     fi
