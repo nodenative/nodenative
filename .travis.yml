@@ -9,7 +9,6 @@ matrix:
     - os: osx
       compiler: clang
       osx_image: xcode7
-  include:
     - os: osx
       compiler: clang
       osx_image: xcode7.1
