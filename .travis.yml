@@ -16,6 +16,7 @@ before_install:
   - echo $TRAVIS_OS_NAME
   - echo $LANG
   - echo $LC_ALL
+  - echo $CXX
   - $CXX --version
   - python --version
   - git submodule update --init
