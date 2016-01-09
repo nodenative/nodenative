@@ -6,7 +6,7 @@ before_install:
   - echo "$LANG"
   - echo "$LC_ALL"
   - git submodule update --init
-script: python2 build.py && out/Debug/test
+script: python build.py && out/Debug/test
 branches:
   only:
     - master

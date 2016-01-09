@@ -37,16 +37,16 @@
             },
             'all_dependent_settings' : {
                 'cflags':[
-                    '-std=c++1y'
+                    '-std=c++14'
                 ]
             },
             'cflags':[
-                '-std=c++1y'
+                '-std=c++14'
             ],
             'conditions' : [
                 ['OS=="mac"', {
                     'xcode_settings': {
-                        'OTHER_CPLUSPLUSFLAGS' : ['-std=c++1y', '-stdlib=libc++'],
+                        'OTHER_CPLUSPLUSFLAGS' : ['-std=c++14', '-stdlib=libc++'],
                         #'MACOSX_DEPLOYMENT_TARGET': '10.7',
                         #'OTHER_LDFLAGS': ['-stdlib=libc++']
                         #'ARCHS': '$(ARCHS_STANDARD_64_BIT)'
@@ -62,7 +62,7 @@
                     ],
                     'all_dependent_settings': {
                         'xcode_settings': {
-                            'OTHER_CPLUSPLUSFLAGS' : ['-std=c++1y', '-stdlib=libc++'],
+                            'OTHER_CPLUSPLUSFLAGS' : ['-std=c++14', '-stdlib=libc++'],
                             #'MACOSX_DEPLOYMENT_TARGET': '10.7',
                             #'OTHER_LDFLAGS': ['-stdlib=libc++']
                             #'ARCHS': '$(ARCHS_STANDARD_64_BIT)'
