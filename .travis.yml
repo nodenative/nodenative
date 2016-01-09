@@ -38,11 +38,6 @@ before_install:
     fi
   - if [ $TRAVIS_OS_NAME == "osx" ]; then
       brew install ninja;
-      if [$CXX == "clang++"]; then
-          export CXX='clang++';
-      else
-          export CXX='g++-4.9';
-      fi
     fi
   - $CXX --version
 before_script: ls
