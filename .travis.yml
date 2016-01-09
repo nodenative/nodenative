@@ -7,8 +7,12 @@ matrix:
     - os: osx
   include:
     - os: osx
-      env: COMPILER=clang++
+      compiler: clang
       osx_image: xcode7
+  include:
+    - os: osx
+      compiler: clang
+      osx_image: xcode7.1
 before_install:
   - echo $TRAVIS_OS_NAME
   - echo $LANG
