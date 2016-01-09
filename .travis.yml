@@ -26,13 +26,18 @@ before_install:
           wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key|sudo apt-key add -
           sudo apt-get -qq install clang-3.6 lldb-3.6;
           export CXX='clang++-3.6';
-        else
+      else
           sudo apt-get -qq install g++-5;
           export CXX='g++-5';
-        fi
+      fi
     fi
   - if [ $TRAVIS_OS_NAME == "osx" ]; then
-        brew install ninja;
+      brew install ninja;
+      if [$CXX == "clang++"]; then
+          export CXX='clang++';
+      else
+          export CXX='g++-4.9';
+      fi
     fi
   - $CXX --version
 before_script: ls
