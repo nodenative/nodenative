@@ -23,6 +23,7 @@ before_install:
       sudo apt-get -qq install g++-4.8;
       export CXX='g++-4.8';
     fi
+  - $CXX --version
 before_script: ls
 script:
   - python build.py
