@@ -3,8 +3,8 @@ compiler:
   - clang
   - gcc
 before_install:
-  - $LANG
-  - $LC_ALL
+  - echo $LANG
+  - echo $LC_ALL
   - $CXX --version
   - python --version
   - git submodule update --init
