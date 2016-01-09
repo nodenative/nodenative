@@ -1,33 +1,17 @@
 #ifndef __NATIVE_CRYPTO_H__
 #define __NATIVE_CRYPTO_H__
-namespace native
-{
-    namespace crypto
-    {
-        class SecureContext
-        {
-        public:
-            X509_STORE* ca_store_;
-            SL_CTX* ctx_;
 
-            static const int kMaxSessionSize = 10 * 1024;
-        protected:
-            SecureContext()
-                : ca_store_(NULL)
-                , ctx_(NULL)
-            {}
-        }
-        template <class Base>
-        class SSLWrap
-        {
-        public:
-            enum Kind
-            {
-                kClient,
-                kServer
-            }
-        }
+#include "crypto/PBKDF2.h"
+//#include "crypto/SecureContext.h"
 
-    }
-}
-#endif
+namespace native {
+namespace crypto {
+
+/** Init crypto module. This method can be called multiple times, but will be initiated only first time
+ */
+void initCrypto();
+
+} // namespace crypto
+} // namespace native
+
+#endif // __NATIVE_CRYPTO_H__

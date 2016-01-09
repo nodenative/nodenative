@@ -8,18 +8,20 @@
                 './gtest.gyp:gtest'
             ],
             'include_dirs' : [
-                '../deps/gmock/include',
-                '../deps/gmock'
+                '../deps/googletest/googlemock/include',
+                '../deps/googletest/googlemock'
             ],
             'sources' : [
-                '../deps/gmock/src/gmock-all.cc'
+                '../deps/googletest/googlemock/src/gmock-all.cc'
             ],
             'direct_dependent_settings' : {
                 'include_dirs' : [
-                    '../deps/gmock/gtest/include',
-                    '../deps/gmock/include'
+                    '../deps/googletest/googlemock/include'
                 ]
-            }
+            },
+            'export_dependent_settings' : [
+                './gtest.gyp:gtest'
+            ]
         },
         #main
         {
@@ -29,12 +31,12 @@
                 'gmock'
             ],
             'sources' : [
-                '../deps/gmock/src/gmock_main.cc'
+                '../deps/googletest/googlemock/src/gmock_main.cc'
             ],
             'direct_dependent_settings' : {
                 'include_dirs' : [
-                    '../deps/gmock/gtest/include',
-                    '../deps/gmock/include'
+                    '../deps/googletest/googletest/include',
+                    '../deps/googletest/googlemock/include'
                 ]
             }
         }

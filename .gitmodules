@@ -1,6 +1,15 @@
-[submodule "libuv"]
-	path = libuv
+[submodule "deps/rapidjson"]
+	path = deps/rapidjson
+	url = https://github.com/miloyip/rapidjson.git
+[submodule "deps/libuv"]
+	path = deps/libuv
 	url = https://github.com/libuv/libuv.git
-[submodule "http-parser"]
-	path = http-parser
-	url = http://github.com/joyent/http-parser.git
+[submodule "deps/http-parser"]
+	path = deps/http-parser
+	url = https://github.com/nodejs/http-parser.git
+[submodule "deps/googletest"]
+	path = deps/googletest
+	url = https://github.com/google/googletest.git
+[submodule "deps/concurrentqueue"]
+	path = deps/concurrentqueue
+	url = https://github.com/cameron314/concurrentqueue.git
