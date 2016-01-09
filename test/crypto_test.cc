@@ -14,9 +14,18 @@ TEST(Crypto, PBKDF2)
     std::string passwordEnc;
     const std::string salt("test");
     const std::string digest("sha1");
-    native::crypto::PBKDF2(password, salt, 2000, 50, digest, passwordEnc);
+    EXPECT_NO_THROW(native::crypto::PBKDF2(password, salt, 2000, 50, digest, passwordEnc));
     EXPECT_EQ(passwordEnc.size(), 50u);
     EXPECT_EQ(passwordEnc, passwordEncExp);
     EXPECT_EQ(1.0, 1.0);
+}
+
+TEST(Crypto, PBKDF2InvalidDigest)
+{
+    const std::string password("password");
+    std::string passwordEnc;
+    const std::string salt("test");
+    const std::string digest("sha1Invalid");
+    EXPECT_ANY_THROW(native::crypto::PBKDF2(password, salt, 2000, 50, digest, passwordEnc));
 }
 
