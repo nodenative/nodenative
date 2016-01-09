@@ -4,7 +4,8 @@ compiler:
   - gcc
 matrix:
   exclude:
-    - env: TRAVIS_OS_NAME=osx CXX=g++
+    - os: osx
+      compiler: gcc
   include:
     - os: osx
       env: xcode7
