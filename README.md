@@ -1,6 +1,20 @@
 # node.native 
 
 <b>node.native</b> is a [C++14](http://en.wikipedia.org/wiki/C%2B%2B14) (aka C++1y) port for [node.js](https://github.com/joyent/node). 
+<table>
+  <thead>
+    <tr>
+      <th>Linux and OSX</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="center">
+        <a href="https://travis-ci.org/tojocky/node.native"><img src="https://travis-ci.org/tojocky/node.native.svg?branch=master"></a>
+      </td>
+    </tr>
+  </tbody>
+</table>
 
 Please note that node.native project is <em>under heavy development</em>.
 
