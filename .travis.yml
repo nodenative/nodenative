@@ -1,3 +1,4 @@
+# a good example is: https://github.com/boostorg/hana/blob/master/.travis.yml
 language: cpp
 compiler:
   - clang
