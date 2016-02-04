@@ -33,7 +33,7 @@ public:
     template<class F, typename... Args>
     Future<typename std::result_of<F(R, Args...)>::type>
     then(F&& f, Args&&... args) {
-        return Future<typename std::result_of<F(R, Args...)>::type>(_p->then<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...));
+        return Future<typename std::result_of<F(R, Args...)>::type>(_p->template then<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...));
     }
 private:
     std::shared_ptr<FutureShared<R>> _p;
@@ -54,7 +54,7 @@ public:
     template<class F, typename... Args>
     Future<typename std::result_of<F(Args...)>::type>
     then(F&& f, Args&&... args) {
-        return Future<typename std::result_of<F(Args...)>::type>(_p->then<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...));
+        return Future<typename std::result_of<F(Args...)>::type>(_p->template then<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...));
     }
 private:
     std::shared_ptr<FutureShared<void>> _p;
