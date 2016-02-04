@@ -1,0 +1,10 @@
+declare_args() {
+    arg1 = false
+    root_extra_deps = []
+}
+
+
+group("root") {
+    deps = [
+    ]
+}
