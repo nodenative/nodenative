@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <fcntl.h>
 #include "callback.h"
+#include "error.h"
 
 namespace native
 {
@@ -14,20 +15,20 @@ namespace native
     {
         typedef uv_file file_handle;
 
-        static const int read_only = O_RDONLY;
-        static const int write_only = O_WRONLY;
-        static const int read_write = O_RDWR;
-        static const int append = O_APPEND;
-        static const int create = O_CREAT;
-        static const int excl = O_EXCL;
-        static const int truncate = O_TRUNC;
-        static const int no_follow = O_NOFOLLOW;
-        static const int directory = O_DIRECTORY;
+        extern const int read_only;
+        extern const int write_only;
+        extern const int read_write;
+        extern const int append;
+        extern const int create;
+        extern const int excl;
+        extern const int truncate;
+        extern const int no_follow;
+        extern const int directory;
 #ifdef O_NOATIME
-        static const int no_access_time = O_NOATIME;
+        extern const int no_access_time;
 #endif
 #ifdef O_LARGEFILE
-        static const int large_large = O_LARGEFILE;
+        extern const int large_large;
 #endif
 
         namespace internal
@@ -56,7 +57,7 @@ namespace native
             }
 
             template<typename callback_t, typename data_t>
-            void delete_req(uv_fs_t* req)
+            void delete_req_template(uv_fs_t* req)
             {
                 delete reinterpret_cast<data_t*>(callbacks::get_data<callback_t>(req->data, 0));
                 delete reinterpret_cast<callbacks*>(req->data);
@@ -73,12 +74,7 @@ namespace native
                 delete req;
             }
 
-            void delete_req(uv_fs_t* req)
-            {
-                delete reinterpret_cast<callbacks*>(req->data);
-                uv_fs_req_cleanup(req);
-                delete req;
-            }
+            void delete_req(uv_fs_t* req);
 
             struct rte_context
             {
@@ -97,14 +93,16 @@ namespace native
                 if(req->result < 0)
                 {
                     // system error
-                    invoke_from_req<callback_t>(req, std::string(), error(req->result));
-                    delete_req<callback_t, rte_context>(req);
+                    error err(req->result);
+                    invoke_from_req<callback_t>(req, std::string(), err);
+                    delete_req_template<callback_t, rte_context>(req);
                 }
                 else if(req->result == 0)
                 {
                     // EOF
-                    invoke_from_req<callback_t>(req, ctx->result, error());
-                    delete_req<callback_t, rte_context>(req);
+                    error err;
+                    invoke_from_req<callback_t>(req, ctx->result, err);
+                    delete_req_template<callback_t, rte_context>(req);
                 }
                 else
                 {
@@ -117,7 +115,7 @@ namespace native
                     if(err)
                     {
                         invoke_from_req<callback_t>(req, std::string(), err);
-                        delete_req<callback_t, rte_context>(req);
+                        delete_req_template<callback_t, rte_context>(req);
                     }
                 }
             }
@@ -211,7 +209,7 @@ namespace native
 
             if(uv_fs_read(uv_default_loop(), req, fd, &iov, 1, 0, internal::rte_cb<decltype(callback)>)) {
                 // failed to initiate uv_fs_read()
-                internal::delete_req<decltype(callback), internal::rte_context>(req);
+                internal::delete_req_template<decltype(callback), internal::rte_context>(req);
                 return false;
             }
             return true;

@@ -17,11 +17,13 @@
                 '../include'
             ],
             'sources' : [
+                '../src/async/AsyncBase.cc',
                 '../src/loop.cc',
                 '../src/stream.cc',
                 '../src/handle.cc',
                 '../src/net.cc',
                 '../src/tcp.cc',
+                '../src/fs.cc',
                 '../src/http.cc',
                 '../src/http/Server.cc',
                 '../src/crypto/utils.cc',

@@ -35,6 +35,7 @@
                 '../test/crypto_test.cpp',
                 '../test/http_test.cpp',
                 '../test/timer_test.cpp',
+                '../test/async_test.cpp',
             ]
         }
     ]

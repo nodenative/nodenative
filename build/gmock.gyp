@@ -12,7 +12,11 @@
                 '../deps/googletest/googlemock'
             ],
             'sources' : [
-                '../deps/googletest/googlemock/src/gmock-all.cc'
+                '../deps/googletest/googlemock/src/gmock-cardinalities.cc',
+                '../deps/googletest/googlemock/src/gmock-internal-utils.cc',
+                '../deps/googletest/googlemock/src/gmock-matchers.cc',
+                '../deps/googletest/googlemock/src/gmock-spec-builders.cc',
+                '../deps/googletest/googlemock/src/gmock.cc',
             ],
             'direct_dependent_settings' : {
                 'include_dirs' : [

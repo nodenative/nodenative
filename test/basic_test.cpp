@@ -1,5 +1,5 @@
-#include "gtest/gtest.h"
 #include "native/native.h"
+#include "gtest/gtest.h"
 
 TEST(TestGTest, EqConstInt)
 {

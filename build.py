@@ -197,11 +197,14 @@ if __name__ == '__main__':
     start_build = time.time()
 
     if builderName == 'ninja':
-        subprocess.call([builderName, '-C', 'out/Debug'])
+        sub1_result = subprocess.call([builderName, '-C', 'out/Debug'])
         print('build in {0}'.format(time.time() - start_build))
         start_build = time.time()
-        subprocess.call([builderName, '-C', 'out/Release'])
-        print('build in {0}'.format(time.time() - start_build))
+        if(sub1_result == 0):
+            subprocess.call([builderName, '-C', 'out/Release'])
+            print('build in {0}'.format(time.time() - start_build))
+        else:
+            print('first resolve errors from Debug mode and after it will try to build in release mode')
     elif builderName == 'make':
         subprocess.call([builderName, '-C', 'out'])
         print('build in {0}'.format(time.time() - start_build))
