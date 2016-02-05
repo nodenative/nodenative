@@ -38,6 +38,25 @@ FutureShared<void>::then(F&& f, Args&&... args) {
     return currFuture;
 }
 
+template<class R>
+template<class F, typename... Args>
+std::shared_ptr<FutureShared<R>>
+FutureShared<R>::error(F&& f, Args&&... args) {
+    std::unique_ptr<ActionCallbackErrorP1<R, Args...>> action(new ActionCallbackErrorP1<R, Args...>(std::forward<F>(f), std::forward<Args>(args)...));
+    std::shared_ptr<FutureShared<R>> currFuture = action->getFuture();
+    _actions.push_back(std::move(action));
+    return currFuture;
+}
+
+template<class F, typename... Args>
+std::shared_ptr<FutureShared<void>>
+FutureShared<void>::error(F&& f, Args&&... args) {
+    std::unique_ptr<ActionCallbackError<Args...>> action(new ActionCallbackError<Args...>(std::forward<F>(f), std::forward<Args>(args)...));
+    std::shared_ptr<FutureShared<void>> currFuture = action->getFuture();
+    _actions.push_back(std::move(action));
+    return currFuture;
+}
+
 } /* namespace native */
 
 #endif // __NATIVE_ASYNC_FEATURESHARED_I__

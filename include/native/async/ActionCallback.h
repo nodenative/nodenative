@@ -5,7 +5,7 @@
  * Propose :
  * Created By : ionlupascu
  * Creation Date : 26-01-2016
- * Last Modified : Thu 04 Feb 2016 06:45:59 GMT
+ * Last Modified : Fri 05 Feb 2016 05:41:56 GMT
  * -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.*/
 
 #include "../helper/TemplateSeqInd.h"
@@ -117,6 +117,51 @@ public:
 
     void setException(const exception& iError) override;
     std::shared_ptr<FutureShared<void>> getFuture();
+};
+
+// Errors
+
+template<typename... Args>
+class ActionCallbackError: public ActionCallbackBase<void> {
+    std::function<void(Args...)> _f;
+    std::tuple<Args...> _args;
+    std::shared_ptr<FutureShared<void>> _future;
+
+    template<std::size_t... Is>
+    void callFn(const exception& iError, helper::TemplateSeqInd<Is...>);
+
+public:
+    ActionCallbackError(std::function<void(Args...)> f, Args&&... args) : _f(f), _args(args...) {}
+
+    void setValue() override;
+
+    void setException(const exception& iError) override {
+        callFn(iError, helper::TemplateSeqIndGen<sizeof...(Args)>());
+    }
+
+    std::shared_ptr<FutureShared<void>> getFuture();
+};
+
+/** Value resolver callback class template. It call the function callback in case if the future resolved
+ */
+template<typename R, typename... Args>
+class ActionCallbackErrorP1: public ActionCallbackBase<R> {
+    std::function<R(const exception&, Args...)> _f;
+    std::tuple<Args...> _args;
+    std::shared_ptr<FutureShared<R>> _future;
+
+    template<std::size_t... Is>
+    void callFn(const exception& iError, helper::TemplateSeqInd<Is...>);
+public:
+    ActionCallbackErrorP1(std::function<R(const exception&, Args...)> f, Args&&... args) : _f(f), _args(args...) {}
+
+    void setValue(R&& r) override;
+
+    void setException(const exception& iError) override {
+        callFn(iError, helper::TemplateSeqIndGen<sizeof...(Args)>());
+    }
+
+    std::shared_ptr<FutureShared<R>> getFuture();
 };
 
 } /* namespace native */

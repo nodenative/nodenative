@@ -8,15 +8,16 @@ loop::loop(bool use_default) {
     if(use_default) {
         // don't delete the default loop
         _uv_loop = std::shared_ptr<uv_loop_t>(uv_default_loop(), [](uv_loop_t* iLoop){
-                int res = 1;
-                do {
-                    res = uv_loop_close(iLoop);
-                } while (res != 0);
+                NNATIVE_DEBUG("destroying default loop...");
+                // Default loop wait forever
+                int res = uv_loop_close(iLoop);
+                NNATIVE_DEBUG("res:" << res);
             });
     } else {
         std::unique_ptr<uv_loop_t> loopInstance(new uv_loop_t);
         if(0 == uv_loop_init(loopInstance.get())) {
             _uv_loop = std::shared_ptr<uv_loop_t>(loopInstance.release(), [](uv_loop_t* iLoop){
+                NNATIVE_DEBUG("destroying specified loop..");
                     int res = 1;
                     do {
                         res = uv_loop_close(iLoop);
@@ -29,6 +30,7 @@ loop::loop(bool use_default) {
 
 loop::~loop()
 {
+    NNATIVE_FCALL();
 }
 
 bool loop::run() {

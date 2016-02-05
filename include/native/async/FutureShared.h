@@ -22,6 +22,10 @@ public:
     template<class F, typename... Args>
     std::shared_ptr<FutureShared<typename std::result_of<F(R, Args...)>::type>>
     then(F&& f, Args&&... args);
+
+    template<class F, typename... Args>
+    std::shared_ptr<FutureShared<R>>
+    error(F&& f, Args&&... args);
 };
 
 template<>
@@ -46,6 +50,10 @@ public:
     template<class F, typename... Args>
     std::shared_ptr<FutureShared<typename std::result_of<F(Args...)>::type>>
     then(F&& f, Args&&... args);
+
+    template<class F, typename... Args>
+    std::shared_ptr<FutureShared<void>>
+    error(F&& f, Args&&... args);
 };
 
 

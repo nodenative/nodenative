@@ -3,6 +3,7 @@
 
 #include "base.h"
 #include "error.h"
+#include "helper/trace.h"
 
 namespace native
 {
@@ -19,7 +20,7 @@ namespace native
          *  @param use_default indicates whether to use default loop or create a new loop.
          */
         loop(bool use_default);
-        loop() : loop(false) {};
+        loop() : loop(false) { NNATIVE_MCALL(); };
 
         loop(std::shared_ptr<uv_loop_t> iLoop) : _uv_loop(iLoop) {}
 

@@ -6,22 +6,27 @@
 #include <string>
 #include <iostream>
 
-
-
-#define NNATIVE_DEBUG(log) std::cout << log << "\n";
-#define NNATIVE_FCALL() native::helper::TraceFunction __currFunction(__FUNCTION__);
+#define NNATIVE_DEBUG(log) std::cout << __FILE__ << ":" << __LINE__ << ":" << log << "\n";
+#define NNATIVE_FCALL() native::helper::TraceFunction __currFunction(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+#define NNATIVE_MCALL() native::helper::TraceFunction __currFunction(__FILE__, __LINE__, __PRETTY_FUNCTION__);
 
 namespace native {
 namespace helper {
 
 struct TraceFunction {
-    std::string _name;
-    TraceFunction(const std::string& iName) : _name(iName) {
-        std::cout << ">> enter "<< _name << "\n";
+    const std::string _file;
+    const unsigned int _line;
+    const std::string _function;
+
+    TraceFunction(const std::string& iFile, unsigned int iLine, const std::string& iFunction) :
+            _file(iFile),
+            _line(iLine),
+            _function(iFunction) {
+        std::cout << _file << ":" << _line << ":>> enter "<< _function << "\n";
     }
 
     ~TraceFunction() {
-        std::cout << "<< exit " << _name << "\n";
+        std::cout << _file << ":" << _line << ":<< exit " << _function << "\n";
     }
 };
 
@@ -32,6 +37,7 @@ struct TraceFunction {
 
 #define NNATIVE_DEBUG(log)
 #define NNATIVE_FCALL()
+#define NNATIVE_MCALL()
 
 #endif /* DEBUG */
 

@@ -35,6 +35,12 @@ public:
     then(F&& f, Args&&... args) {
         return Future<typename std::result_of<F(R, Args...)>::type>(_p->template then<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...));
     }
+
+    template<class F, typename... Args>
+    Future<R>
+    error(F&& f, Args&&... args) {
+        return Future<R>(_p->template error<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...));
+    }
 private:
     std::shared_ptr<FutureShared<R>> _p;
 };
@@ -55,6 +61,12 @@ public:
     Future<typename std::result_of<F(Args...)>::type>
     then(F&& f, Args&&... args) {
         return Future<typename std::result_of<F(Args...)>::type>(_p->template then<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...));
+    }
+
+    template<class F, typename... Args>
+    Future<void>
+    error(F&& f, Args&&... args) {
+        return Future<void>(_p->template error<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...));
     }
 private:
     std::shared_ptr<FutureShared<void>> _p;

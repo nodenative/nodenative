@@ -15,8 +15,8 @@ class AsyncCallback : public AsyncBase {
     void executeCb(std::tuple<Args...>& iArgs, helper::TemplateSeqInd<Is...>) {
         try {
             _promise.setValue(_f(std::forward<Args>(std::get<Is>(iArgs))...));
-        } catch (...) {
-            _promise.setException(exception("unknown error"));
+        } catch (exception e) {
+            _promise.setException(e);
         }
     }
 
@@ -54,8 +54,8 @@ class AsyncCallback<void, Args...> : public AsyncBase {
         try {
             _f(std::get<Is>(iArgs)...);
             _promise.setValue();
-        } catch (...) {
-            _promise.setException(exception("unknown error"));
+        } catch (exception e) {
+            _promise.setException(e);
         }
     }
 
@@ -92,5 +92,3 @@ public:
 
 
 #endif /* __NATIVE_ASYNC_ASYNCCALLBACK_H__ */
-
-

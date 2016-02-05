@@ -5,7 +5,7 @@
  * Propose :
  * Created By : ionlupascu
  * Creation Date : 26-01-2016
- * Last Modified : Thu 04 Feb 2016 06:54:00 GMT
+ * Last Modified : Fri 05 Feb 2016 05:30:20 GMT
  * -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.*/
 
 namespace native {
@@ -129,6 +129,69 @@ template<typename P, typename... Args>
 void ActionCallbackP1<void, P, Args...>::setException(const exception &iError) {
     if(this->_future) {
         this->_future->setException(iError);
+    }
+}
+
+// Error
+
+template<typename... Args>
+std::shared_ptr<FutureShared<void>> ActionCallbackError<Args...>::getFuture() {
+    if(!this->_future) {
+        this->_future = std::make_shared<FutureShared<void>>();
+    }
+
+    return this->_future;
+}
+
+template<typename R, typename... Args>
+std::shared_ptr<FutureShared<R>> ActionCallbackErrorP1<R, Args...>::getFuture() {
+    if(!this->_future) {
+        this->_future = std::make_shared<FutureShared<R>>();
+    }
+
+    return this->_future;
+}
+
+template<typename R, typename... Args>
+template<std::size_t... Is>
+void ActionCallbackErrorP1<R, Args...>::callFn(const exception& iError, helper::TemplateSeqInd<Is...>) {
+    if(!this->_future) {
+        return;
+    }
+
+    try {
+        this->_future->setValue(this->_f(iError, std::get<Is>(this->_args)...));
+    } catch (exception e) {
+        this->_future->setException(e);
+    }
+}
+
+template<typename... Args>
+template<std::size_t... Is>
+void ActionCallbackError<Args...>::callFn(const exception& iError, helper::TemplateSeqInd<Is...>) {
+    if(!this->_future) {
+        return;
+    }
+
+    try {
+        this->_f(iError, std::get<Is>(_args)...);
+        this->_future->setValue();
+    } catch (exception e) {
+        this->_future->setException(e);
+    }
+}
+
+template<typename... Args>
+void ActionCallbackError<Args...>::setValue() {
+    if(this->_future) {
+        this->_future->setValue();
+    }
+}
+
+template<typename R, typename... Args>
+void ActionCallbackErrorP1<R, Args...>::setValue(R&& r) {
+    if(_future) {
+        _future->setValue(std::forward<R>(r));
     }
 }
 
