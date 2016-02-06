@@ -1,6 +1,10 @@
 #ifndef __NATIVE_ASYNC_H__
 #define __NATIVE_ASYNC_H__
 
+#include "async/FutureError.h"
+#include "async/ActionCallback.h"
+#include "async/FutureShared.h"
+#include "async/Future.h"
 #include "async/Promise.h"
 #include "async/AsyncCallback.h"
 #include "helper/trace.h"

@@ -139,3 +139,37 @@ TEST(Asynctest, asyncMultipThenValueOrder)
     expectedorder = "1,2,3,31,21";
     EXPECT_EQ(order, expectedorder);
 }
+
+TEST(Asynctest, asyncError)
+{
+    bool exceptionReceived = false;
+    bool thenProcessed = false;
+    bool afterErrorProcessed = false;
+    const std::string errorText("TestError");
+
+    native::loop currLoop(true);
+    {
+        native::async(currLoop, [&errorText]() {
+            throw native::FutureError(errorText);
+        }).then([&thenProcessed](){
+            thenProcessed = true;
+        }).error([&exceptionReceived, &errorText](const native::FutureError& iError){
+            exceptionReceived = true;
+            EXPECT_EQ(iError.message(), errorText);
+            // By not throwing any error, it means that the state is resolved
+        }).then([&afterErrorProcessed, &exceptionReceived](){
+            EXPECT_EQ(exceptionReceived, true);
+            afterErrorProcessed = true;
+        });
+    }
+
+    EXPECT_EQ(exceptionReceived, false);
+    EXPECT_EQ(thenProcessed, false);
+    EXPECT_EQ(afterErrorProcessed, false);
+
+    currLoop.run();
+
+    EXPECT_EQ(exceptionReceived, true);
+    EXPECT_EQ(thenProcessed, false);
+    EXPECT_EQ(afterErrorProcessed, true);
+}

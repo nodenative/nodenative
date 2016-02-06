@@ -9,9 +9,14 @@ loop::loop(bool use_default) {
         // don't delete the default loop
         _uv_loop = std::shared_ptr<uv_loop_t>(uv_default_loop(), [](uv_loop_t* iLoop){
                 NNATIVE_DEBUG("destroying default loop...");
-                // Default loop wait forever
-                int res = uv_loop_close(iLoop);
-                NNATIVE_DEBUG("res:" << res);
+                // TODO Default loop wait forever
+                uv_loop_close(iLoop);
+                /*
+                int res = 1;
+                do {
+                    res = uv_loop_close(iLoop);
+                } while (res != 0);
+                */
             });
     } else {
         std::unique_ptr<uv_loop_t> loopInstance(new uv_loop_t);

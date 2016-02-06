@@ -13,7 +13,7 @@ public:
         _future.setValue(std::forward<R>(iVal));
     }
 
-    void setException(const exception& iException) {
+    void setException(const FutureError& iException) {
         _future.setException(iException);
     }
 
@@ -28,7 +28,7 @@ public:
         _future.setValue();
     }
 
-    void setException(const exception& iError) {
+    void setException(const FutureError& iError) {
         _future.setException(iError);
     }
 

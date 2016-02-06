@@ -37,8 +37,8 @@ namespace native
         void setError(int iErrCode) { uv_err_ = iErrCode; }
         int code() const { return uv_err_; }
 
-        const char* name() const { return uv_err_ < 0 ? uv_err_name(uv_err_) : 0; }
-        const char* str() const { return uv_err_ < 0 ? uv_strerror(uv_err_) : 0; }
+        virtual const char* name() const { return uv_err_ < 0 ? uv_err_name(uv_err_) : 0; }
+        virtual const char* str() const { return uv_err_ < 0 ? uv_strerror(uv_err_) : 0; }
 
     private:
         int uv_err_;

@@ -2,7 +2,6 @@
 #define __NATIVE_ASYNC_FEATURE_H__
 
 #include "FutureShared.h"
-#include "../error.h"
 #include <memory>
 
 /** provide a mechanism to access the result of asynchronous operations:
@@ -23,7 +22,7 @@ class Future {
     friend Promise<R>;
 
     void setValue(R&& iVal) { _p->setValue(std::forward<R>(iVal)); }
-    void setException(const exception& iException) { _p->setException(iException); }
+    void setException(const FutureError& iException) { _p->setException(iException); }
 public:
     typedef R result_type;
 
@@ -50,7 +49,7 @@ class Future<void> {
     friend Promise<void>;
 
     void setValue() {_p->setValue();}
-    void setException(const exception& iException) {_p->setException(iException);}
+    void setException(const FutureError& iException) {_p->setException(iException);}
 public:
     typedef void result_type;
 

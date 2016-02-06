@@ -5,7 +5,7 @@
  * Propose :
  * Created By : ionlupascu
  * Creation Date : 26-01-2016
- * Last Modified : Fri 05 Feb 2016 05:30:20 GMT
+ * Last Modified : Sat 06 Feb 2016 06:13:33 GMT
  * -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.*/
 
 namespace native {
@@ -55,7 +55,7 @@ void ActionCallbackP1<R, P, Args...>::callFn(P&& p, helper::TemplateSeqInd<Is...
 
     try {
         this->_future->setValue(this->_f(std::forward<P>(p), std::get<Is>(this->_args)...));
-    } catch (exception e) {
+    } catch (const FutureError &e) {
         this->_future->setException(e);
     }
 }
@@ -70,7 +70,7 @@ void ActionCallbackP1<void, P, Args...>::callFn(P&& p, helper::TemplateSeqInd<Is
     try {
         this->_f(std::forward<P>(p), std::get<Is>(_args)...);
         this->_future->setValue();
-    } catch (exception e) {
+    } catch (const FutureError &e) {
         this->_future->setException(e);
     }
 }
@@ -84,7 +84,7 @@ void ActionCallback<R, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
 
     try {
         this->_future->setValue(this->_f(std::get<Is>(_args)...));
-    } catch (exception e) {
+    } catch (const FutureError &e) {
         this->_future->setException(e);
     }
 }
@@ -99,34 +99,34 @@ void ActionCallback<void, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
     try {
         this->_f(std::get<Is>(_args)...);
         this->_future->setValue();
-    } catch (exception e) {
+    } catch (const FutureError &e) {
         this->_future->setException(e);
     }
 }
 
 template<typename R, typename... Args>
-void ActionCallback<R, Args...>::setException(const exception &iError) {
+void ActionCallback<R, Args...>::setException(const FutureError &iError) {
     if(this->_future) {
         this->_future->setException(iError);
     }
 }
 
 template<typename... Args>
-void ActionCallback<void, Args...>::setException(const exception &iError) {
+void ActionCallback<void, Args...>::setException(const FutureError &iError) {
     if(this->_future) {
         this->_future->setException(iError);
     }
 }
 
 template<typename R, typename P, typename... Args>
-void ActionCallbackP1<R, P, Args...>::setException(const exception &iError) {
+void ActionCallbackP1<R, P, Args...>::setException(const FutureError &iError) {
     if(_future) {
         _future->setException(iError);
     }
 }
 
 template<typename P, typename... Args>
-void ActionCallbackP1<void, P, Args...>::setException(const exception &iError) {
+void ActionCallbackP1<void, P, Args...>::setException(const FutureError &iError) {
     if(this->_future) {
         this->_future->setException(iError);
     }
@@ -154,21 +154,21 @@ std::shared_ptr<FutureShared<R>> ActionCallbackErrorP1<R, Args...>::getFuture() 
 
 template<typename R, typename... Args>
 template<std::size_t... Is>
-void ActionCallbackErrorP1<R, Args...>::callFn(const exception& iError, helper::TemplateSeqInd<Is...>) {
+void ActionCallbackErrorP1<R, Args...>::callFn(const FutureError& iError, helper::TemplateSeqInd<Is...>) {
     if(!this->_future) {
         return;
     }
 
     try {
         this->_future->setValue(this->_f(iError, std::get<Is>(this->_args)...));
-    } catch (exception e) {
+    } catch (const FutureError& e) {
         this->_future->setException(e);
     }
 }
 
 template<typename... Args>
 template<std::size_t... Is>
-void ActionCallbackError<Args...>::callFn(const exception& iError, helper::TemplateSeqInd<Is...>) {
+void ActionCallbackError<Args...>::callFn(const FutureError& iError, helper::TemplateSeqInd<Is...>) {
     if(!this->_future) {
         return;
     }
@@ -176,7 +176,7 @@ void ActionCallbackError<Args...>::callFn(const exception& iError, helper::Templ
     try {
         this->_f(iError, std::get<Is>(_args)...);
         this->_future->setValue();
-    } catch (exception e) {
+    } catch (const FutureError &e) {
         this->_future->setException(e);
     }
 }
