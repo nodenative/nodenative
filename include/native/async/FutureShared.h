@@ -9,7 +9,7 @@ namespace native {
 template<class R>
 class FutureShared {
 private:
-    std::vector<std::unique_ptr<ActionCallbackBase<R>>> _actions;
+    std::vector<std::shared_ptr<ActionCallbackBase<R>>> _actions;
     bool _satisfied;
 
 public:
@@ -18,7 +18,7 @@ public:
     FutureShared() : _satisfied(false) {}
 
     void setValue(R&& iVal);
-    void setException(const FutureError& iError);
+    void setError(const FutureError& iError);
 
     template<class F, typename... Args>
     std::shared_ptr<FutureShared<typename std::result_of<F(R, Args...)>::type>>
@@ -32,35 +32,27 @@ public:
 template<>
 class FutureShared<void> {
 private:
-    std::vector<std::unique_ptr<ActionCallbackBase<void>>> _actions;
+    std::vector<std::shared_ptr<ActionCallbackBase<void>>> _actions;
     bool _satisfied;
+
+    // TODO: without template method it doesn't allow to decouple the implementation method
+    template<typename T>
+    void setValueT();
+
+    template<typename T>
+    void setErrorT(const FutureError &iError);
 public:
     typedef void result_type;
 
     FutureShared() : _satisfied(false) {}
 
+    // TODO: without template method it doesn't allow to decouple the implementation method.
     void setValue() {
-        if(_satisfied) {
-            throw PromiseAlreadySatisfied();
-        }
-
-        _satisfied = true;
-
-        for(std::unique_ptr<ActionCallbackBase<void>> &action : this->_actions) {
-            action->setValue();
-        }
+        setValueT<void>();
     }
 
-    void setException(const FutureError& iError) {
-        if(_satisfied) {
-            throw PromiseAlreadySatisfied();
-        }
-
-        _satisfied = true;
-
-        for(std::unique_ptr<ActionCallbackBase<void>> &action : this->_actions) {
-            action->setException(iError);
-        }
+    void setError(const FutureError& iError) {
+        setErrorT<void>(iError);
     }
 
     template<class F, typename... Args>
@@ -71,7 +63,6 @@ public:
     std::shared_ptr<FutureShared<void>>
     error(F&& f, Args&&... args);
 };
-
 
 } /* namespace native */
 

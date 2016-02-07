@@ -5,27 +5,53 @@ namespace native {
 
 template<class R>
 void FutureShared<R>::setValue(R&& iVal) {
-    if(_satisfied) {
+    if(this->_satisfied) {
         throw PromiseAlreadySatisfied();
     }
 
-    _satisfied = true;
+    this->_satisfied = true;
 
-    for(std::unique_ptr<ActionCallbackBase<R>> &action : this->_actions) {
-        action->setValue(std::forward<R>(iVal));
+    for(std::shared_ptr<ActionCallbackBase<R>> &action : this->_actions) {
+        action->SetValue(action, std::forward<R>(iVal));
+    }
+}
+
+template<typename T>
+void FutureShared<void>::setValueT() {
+    if(this->_satisfied) {
+        throw PromiseAlreadySatisfied();
+    }
+
+    this->_satisfied = true;
+
+    for(std::shared_ptr<ActionCallbackBase<void>> &action : this->_actions) {
+        action->SetValue(action);
     }
 }
 
 template<typename R>
-void FutureShared<R>::setException(const FutureError& iError) {
-    if(_satisfied) {
+void FutureShared<R>::setError(const FutureError& iError) {
+    if(this->_satisfied) {
         throw PromiseAlreadySatisfied();
     }
 
-    _satisfied = true;
+    this->_satisfied = true;
 
-    for(std::unique_ptr<ActionCallbackBase<R>> &action : this->_actions) {
-        action->setException(iError);
+    for(std::shared_ptr<ActionCallbackBase<R>> &action : this->_actions) {
+        action->SetError(action, iError);
+    }
+}
+
+template<typename T>
+void FutureShared<void>::setErrorT(const FutureError& iError) {
+    if(this->_satisfied) {
+        throw PromiseAlreadySatisfied();
+    }
+
+    this->_satisfied = true;
+
+    for(std::shared_ptr<ActionCallbackBase<void>> &action : this->_actions) {
+        action->SetError(action, iError);
     }
 }
 
@@ -38,7 +64,7 @@ FutureShared<R>::then(F&& f, Args&&... args) {
     }
 
     using return_type = typename std::result_of<F(R, Args...)>::type;
-    std::unique_ptr<ActionCallbackP1<return_type, R, Args...>> action(new ActionCallbackP1<return_type, R, Args...>(std::forward<F>(f), std::forward<Args>(args)...));
+    std::shared_ptr<ActionCallbackP1<return_type, R, Args...>> action(new ActionCallbackP1<return_type, R, Args...>(std::forward<F>(f), std::forward<Args>(args)...));
     std::shared_ptr<FutureShared<return_type>> currFuture = action->getFuture();
     _actions.push_back(std::move(action));
     return currFuture;
@@ -52,7 +78,7 @@ FutureShared<void>::then(F&& f, Args&&... args) {
     }
 
     using return_type = typename std::result_of<F(Args...)>::type;
-    std::unique_ptr<ActionCallback<return_type, Args...>> action(new ActionCallback<return_type, Args...>(std::forward<F>(f), std::forward<Args>(args)...));
+    std::shared_ptr<ActionCallback<return_type, Args...>> action(new ActionCallback<return_type, Args...>(std::forward<F>(f), std::forward<Args>(args)...));
     std::shared_ptr<FutureShared<return_type>> currFuture = action->getFuture();
     _actions.push_back(std::move(action));
     return currFuture;
@@ -66,7 +92,7 @@ FutureShared<R>::error(F&& f, Args&&... args) {
         throw FutureAlreadyRetrieved();
     }
 
-    std::unique_ptr<ActionCallbackErrorP1<R, Args...>> action(new ActionCallbackErrorP1<R, Args...>(std::forward<F>(f), std::forward<Args>(args)...));
+    std::shared_ptr<ActionCallbackErrorP1<R, Args...>> action(new ActionCallbackErrorP1<R, Args...>(std::forward<F>(f), std::forward<Args>(args)...));
     std::shared_ptr<FutureShared<R>> currFuture = action->getFuture();
     _actions.push_back(std::move(action));
     return currFuture;
@@ -79,7 +105,7 @@ FutureShared<void>::error(F&& f, Args&&... args) {
         throw FutureAlreadyRetrieved();
     }
 
-    std::unique_ptr<ActionCallbackError<Args...>> action(new ActionCallbackError<Args...>(std::forward<F>(f), std::forward<Args>(args)...));
+    std::shared_ptr<ActionCallbackError<Args...>> action(new ActionCallbackError<Args...>(std::forward<F>(f), std::forward<Args>(args)...));
     std::shared_ptr<FutureShared<void>> currFuture = action->getFuture();
     _actions.push_back(std::move(action));
     return currFuture;

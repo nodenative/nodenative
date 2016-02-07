@@ -13,8 +13,8 @@ public:
         _future.setValue(std::forward<R>(iVal));
     }
 
-    void setException(const FutureError& iException) {
-        _future.setException(iException);
+    void setError(const FutureError& iException) {
+        _future.setError(iException);
     }
 
     Future<R> getFuture() { return _future; }
@@ -28,8 +28,8 @@ public:
         _future.setValue();
     }
 
-    void setException(const FutureError& iError) {
-        _future.setException(iError);
+    void setError(const FutureError& iError) {
+        _future.setError(iError);
     }
 
     Future<void> getFuture() { return _future; }

@@ -22,7 +22,7 @@ class Future {
     friend Promise<R>;
 
     void setValue(R&& iVal) { _p->setValue(std::forward<R>(iVal)); }
-    void setException(const FutureError& iException) { _p->setException(iException); }
+    void setError(const FutureError& iException) { _p->setError(iException); }
 public:
     typedef R result_type;
 
@@ -49,7 +49,7 @@ class Future<void> {
     friend Promise<void>;
 
     void setValue() {_p->setValue();}
-    void setException(const FutureError& iException) {_p->setException(iException);}
+    void setError(const FutureError& iException) {_p->setError(iException);}
 public:
     typedef void result_type;
 

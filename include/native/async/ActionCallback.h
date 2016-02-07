@@ -3,9 +3,6 @@
 
 /*-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
  * Propose :
- * Created By : ionlupascu
- * Creation Date : 26-01-2016
- * Last Modified : Sat 06 Feb 2016 07:13:59 GMT
  * -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.*/
 
 #include "../helper/TemplateSeqInd.h"
@@ -22,18 +19,39 @@ template<typename P>
 class ActionCallbackBase {
 public:
     virtual ~ActionCallbackBase() {}
-    virtual void setValue(P&&) = 0;
-    virtual void setException(const FutureError&) = 0;
+
+    static void SetValue(std::shared_ptr<ActionCallbackBase<P>> iInstance, P&& p);
+    static void SetError(std::shared_ptr<ActionCallbackBase<P>> iInstance, const FutureError&);
+
+    virtual void setValueCb(P&&) = 0;
+    virtual void setErrorCb(const FutureError&) = 0;
 };
 
 /** Acction callback base class template specialization for void type.
  */
 template<>
 class ActionCallbackBase<void> {
+protected:
+    virtual void setValueCb() = 0;
+    virtual void setErrorCb(const FutureError&) = 0;
+
 public:
     virtual ~ActionCallbackBase() {}
-    virtual void setValue() = 0;
-    virtual void setException(const FutureError&) = 0;
+
+    // TODO: resolve why method from specialization class cannot be decouple
+    template<typename T>
+    static void SetValueT(std::shared_ptr<ActionCallbackBase<void>> iInstance);
+
+    template<typename T>
+    static void SetErrorT(std::shared_ptr<ActionCallbackBase<void>> iInstance, const FutureError &iError);
+
+    static void SetValue(std::shared_ptr<ActionCallbackBase<void>> iInstance) {
+        SetValueT<void>(iInstance);
+    }
+
+    static void SetError(std::shared_ptr<ActionCallbackBase<void>> iInstance, const FutureError &iError) {
+        SetErrorT<void>(iInstance, iError);
+    }
 };
 
 template<typename R, typename... Args>
@@ -45,14 +63,11 @@ class ActionCallback: public ActionCallbackBase<void> {
     template<std::size_t... Is>
     void callFn(helper::TemplateSeqInd<Is...>);
 
+    void setValueCb() override;
+    void setErrorCb(const FutureError& iError) override;
+
 public:
     ActionCallback(std::function<R(Args...)> f, Args&&... args) : _f(f), _args(args...) {}
-
-    void setValue() override {
-        callFn(helper::TemplateSeqIndGen<sizeof...(Args)>());
-    }
-
-    void setException(const FutureError& iError) override;
 
     std::shared_ptr<FutureShared<R>> getFuture();
 };
@@ -66,14 +81,11 @@ class ActionCallback<void, Args...>: public ActionCallbackBase<void> {
     template<std::size_t... Is>
     void callFn(helper::TemplateSeqInd<Is...>);
 
+    void setValueCb() override;
+    void setErrorCb(const FutureError& iError) override;
+
 public:
     ActionCallback(std::function<void(Args...)> f, Args&&... args) : _f(f), _args(args...) {}
-
-    void setValue() override {
-        callFn(helper::TemplateSeqIndGen<sizeof...(Args)>());
-    }
-
-    void setException(const FutureError& iError) override;
 
     std::shared_ptr<FutureShared<void>> getFuture();
 };
@@ -88,14 +100,13 @@ class ActionCallbackP1: public ActionCallbackBase<P> {
 
     template<std::size_t... Is>
     void callFn(P&& p, helper::TemplateSeqInd<Is...>);
+
+    void setValueCb(P&& p) override;
+    void setErrorCb(const FutureError& iError) override;
+
 public:
     ActionCallbackP1(std::function<R(P, Args...)> f, Args&&... args) : _f(f), _args(args...) {}
 
-    void setValue(P&& p) override {
-        callFn(std::forward<P>(p), helper::TemplateSeqIndGen<sizeof...(Args)>());
-    }
-
-    void setException(const FutureError& iError) override;
     std::shared_ptr<FutureShared<R>> getFuture();
 };
 
@@ -108,14 +119,12 @@ class ActionCallbackP1<void, P, Args...>: public ActionCallbackBase<P> {
     template<std::size_t... Is>
     void callFn(P&& p, helper::TemplateSeqInd<Is...>);
 
+    void setValueCb(P&& p) override;
+    void setErrorCb(const FutureError& iError) override;
+
 public:
     ActionCallbackP1(std::function<void(P, Args...)> f, Args&&... args) : _f(f), _args(args...) {}
 
-    void setValue(P&& p) override {
-        callFn(std::forward<P>(p), helper::TemplateSeqIndGen<sizeof...(Args)>());
-    }
-
-    void setException(const FutureError& iError) override;
     std::shared_ptr<FutureShared<void>> getFuture();
 };
 
@@ -130,14 +139,11 @@ class ActionCallbackError: public ActionCallbackBase<void> {
     template<std::size_t... Is>
     void callFn(const FutureError& iError, helper::TemplateSeqInd<Is...>);
 
+    void setValueCb() override;
+    void setErrorCb(const FutureError& iError) override;
+
 public:
     ActionCallbackError(std::function<void(const FutureError&, Args...)> f, Args&&... args) : _f(f), _args(args...) {}
-
-    void setValue() override;
-
-    void setException(const FutureError& iError) override {
-        callFn(iError, helper::TemplateSeqIndGen<sizeof...(Args)>());
-    }
 
     std::shared_ptr<FutureShared<void>> getFuture();
 };
@@ -152,14 +158,12 @@ class ActionCallbackErrorP1: public ActionCallbackBase<R> {
 
     template<std::size_t... Is>
     void callFn(const FutureError& iError, helper::TemplateSeqInd<Is...>);
+
+    void setValueCb(R&& r) override;
+    void setErrorCb(const FutureError& iError) override;
+
 public:
     ActionCallbackErrorP1(std::function<R(const FutureError&, Args...)> f, Args&&... args) : _f(f), _args(args...) {}
-
-    void setValue(R&& r) override;
-
-    void setException(const FutureError& iError) override {
-        callFn(iError, helper::TemplateSeqIndGen<sizeof...(Args)>());
-    }
 
     std::shared_ptr<FutureShared<R>> getFuture();
 };

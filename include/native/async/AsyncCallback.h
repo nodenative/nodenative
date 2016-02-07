@@ -16,7 +16,7 @@ class AsyncCallback : public AsyncBase {
         try {
             _promise.setValue(_f(std::forward<Args>(std::get<Is>(iArgs))...));
         } catch (const FutureError &e) {
-            _promise.setException(e);
+            _promise.setError(e);
         }
     }
 
@@ -55,7 +55,7 @@ class AsyncCallback<void, Args...> : public AsyncBase {
             _f(std::get<Is>(iArgs)...);
             _promise.setValue();
         } catch (const FutureError &e) {
-            _promise.setException(e);
+            _promise.setError(e);
         }
     }
 
