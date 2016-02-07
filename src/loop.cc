@@ -28,7 +28,12 @@ loop::loop(bool use_default) {
                 */
             });
 
+        if(0 != uv_loop_init(_uv_loop.get())) {
+            _uv_loop.reset();
+        }
+
         savedPtr = _uv_loop;
+
     } else {
         std::unique_ptr<uv_loop_t> loopInstance(new uv_loop_t);
         if(0 == uv_loop_init(loopInstance.get())) {

@@ -136,8 +136,8 @@ TEST(Asynctest, asyncMultipThenValueOrder)
 
     // Maybe this is an issue, for non async callback first are resolved dependences callbacks
     // An solution would be each callback from "then" to call async, this may resolve the issue
-    expectedorder = "1,2,3,31,21";
-    EXPECT_EQ(order, expectedorder);
+    expectedorder = "1,2,21,3,31";
+    EXPECT_EQ(expectedorder, order);
 }
 
 TEST(Asynctest, asyncError)

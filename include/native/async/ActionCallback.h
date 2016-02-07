@@ -7,6 +7,7 @@
 
 #include "../helper/TemplateSeqInd.h"
 #include "FutureError.h"
+#include "AsyncBase.h"
 
 namespace native {
 
@@ -55,6 +56,56 @@ public:
     virtual void setValueCb() = 0;
     virtual void setErrorCb(const FutureError&) = 0;
     virtual std::shared_ptr<uv_loop_t> getLoop() = 0;
+};
+
+template<typename P>
+class ActionCallbackBaseDetached : public AsyncBase {
+private:
+    std::shared_ptr<ActionCallbackBase<P>> _instance;
+    std::tuple<P> _args;
+
+public:
+    ActionCallbackBaseDetached() = delete;
+    ActionCallbackBaseDetached(std::shared_ptr<ActionCallbackBase<P>> iInstance, P&& p);
+    void executeAsync(std::shared_ptr<AsyncBase>) override;
+
+    static void Enqueue(std::shared_ptr<ActionCallbackBase<P>> iInstance, P&& p);
+};
+
+template<>
+class ActionCallbackBaseDetached<void> : public AsyncBase {
+private:
+    std::shared_ptr<ActionCallbackBase<void>> _instance;
+
+    template<typename T>
+    static void EnqueueT(std::shared_ptr<ActionCallbackBase<void>> iInstance);
+
+    template<typename T>
+    void executeAsyncT(std::shared_ptr<AsyncBase>);
+
+public:
+    ActionCallbackBaseDetached() = delete;
+    ActionCallbackBaseDetached(std::shared_ptr<ActionCallbackBase<void>> iInstance) : AsyncBase(iInstance->getLoop()), _instance(iInstance) {}
+
+    // TODO: resolve decouple method from class specializations
+    void executeAsync(std::shared_ptr<AsyncBase> iBase) override { executeAsyncT<void>(iBase); }
+
+    // TODO: resolve decouple method from class specializations
+    static void Enqueue(std::shared_ptr<ActionCallbackBase<void>> iInstance) { EnqueueT<void>(iInstance); }
+};
+
+template<typename P>
+class ActionCallbackBaseDetachedError : public AsyncBase {
+private:
+    std::shared_ptr<ActionCallbackBase<P>> _instance;
+    FutureError _error;
+
+public:
+    ActionCallbackBaseDetachedError() = delete;
+    ActionCallbackBaseDetachedError(std::shared_ptr<ActionCallbackBase<P>> iInstance, const FutureError &iError);
+    void executeAsync(std::shared_ptr<AsyncBase>) override;
+
+    static void Enqueue(std::shared_ptr<ActionCallbackBase<P>> iInstance, const FutureError &iError);
 };
 
 template<typename R, typename... Args>

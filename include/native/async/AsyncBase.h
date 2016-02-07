@@ -25,6 +25,7 @@ protected:
     void enqueue();
     AsyncBase() = delete;
     AsyncBase(loop &iLoop);
+    AsyncBase(std::shared_ptr<uv_loop_t> iLoop);
 public:
     template<class Child, typename... Args>
     static Child* Create(loop& iLoop, Args&&... args);

@@ -8,33 +8,83 @@
 namespace native {
 
 template<typename P>
-void ActionCallbackBase<P>::SetValue(std::shared_ptr<ActionCallbackBase<P>> iInstance, P&& p) {
+ActionCallbackBaseDetached<P>::ActionCallbackBaseDetached(std::shared_ptr<ActionCallbackBase<P>> iInstance, P&& p) :
+        AsyncBase(iInstance->getLoop()),
+        _instance(iInstance),
+        _args(p) {
+}
+
+template<typename P>
+ActionCallbackBaseDetachedError<P>::ActionCallbackBaseDetachedError(std::shared_ptr<ActionCallbackBase<P>> iInstance, const FutureError &iError) :
+        AsyncBase(iInstance->getLoop()),
+        _instance(iInstance),
+        _error(iError) {
+}
+
+template<typename P>
+void ActionCallbackBaseDetached<P>::executeAsync(std::shared_ptr<AsyncBase>) {
+    NNATIVE_FCALL();
+    _instance->setValueCb(std::forward<P>(std::get<0>(_args)));
+}
+
+
+template<typename T>
+void ActionCallbackBaseDetached<void>::executeAsyncT(std::shared_ptr<AsyncBase>) {
+    NNATIVE_FCALL();
+    _instance->setValueCb();
+}
+
+template<typename P>
+void ActionCallbackBaseDetachedError<P>::executeAsync(std::shared_ptr<AsyncBase>) {
+    NNATIVE_FCALL();
+    _instance->setErrorCb(_error);
+}
+
+template<typename P>
+void ActionCallbackBaseDetached<P>::Enqueue(std::shared_ptr<ActionCallbackBase<P>> iInstance, P&& p) {
+    NNATIVE_FCALL();
     NNATIVE_ASSERT(iInstance);
-    iInstance->setValueCb(std::forward<P>(p));
+    std::unique_ptr<ActionCallbackBaseDetached<P>> detachedInst(new ActionCallbackBaseDetached<P>(iInstance, std::forward<P>(p)));
+    detachedInst->enqueue();
+    detachedInst.release();
+}
+
+template<typename T>
+void ActionCallbackBaseDetached<void>::EnqueueT(std::shared_ptr<ActionCallbackBase<void>> iInstance) {
+    NNATIVE_FCALL();
+    NNATIVE_ASSERT(iInstance);
+    std::unique_ptr<ActionCallbackBaseDetached<void>> detachedInst(new ActionCallbackBaseDetached<void>(iInstance));
+    detachedInst->enqueue();
+    detachedInst.release();
+}
+
+template<typename P>
+void ActionCallbackBaseDetachedError<P>::Enqueue(std::shared_ptr<ActionCallbackBase<P>> iInstance, const FutureError &iError) {
+    NNATIVE_FCALL();
+    NNATIVE_ASSERT(iInstance);
+    std::unique_ptr<ActionCallbackBaseDetachedError<P>> detachedInst(new ActionCallbackBaseDetachedError<P>(iInstance, iError));
+    detachedInst->enqueue();
+    detachedInst.release();
+}
+
+template<typename P>
+void ActionCallbackBase<P>::SetValue(std::shared_ptr<ActionCallbackBase<P>> iInstance, P&& p) {
+    ActionCallbackBaseDetached<P>::Enqueue(iInstance, std::forward<P>(p));
 }
 
 template<typename T>
 void ActionCallbackBase<void>::SetValueT(std::shared_ptr<ActionCallbackBase<void>> iInstance) {
-    NNATIVE_ASSERT(iInstance);
-//    async([](std::shared_ptr<ActionCallbackBase<void>> iInstance){
-        iInstance->setValueCb();
-//    }, iInstance);
+    ActionCallbackBaseDetached<void>::Enqueue(iInstance);
 }
 
 template<typename P>
 void ActionCallbackBase<P>::SetError(std::shared_ptr<ActionCallbackBase<P>> iInstance, const FutureError &iError) {
-    NNATIVE_ASSERT(iInstance);
-//    async([](std::shared_ptr<ActionCallbackBase<void>> iInstance, FutureError iError){
-        iInstance->setErrorCb(iError);
-//    }, iInstance, iError);
+    ActionCallbackBaseDetachedError<P>::Enqueue(iInstance, iError);
 }
 
 template<typename T>
 void ActionCallbackBase<void>::SetErrorT(std::shared_ptr<ActionCallbackBase<void>> iInstance, const FutureError &iError) {
-    NNATIVE_ASSERT(iInstance);
-//    async([](std::shared_ptr<ActionCallbackBase<void>> iInstance, FutureError iError){
-        iInstance->setErrorCb(iError);
-//    }, iInstance, iError);
+    ActionCallbackBaseDetachedError<void>::Enqueue(iInstance, iError);
 }
 
 template<typename R, typename... Args>

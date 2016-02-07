@@ -9,20 +9,16 @@ AsyncBase::AsyncBase(loop &iLoop) {
     _loop = iLoop._uv_loop;
 }
 
+AsyncBase::AsyncBase(std::shared_ptr<uv_loop_t> iLoop) {
+    _loop = iLoop;
+}
+
 void AsyncBase::enqueue() {
     NNATIVE_FCALL();
     _uv_async.data = this;
-    uv_loop_t* currLoop = nullptr;
+    NNATIVE_ASSERT(_loop);
 
-    if(_loop) {
-        NNATIVE_DEBUG("get defined loop");
-        currLoop = _loop.get();
-    } else {
-        NNATIVE_DEBUG("get default loop");
-        currLoop = uv_default_loop();
-    }
-
-    if(uv_async_init(currLoop, &_uv_async, &AsyncBase::Async) != 0) {
+    if(uv_async_init(_loop.get(), &_uv_async, &AsyncBase::Async) != 0) {
         NNATIVE_DEBUG("Error in uv_async_init");
         throw native::exception("uv_async_init");
     }
