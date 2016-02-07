@@ -16,24 +16,25 @@ TEST(FutureThentest, order)
             order+=",2";
         });
 
-        native::Future<void> f21 = f2.then([&order]{
-            order+=",21";
-        });
-
-        native::Future<void> f22 = f21.then([&order]{
-            order+=",22";
-        });
-
-        native::Future<void> f23 = f21.then([&order]{
-            order+=",23";
-        });
-
         native::Future<void> f3 = f2.then([&order]{
             order+=",3";
         });
 
         native::Future<void> f4 = f3.then([&order]{
             order+=",4";
+        });
+
+        // Add more async work to second future
+        native::Future<void> f21 = f1.then([&order]{
+            order+=",21";
+        });
+
+        native::Future<void> f22 = f1.then([&order]{
+            order+=",22";
+        });
+
+        native::Future<void> f23 = f1.then([&order]{
+            order+=",23";
         });
 
         EXPECT_EQ(expectedOrder, order);
@@ -47,7 +48,7 @@ TEST(FutureThentest, order)
 
     currLoop.run();
 
-    expectedOrder = "1,2,3,4, 21, 22, 23";
+    expectedOrder = "1,2,21,22,23,3,4";
     EXPECT_EQ(expectedOrder, order);
 }
 

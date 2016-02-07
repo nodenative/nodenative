@@ -15,13 +15,15 @@ class AsyncBase {
 
     // This method will be called from uv
     static void Async(uv_async_t*);
+    static void AsyncClosed(uv_handle_t*);
 protected:
     uv_async_t _uv_async;
 
     /** Public method called at event loop
      * Extend this class for custom usage
      */
-    virtual void executeAsync(std::shared_ptr<AsyncBase>) = 0;
+    virtual void executeAsync() = 0;
+    virtual void closeAsync(std::shared_ptr<AsyncBase>) {}
     void enqueue();
     AsyncBase() = delete;
     AsyncBase(loop &iLoop);
@@ -29,9 +31,7 @@ protected:
 public:
     template<class Child, typename... Args>
     static Child* Create(loop& iLoop, Args&&... args);
-    virtual ~AsyncBase() {
-        NNATIVE_FCALL();
-    };
+    virtual ~AsyncBase();
 };
 
 } /* namespace native */

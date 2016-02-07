@@ -6,11 +6,19 @@
 namespace native {
 
 AsyncBase::AsyncBase(loop &iLoop) {
+    NNATIVE_FCALL();
     _loop = iLoop._uv_loop;
 }
 
 AsyncBase::AsyncBase(std::shared_ptr<uv_loop_t> iLoop) {
+    NNATIVE_FCALL();
     _loop = iLoop;
+}
+
+AsyncBase::~AsyncBase() {
+    NNATIVE_FCALL();
+    // Check if the destructor is called with pending job
+    NNATIVE_ASSERT(this->_uv_async.data == nullptr);
 }
 
 void AsyncBase::enqueue() {
@@ -34,14 +42,20 @@ void AsyncBase::Async(uv_async_t* iAsync) {
     NNATIVE_FCALL();
 
     //AsyncBase* currobj = helper::Containerof(AsyncBase::_uv_async, iAsync);
+    NNATIVE_ASSERT(iAsync->data != nullptr);
     AsyncBase* currobj = static_cast<AsyncBase*>(iAsync->data);
 
-    uv_close((uv_handle_t*)&currobj->_uv_async, NULL);
+    uv_close((uv_handle_t*)&(currobj->_uv_async), &AsyncBase::AsyncClosed);
+
+    currobj->executeAsync();
+}
+
+void AsyncBase::AsyncClosed(uv_handle_t* iAsync) {
+    NNATIVE_FCALL();
+    AsyncBase* currobj = static_cast<AsyncBase*>(iAsync->data);
+    iAsync->data = nullptr;
 
     // Move the shared pointer to a temporary variable.
     std::shared_ptr<AsyncBase> currInst(currobj);
-
-    currInst->executeAsync(currInst);
 }
-
 } /* namespace native */

@@ -67,7 +67,10 @@ private:
 public:
     ActionCallbackBaseDetached() = delete;
     ActionCallbackBaseDetached(std::shared_ptr<ActionCallbackBase<P>> iInstance, P&& p);
-    void executeAsync(std::shared_ptr<AsyncBase>) override;
+    ~ActionCallbackBaseDetached() {
+        NNATIVE_FCALL();
+    }
+    void executeAsync() override;
 
     static void Enqueue(std::shared_ptr<ActionCallbackBase<P>> iInstance, P&& p);
 };
@@ -81,14 +84,17 @@ private:
     static void EnqueueT(std::shared_ptr<ActionCallbackBase<void>> iInstance);
 
     template<typename T>
-    void executeAsyncT(std::shared_ptr<AsyncBase>);
+    void executeAsyncT();
 
 public:
     ActionCallbackBaseDetached() = delete;
     ActionCallbackBaseDetached(std::shared_ptr<ActionCallbackBase<void>> iInstance) : AsyncBase(iInstance->getLoop()), _instance(iInstance) {}
+    ~ActionCallbackBaseDetached() {
+        NNATIVE_FCALL();
+    }
 
     // TODO: resolve decouple method from class specializations
-    void executeAsync(std::shared_ptr<AsyncBase> iBase) override { executeAsyncT<void>(iBase); }
+    void executeAsync() override { executeAsyncT<void>(); }
 
     // TODO: resolve decouple method from class specializations
     static void Enqueue(std::shared_ptr<ActionCallbackBase<void>> iInstance) { EnqueueT<void>(iInstance); }
@@ -103,7 +109,10 @@ private:
 public:
     ActionCallbackBaseDetachedError() = delete;
     ActionCallbackBaseDetachedError(std::shared_ptr<ActionCallbackBase<P>> iInstance, const FutureError &iError);
-    void executeAsync(std::shared_ptr<AsyncBase>) override;
+    ~ActionCallbackBaseDetachedError() {
+        NNATIVE_FCALL();
+    }
+    void executeAsync() override;
 
     static void Enqueue(std::shared_ptr<ActionCallbackBase<P>> iInstance, const FutureError &iError);
 };

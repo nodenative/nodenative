@@ -22,20 +22,20 @@ ActionCallbackBaseDetachedError<P>::ActionCallbackBaseDetachedError(std::shared_
 }
 
 template<typename P>
-void ActionCallbackBaseDetached<P>::executeAsync(std::shared_ptr<AsyncBase>) {
+void ActionCallbackBaseDetached<P>::executeAsync() {
     NNATIVE_FCALL();
     _instance->setValueCb(std::forward<P>(std::get<0>(_args)));
 }
 
 
 template<typename T>
-void ActionCallbackBaseDetached<void>::executeAsyncT(std::shared_ptr<AsyncBase>) {
+void ActionCallbackBaseDetached<void>::executeAsyncT() {
     NNATIVE_FCALL();
     _instance->setValueCb();
 }
 
 template<typename P>
-void ActionCallbackBaseDetachedError<P>::executeAsync(std::shared_ptr<AsyncBase>) {
+void ActionCallbackBaseDetachedError<P>::executeAsync() {
     NNATIVE_FCALL();
     _instance->setErrorCb(_error);
 }

@@ -29,6 +29,7 @@ loop::loop(bool use_default) {
             });
 
         if(0 != uv_loop_init(_uv_loop.get())) {
+            NNATIVE_DEBUG("error to init loop " << (_uv_loop.get()));
             _uv_loop.reset();
         }
 
@@ -56,6 +57,7 @@ loop::~loop()
 
 bool loop::run() {
     NNATIVE_FCALL();
+    NNATIVE_ASSERT(_uv_loop);
     return (uv_run(_uv_loop.get(), UV_RUN_DEFAULT) == 0); 
 }
 
