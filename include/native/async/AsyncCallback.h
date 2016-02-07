@@ -21,7 +21,7 @@ class AsyncCallback : public AsyncBase {
     }
 
 protected:
-    AsyncCallback(loop &iLoop, std::function<R(Args...)> f, Args&&... args) : AsyncBase(iLoop), _f(f), _args(args...) {}
+    AsyncCallback(loop &iLoop, std::function<R(Args...)> f, Args&&... args) : AsyncBase(iLoop), _f(f), _args(args...), _promise(iLoop) {}
 
     virtual void executeAsync(std::shared_ptr<AsyncBase>) {
         executeCb(_args, helper::TemplateSeqIndGen<sizeof...(Args)>{});
@@ -60,7 +60,7 @@ class AsyncCallback<void, Args...> : public AsyncBase {
     }
 
 protected:
-    AsyncCallback(loop &iLoop, std::function<void(Args...)> f, Args&&... args) : AsyncBase(iLoop), _f(f), _args(args...) {
+    AsyncCallback(loop &iLoop, std::function<void(Args...)> f, Args&&... args) : AsyncBase(iLoop), _f(f), _args(args...), _promise(iLoop) {
         NNATIVE_FCALL();
     }
 

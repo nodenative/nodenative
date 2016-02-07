@@ -38,39 +38,79 @@ void ActionCallbackBase<void>::SetErrorT(std::shared_ptr<ActionCallbackBase<void
 }
 
 template<typename R, typename... Args>
-std::shared_ptr<FutureShared<R>> ActionCallback<R, Args...>::getFuture() {
-    if(!this->_future) {
-        this->_future = std::make_shared<FutureShared<R>>();
-    }
+ActionCallback<R, Args...>::ActionCallback(std::shared_ptr<uv_loop_t> iLoop, std::function<R(Args...)> f, Args&&... args) :
+         _f(f),
+         _args(args...),
+         _future(std::make_shared<FutureShared<R>>(iLoop))
+{
+}
 
+template<typename... Args>
+ActionCallback<void, Args...>::ActionCallback(std::shared_ptr<uv_loop_t> iLoop, std::function<void(Args...)> f, Args&&... args) :
+         _f(f),
+         _args(args...),
+         _future(std::make_shared<FutureShared<void>>(iLoop))
+{
+}
+
+template<typename R, typename P, typename... Args>
+ActionCallbackP1<R, P, Args...>::ActionCallbackP1(std::shared_ptr<uv_loop_t> iLoop, std::function<R(P, Args...)> f, Args&&... args) :
+         _f(f),
+         _args(args...),
+         _future(std::make_shared<FutureShared<R>>(iLoop))
+{
+}
+
+template<typename P, typename... Args>
+ActionCallbackP1<void, P, Args...>::ActionCallbackP1(std::shared_ptr<uv_loop_t> iLoop, std::function<void(P, Args...)> f, Args&&... args) :
+         _f(f),
+         _args(args...),
+         _future(std::make_shared<FutureShared<void>>(iLoop))
+{
+}
+
+template<typename R, typename... Args>
+std::shared_ptr<FutureShared<R>> ActionCallback<R, Args...>::getFuture() {
+    NNATIVE_ASSERT(this->_future);
     return this->_future;
 }
 
 template<typename... Args>
 std::shared_ptr<FutureShared<void>> ActionCallback<void, Args...>::getFuture() {
-    if(!this->_future) {
-        this->_future = std::make_shared<FutureShared<void>>();
-    }
-
+    NNATIVE_ASSERT(this->_future);
     return this->_future;
 }
 
 template<typename R, typename P, typename... Args>
 std::shared_ptr<FutureShared<R>> ActionCallbackP1<R, P, Args...>::getFuture() {
-    if(!this->_future) {
-        this->_future = std::make_shared<FutureShared<R>>();
-    }
-
+    NNATIVE_ASSERT(this->_future);
     return this->_future;
 }
 
 template<typename P, typename... Args>
 std::shared_ptr<FutureShared<void>> ActionCallbackP1<void, P, Args...>::getFuture() {
-    if(!this->_future) {
-        this->_future = std::make_shared<FutureShared<void>>();
-    }
-
+    NNATIVE_ASSERT(this->_future);
     return this->_future;
+}
+
+template<typename R, typename... Args>
+std::shared_ptr<uv_loop_t> ActionCallback<R, Args...>::getLoop() {
+    return this->getFuture()->getLoop();
+}
+
+template<typename... Args>
+std::shared_ptr<uv_loop_t> ActionCallback<void, Args...>::getLoop() {
+    return this->getFuture()->getLoop();
+}
+
+template<typename R, typename P, typename... Args>
+std::shared_ptr<uv_loop_t> ActionCallbackP1<R, P, Args...>::getLoop() {
+    return this->getFuture()->getLoop();
+}
+
+template<typename P, typename... Args>
+std::shared_ptr<uv_loop_t> ActionCallbackP1<void, P, Args...>::getLoop() {
+    return this->getFuture()->getLoop();
 }
 
 template<typename R, typename P, typename... Args>
@@ -182,21 +222,41 @@ void ActionCallbackP1<void, P, Args...>::setErrorCb(const FutureError &iError) {
 // Error
 
 template<typename... Args>
-std::shared_ptr<FutureShared<void>> ActionCallbackError<Args...>::getFuture() {
-    if(!this->_future) {
-        this->_future = std::make_shared<FutureShared<void>>();
-    }
+ActionCallbackError<Args...>::ActionCallbackError(std::shared_ptr<uv_loop_t> iLoop, std::function<void(const FutureError&, Args...)> f, Args&&... args) :
+         _f(f),
+         _args(args...),
+         _future(std::make_shared<FutureShared<void>>(iLoop))
+{
+}
 
+template<typename R, typename... Args>
+ActionCallbackErrorP1<R, Args...>::ActionCallbackErrorP1(std::shared_ptr<uv_loop_t> iLoop, std::function<R(const FutureError&, Args...)> f, Args&&... args) :
+         _f(f),
+         _args(args...),
+         _future(std::make_shared<FutureShared<R>>(iLoop))
+{
+}
+
+template<typename... Args>
+std::shared_ptr<FutureShared<void>> ActionCallbackError<Args...>::getFuture() {
+    NNATIVE_ASSERT(this->_future);
     return this->_future;
 }
 
 template<typename R, typename... Args>
 std::shared_ptr<FutureShared<R>> ActionCallbackErrorP1<R, Args...>::getFuture() {
-    if(!this->_future) {
-        this->_future = std::make_shared<FutureShared<R>>();
-    }
-
+    NNATIVE_ASSERT(this->_future);
     return this->_future;
+}
+
+template<typename... Args>
+std::shared_ptr<uv_loop_t> ActionCallbackError<Args...>::getLoop() {
+    return this->getFuture()->getLoop();
+}
+
+template<typename R, typename... Args>
+std::shared_ptr<uv_loop_t> ActionCallbackErrorP1<R, Args...>::getLoop() {
+    return this->getFuture()->getLoop();
 }
 
 template<typename R, typename... Args>

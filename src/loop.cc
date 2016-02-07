@@ -1,11 +1,20 @@
 #include "native/loop.h"
 #include "native/helper/trace.h"
 
-using namespace native;
+#include <memory>
+
+namespace native {
 
 loop::loop(bool use_default) {
     NNATIVE_FCALL();
     if(use_default) {
+        static std::weak_ptr<uv_loop_t> savedPtr;
+
+        if(!savedPtr.expired()) {
+            _uv_loop = savedPtr.lock();
+            return;
+        }
+
         // don't delete the default loop
         _uv_loop = std::shared_ptr<uv_loop_t>(uv_default_loop(), [](uv_loop_t* iLoop){
                 NNATIVE_DEBUG("destroying default loop...");
@@ -18,6 +27,8 @@ loop::loop(bool use_default) {
                 } while (res != 0);
                 */
             });
+
+        savedPtr = _uv_loop;
     } else {
         std::unique_ptr<uv_loop_t> loopInstance(new uv_loop_t);
         if(0 == uv_loop_init(loopInstance.get())) {
@@ -58,17 +69,19 @@ int64_t loop::now()
     return uv_now(_uv_loop.get());
 }
 
-bool native::run()
+bool run()
 {
     return (uv_run(uv_default_loop(), UV_RUN_DEFAULT) == 0);
 }
 
-bool native::run_once()
+bool run_once()
 {
     return (uv_run(uv_default_loop(), UV_RUN_ONCE) == 0);
 }
 
-bool native::run_nowait()
+bool run_nowait()
 {
     return (uv_run(uv_default_loop(), UV_RUN_NOWAIT) == 0);
 }
+
+} /* namespace native */

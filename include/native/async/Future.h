@@ -26,7 +26,8 @@ class Future {
 public:
     typedef R result_type;
 
-    Future() : _p(std::make_shared<FutureShared<R>>()) {}
+    Future() = delete;
+    Future(loop &iLoop) : _p(std::make_shared<FutureShared<R>>(iLoop)) {}
     Future(std::shared_ptr<FutureShared<R>> p) : _p(p) {}
 
     template<class F, typename... Args>
@@ -53,7 +54,8 @@ class Future<void> {
 public:
     typedef void result_type;
 
-    Future() : _p(std::make_shared<FutureShared<void>>()) {}
+    Future() = delete;
+    Future(loop &iLoop) : _p(std::make_shared<FutureShared<void>>(iLoop)) {}
     Future(std::shared_ptr<FutureShared<void>> p) : _p(p) {}
 
     template<class F, typename... Args>
