@@ -1,7 +1,7 @@
 #include "native/native.h"
 #include "gtest/gtest.h"
 
-TEST(FutureThentest, order)
+TEST(FutureThenTest, order)
 {
     std::string order;
     std::string expectedOrder;
@@ -52,7 +52,7 @@ TEST(FutureThentest, order)
     EXPECT_EQ(expectedOrder, order);
 }
 
-TEST(FutureThentest, ReturnFuture)
+TEST(FutureThenTest, ReturnFuture)
 {
     bool called_p1 = false;
     bool called_p2 = false;
@@ -96,7 +96,7 @@ TEST(FutureThentest, ReturnFuture)
     EXPECT_EQ(called_p1_after, true);
 }
 
-TEST(FutureThentest, ReturnFutureWithValue)
+TEST(FutureThenTest, ReturnFutureWithValue)
 {
     bool called_p1 = false;
     bool called_p2 = false;
@@ -125,6 +125,55 @@ TEST(FutureThentest, ReturnFutureWithValue)
         EXPECT_EQ(called_p1_after, false);
 
         promise.setValue();
+
+        EXPECT_EQ(called_p1, false);
+        EXPECT_EQ(called_p2, false);
+        EXPECT_EQ(called_p1_after, false);
+    }
+
+    EXPECT_EQ(called_p1, false);
+    EXPECT_EQ(called_p2, false);
+    EXPECT_EQ(called_p1_after, false);
+
+    currLoop.run();
+
+    EXPECT_EQ(called_p1, true);
+    EXPECT_EQ(called_p2, true);
+    EXPECT_EQ(called_p1_after, true);
+}
+
+
+TEST(FutureThenTest, ValueParamReturnFutureWithValue)
+{
+    bool called_p1 = false;
+    bool called_p2 = false;
+    bool called_p1_after = false;
+    double expectedValue(1.0);
+    native::loop currLoop(true);
+    {
+        native::Promise<double> promise(currLoop);
+        promise.getFuture().then([&called_p1, &called_p2, &expectedValue](double iValue) -> native::Future<int>{
+            auto future = native::async([&called_p1, &called_p2]() -> int{
+                EXPECT_EQ(called_p1, true);
+                called_p2 = true;
+                return 1;
+            });
+            called_p1 = true;
+            EXPECT_EQ(called_p2, false);
+            EXPECT_EQ(iValue, expectedValue);
+            return future;
+        }).then([&called_p1, &called_p2, &called_p1_after](int iValue){
+            called_p1_after = true;
+            EXPECT_EQ(iValue, 1);
+            EXPECT_EQ(called_p1, true);
+            EXPECT_EQ(called_p2, true);
+        });
+
+        EXPECT_EQ(called_p1, false);
+        EXPECT_EQ(called_p2, false);
+        EXPECT_EQ(called_p1_after, false);
+
+        promise.setValue(std::move(expectedValue));
 
         EXPECT_EQ(called_p1, false);
         EXPECT_EQ(called_p2, false);

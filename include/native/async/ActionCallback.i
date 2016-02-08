@@ -189,6 +189,18 @@ std::shared_ptr<FutureShared<R>> ActionCallbackP1<R, P, Args...>::getFuture() {
     return this->_future;
 }
 
+template<typename R, typename P, typename... Args>
+std::shared_ptr<FutureShared<R>> ActionCallbackP1<Future<R>, P, Args...>::getFuture() {
+    NNATIVE_ASSERT(this->_future);
+    return this->_future;
+}
+
+template<typename P, typename... Args>
+std::shared_ptr<FutureShared<void>> ActionCallbackP1<Future<void>, P, Args...>::getFuture() {
+    NNATIVE_ASSERT(this->_future);
+    return this->_future;
+}
+
 template<typename P, typename... Args>
 std::shared_ptr<FutureShared<void>> ActionCallbackP1<void, P, Args...>::getFuture() {
     NNATIVE_ASSERT(this->_future);
