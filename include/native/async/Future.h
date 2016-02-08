@@ -31,9 +31,9 @@ public:
     Future(std::shared_ptr<FutureShared<R>> p) : _p(p) {}
 
     template<class F, typename... Args>
-    Future<typename std::result_of<F(R, Args...)>::type>
+    Future<typename ActionCallbackP1<typename std::result_of<F(R, Args...)>::type, R, Args...>::ResultType>
     then(F&& f, Args&&... args) {
-        return Future<typename std::result_of<F(R, Args...)>::type>(_p->template then<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...));
+        return Future<typename ActionCallbackP1<typename std::result_of<F(R, Args...)>::type, R, Args...>::ResultType>(_p->template then<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...));
     }
 
     template<class F, typename... Args>
@@ -59,9 +59,9 @@ public:
     Future(std::shared_ptr<FutureShared<void>> p) : _p(p) {}
 
     template<class F, typename... Args>
-    Future<typename std::result_of<F(Args...)>::type>
+    Future<typename ActionCallback<typename std::result_of<F(Args...)>::type, Args...>::ResultType>
     then(F&& f, Args&&... args) {
-        return Future<typename std::result_of<F(Args...)>::type>(_p->template then<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...));
+        return Future<typename ActionCallback<typename std::result_of<F(Args...)>::type, Args...>::ResultType>(_p->template then<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...));
     }
 
     template<class F, typename... Args>

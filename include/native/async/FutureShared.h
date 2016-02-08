@@ -28,7 +28,7 @@ public:
     std::shared_ptr<uv_loop_t> getLoop() { return _loop; }
 
     template<class F, typename... Args>
-    std::shared_ptr<FutureShared<typename std::result_of<F(R, Args...)>::type>>
+    std::shared_ptr<FutureShared<typename ActionCallbackP1<typename std::result_of<F(R, Args...)>::type, R, Args...>::ResultType>>
     then(F&& f, Args&&... args);
 
     template<class F, typename... Args>
@@ -68,7 +68,7 @@ public:
     std::shared_ptr<uv_loop_t> getLoop() { return _loop; }
 
     template<class F, typename... Args>
-    std::shared_ptr<FutureShared<typename std::result_of<F(Args...)>::type>>
+    std::shared_ptr<FutureShared<typename ActionCallback<typename std::result_of<F(Args...)>::type, Args...>::ResultType>>
     then(F&& f, Args&&... args);
 
     template<class F, typename... Args>

@@ -14,10 +14,16 @@ namespace native {
 template<class R>
 class FutureShared;
 
+template<typename R>
+class Future;
+
 /** Action callback base class template
  */
 template<typename P>
 class ActionCallbackBase {
+protected:
+    std::weak_ptr<ActionCallbackBase<P>> _instance;
+
 public:
     virtual ~ActionCallbackBase() {}
 
@@ -34,6 +40,7 @@ public:
 template<>
 class ActionCallbackBase<void> {
 protected:
+    std::weak_ptr<ActionCallbackBase<void>> _instance;
 
 public:
     virtual ~ActionCallbackBase() {}
@@ -130,10 +137,56 @@ class ActionCallback: public ActionCallbackBase<void> {
     void setErrorCb(const FutureError& iError) override;
 
 public:
+    typedef R ResultType;
+
     ActionCallback() = delete;
     ActionCallback(std::shared_ptr<uv_loop_t> iLoop, std::function<R(Args...)> f, Args&&... args);
 
     std::shared_ptr<FutureShared<R>> getFuture();
+    std::shared_ptr<uv_loop_t> getLoop() override;
+};
+
+template<typename R, typename... Args>
+class ActionCallback<Future<R>, Args...>: public ActionCallbackBase<void> {
+    std::function<Future<R>(Args...)> _f;
+    std::tuple<Args...> _args;
+    std::shared_ptr<FutureShared<R>> _future;
+
+    template<std::size_t... Is>
+    void callFn(helper::TemplateSeqInd<Is...>);
+
+    void setValueCb() override;
+    void setErrorCb(const FutureError& iError) override;
+
+public:
+    typedef R ResultType;
+
+    ActionCallback() = delete;
+    ActionCallback(std::shared_ptr<uv_loop_t> iLoop, std::function<Future<R>(Args...)> f, Args&&... args);
+
+    std::shared_ptr<FutureShared<R>> getFuture();
+    std::shared_ptr<uv_loop_t> getLoop() override;
+};
+
+template<typename... Args>
+class ActionCallback<Future<void>, Args...>: public ActionCallbackBase<void> {
+    std::function<Future<void>(Args...)> _f;
+    std::tuple<Args...> _args;
+    std::shared_ptr<FutureShared<void>> _future;
+
+    template<std::size_t... Is>
+    void callFn(helper::TemplateSeqInd<Is...>);
+
+    void setValueCb() override;
+    void setErrorCb(const FutureError& iError) override;
+
+public:
+    typedef void ResultType;
+
+    ActionCallback() = delete;
+    ActionCallback(std::shared_ptr<uv_loop_t> iLoop, std::function<Future<void>(Args...)> f, Args&&... args);
+
+    std::shared_ptr<FutureShared<void>> getFuture();
     std::shared_ptr<uv_loop_t> getLoop() override;
 };
 
@@ -150,6 +203,8 @@ class ActionCallback<void, Args...>: public ActionCallbackBase<void> {
     void setErrorCb(const FutureError& iError) override;
 
 public:
+    typedef void ResultType;
+
     ActionCallback() = delete;
     ActionCallback(std::shared_ptr<uv_loop_t> iLoop, std::function<void(Args...)> f, Args&&... args);
 
@@ -172,10 +227,56 @@ class ActionCallbackP1: public ActionCallbackBase<P> {
     void setErrorCb(const FutureError& iError) override;
 
 public:
+    typedef R ResultType;
+
     ActionCallbackP1() = delete;
     ActionCallbackP1(std::shared_ptr<uv_loop_t> iLoop, std::function<R(P, Args...)> f, Args&&... args);
 
     std::shared_ptr<FutureShared<R>> getFuture();
+    std::shared_ptr<uv_loop_t> getLoop() override;
+};
+
+template<typename R, typename P, typename... Args>
+class ActionCallbackP1<Future<R>, P, Args...>: public ActionCallbackBase<P> {
+    std::function<Future<R>(P, Args...)> _f;
+    std::tuple<Args...> _args;
+    std::shared_ptr<FutureShared<R>> _future;
+
+    template<std::size_t... Is>
+    void callFn(P&& p, helper::TemplateSeqInd<Is...>);
+
+    void setValueCb(P&& p) override;
+    void setErrorCb(const FutureError& iError) override;
+
+public:
+    typedef R ResultType;
+
+    ActionCallbackP1() = delete;
+    ActionCallbackP1(std::shared_ptr<uv_loop_t> iLoop, std::function<Future<R>(P, Args...)> f, Args&&... args);
+
+    std::shared_ptr<FutureShared<R>> getFuture();
+    std::shared_ptr<uv_loop_t> getLoop() override;
+};
+
+template<typename P, typename... Args>
+class ActionCallbackP1<Future<void>, P, Args...>: public ActionCallbackBase<P> {
+    std::function<Future<void>(P, Args...)> _f;
+    std::tuple<Args...> _args;
+    std::shared_ptr<FutureShared<void>> _future;
+
+    template<std::size_t... Is>
+    void callFn(P&& p, helper::TemplateSeqInd<Is...>);
+
+    void setValueCb(P&& p) override;
+    void setErrorCb(const FutureError& iError) override;
+
+public:
+    typedef void ResultType;
+
+    ActionCallbackP1() = delete;
+    ActionCallbackP1(std::shared_ptr<uv_loop_t> iLoop, std::function<Future<void>(P, Args...)> f, Args&&... args);
+
+    std::shared_ptr<FutureShared<void>> getFuture();
     std::shared_ptr<uv_loop_t> getLoop() override;
 };
 
@@ -192,6 +293,8 @@ class ActionCallbackP1<void, P, Args...>: public ActionCallbackBase<P> {
     void setErrorCb(const FutureError& iError) override;
 
 public:
+    typedef void ResultType;
+
     ActionCallbackP1() = delete;
     ActionCallbackP1(std::shared_ptr<uv_loop_t> iLoop, std::function<void(P, Args...)> f, Args&&... args);
 

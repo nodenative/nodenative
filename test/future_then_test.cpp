@@ -54,17 +54,91 @@ TEST(FutureThentest, order)
 
 TEST(FutureThentest, ReturnFuture)
 {
-    bool called = false;
+    bool called_p1 = false;
+    bool called_p2 = false;
+    bool called_p1_after = false;
     native::loop currLoop(true);
     {
-        native::async(currLoop, [&called](){
-            called = true;
+        native::Promise<void> promise(currLoop);
+        promise.getFuture().then([&called_p1, &called_p2]() -> native::Future<void>{
+            auto future = native::async([&called_p1, &called_p2](){
+                EXPECT_EQ(called_p1, true);
+                called_p2 = true;
+            });
+            called_p1 = true;
+            EXPECT_EQ(called_p2, false);
+            return future;
+        }).then([&called_p1, &called_p2, &called_p1_after](){
+            called_p1_after = true;
+            EXPECT_EQ(called_p1, true);
+            EXPECT_EQ(called_p2, true);
         });
+
+        EXPECT_EQ(called_p1, false);
+        EXPECT_EQ(called_p2, false);
+        EXPECT_EQ(called_p1_after, false);
+
+        promise.setValue();
+
+        EXPECT_EQ(called_p1, false);
+        EXPECT_EQ(called_p2, false);
+        EXPECT_EQ(called_p1_after, false);
     }
-    EXPECT_EQ(called, false);
+
+    EXPECT_EQ(called_p1, false);
+    EXPECT_EQ(called_p2, false);
+    EXPECT_EQ(called_p1_after, false);
 
     currLoop.run();
 
-    EXPECT_EQ(called, true);
+    EXPECT_EQ(called_p1, true);
+    EXPECT_EQ(called_p2, true);
+    EXPECT_EQ(called_p1_after, true);
+}
+
+TEST(FutureThentest, ReturnFutureWithValue)
+{
+    bool called_p1 = false;
+    bool called_p2 = false;
+    bool called_p1_after = false;
+    native::loop currLoop(true);
+    {
+        native::Promise<void> promise(currLoop);
+        promise.getFuture().then([&called_p1, &called_p2]() -> native::Future<int>{
+            auto future = native::async([&called_p1, &called_p2]() -> int{
+                EXPECT_EQ(called_p1, true);
+                called_p2 = true;
+                return 1;
+            });
+            called_p1 = true;
+            EXPECT_EQ(called_p2, false);
+            return future;
+        }).then([&called_p1, &called_p2, &called_p1_after](int iValue){
+            called_p1_after = true;
+            EXPECT_EQ(iValue, 1);
+            EXPECT_EQ(called_p1, true);
+            EXPECT_EQ(called_p2, true);
+        });
+
+        EXPECT_EQ(called_p1, false);
+        EXPECT_EQ(called_p2, false);
+        EXPECT_EQ(called_p1_after, false);
+
+        promise.setValue();
+
+        EXPECT_EQ(called_p1, false);
+        EXPECT_EQ(called_p2, false);
+        EXPECT_EQ(called_p1_after, false);
+    }
+
+    EXPECT_EQ(called_p1, false);
+    EXPECT_EQ(called_p2, false);
+    EXPECT_EQ(called_p1_after, false);
+
+    currLoop.run();
+
+    EXPECT_EQ(called_p1, true);
+    EXPECT_EQ(called_p2, true);
+    EXPECT_EQ(called_p1_after, true);
 }
 

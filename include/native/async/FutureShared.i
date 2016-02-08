@@ -57,7 +57,7 @@ void FutureShared<void>::setErrorT(const FutureError& iError) {
 
 template<class R>
 template<class F, typename... Args>
-std::shared_ptr<FutureShared<typename std::result_of<F(R, Args...)>::type>>
+std::shared_ptr<FutureShared<typename ActionCallbackP1<typename std::result_of<F(R, Args...)>::type, R, Args...>::ResultType>>
 FutureShared<R>::then(F&& f, Args&&... args) {
     if(this->_satisfied) {
         throw FutureAlreadyRetrieved();
@@ -65,13 +65,12 @@ FutureShared<R>::then(F&& f, Args&&... args) {
 
     using return_type = typename std::result_of<F(R, Args...)>::type;
     std::shared_ptr<ActionCallbackP1<return_type, R, Args...>> action(new ActionCallbackP1<return_type, R, Args...>(_loop, std::forward<F>(f), std::forward<Args>(args)...));
-    std::shared_ptr<FutureShared<return_type>> currFuture = action->getFuture();
     _actions.push_back(action);
-    return currFuture;
+    return action->getFuture();
 }
 
 template<class F, typename... Args>
-std::shared_ptr<FutureShared<typename std::result_of<F(Args...)>::type>>
+std::shared_ptr<FutureShared<typename ActionCallback<typename std::result_of<F(Args...)>::type, Args...>::ResultType>>
 FutureShared<void>::then(F&& f, Args&&... args) {
     if(_satisfied) {
         throw FutureAlreadyRetrieved();
@@ -79,9 +78,8 @@ FutureShared<void>::then(F&& f, Args&&... args) {
 
     using return_type = typename std::result_of<F(Args...)>::type;
     std::shared_ptr<ActionCallback<return_type, Args...>> action(new ActionCallback<return_type, Args...>(_loop, std::forward<F>(f), std::forward<Args>(args)...));
-    std::shared_ptr<FutureShared<return_type>> currFuture = action->getFuture();
     _actions.push_back(action);
-    return currFuture;
+    return action->getFuture();
 }
 
 template<class R>
