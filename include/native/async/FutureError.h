@@ -1,6 +1,8 @@
 #ifndef __ASYNC_FUTUREERROR_H__
 #define __ASYNC_FUTUREERROR_H__
 
+#include "../error.h"
+
 namespace native {
 
 class FutureError : public exception {

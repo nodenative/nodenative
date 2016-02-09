@@ -13,7 +13,6 @@ namespace native
      */
     class loop
     {
-        friend AsyncBase;
     public:
         /**
          *  Default constructor

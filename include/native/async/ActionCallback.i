@@ -28,12 +28,6 @@ void ActionCallbackBaseDetached<P>::executeAsync() {
 }
 
 
-template<typename T>
-void ActionCallbackBaseDetached<void>::executeAsyncT() {
-    NNATIVE_FCALL();
-    _instance->setValueCb();
-}
-
 template<typename P>
 void ActionCallbackBaseDetachedError<P>::executeAsync() {
     NNATIVE_FCALL();
@@ -45,15 +39,6 @@ void ActionCallbackBaseDetached<P>::Enqueue(std::shared_ptr<ActionCallbackBase<P
     NNATIVE_FCALL();
     NNATIVE_ASSERT(iInstance);
     std::unique_ptr<ActionCallbackBaseDetached<P>> detachedInst(new ActionCallbackBaseDetached<P>(iInstance, std::forward<P>(p)));
-    detachedInst->enqueue();
-    detachedInst.release();
-}
-
-template<typename T>
-void ActionCallbackBaseDetached<void>::EnqueueT(std::shared_ptr<ActionCallbackBase<void>> iInstance) {
-    NNATIVE_FCALL();
-    NNATIVE_ASSERT(iInstance);
-    std::unique_ptr<ActionCallbackBaseDetached<void>> detachedInst(new ActionCallbackBaseDetached<void>(iInstance));
     detachedInst->enqueue();
     detachedInst.release();
 }
@@ -74,25 +59,11 @@ void ActionCallbackBase<P>::SetValue(std::shared_ptr<ActionCallbackBase<P>> iIns
     ActionCallbackBaseDetached<P>::Enqueue(iInstance, std::forward<P>(p));
 }
 
-template<typename T>
-void ActionCallbackBase<void>::SetValueT(std::shared_ptr<ActionCallbackBase<void>> iInstance) {
-    NNATIVE_ASSERT(iInstance);
-    iInstance->_instance = iInstance;
-    ActionCallbackBaseDetached<void>::Enqueue(iInstance);
-}
-
 template<typename P>
 void ActionCallbackBase<P>::SetError(std::shared_ptr<ActionCallbackBase<P>> iInstance, const FutureError &iError) {
     NNATIVE_ASSERT(iInstance);
     iInstance->_instance = iInstance;
     ActionCallbackBaseDetachedError<P>::Enqueue(iInstance, iError);
-}
-
-template<typename T>
-void ActionCallbackBase<void>::SetErrorT(std::shared_ptr<ActionCallbackBase<void>> iInstance, const FutureError &iError) {
-    NNATIVE_ASSERT(iInstance);
-    iInstance->_instance = iInstance;
-    ActionCallbackBaseDetachedError<void>::Enqueue(iInstance, iError);
 }
 
 template<typename R, typename... Args>
@@ -250,134 +221,102 @@ std::shared_ptr<uv_loop_t> ActionCallbackP1<void, P, Args...>::getLoop() {
 template<typename R, typename... Args>
 template<std::size_t... Is>
 void ActionCallback<R, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
-    if(!this->_future) {
-        return;
-    }
-
     try {
-        this->_future->setValue(this->_f(std::get<Is>(_args)...));
+        this->getFuture()->setValue(this->_f(std::get<Is>(_args)...));
     } catch (const FutureError &e) {
-        this->_future->setError(e);
+        this->getFuture()->setError(e);
     }
 }
 
 template<typename R, typename... Args>
 template<std::size_t... Is>
 void ActionCallback<Future<R>, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
-    if(!this->_future) {
-        return;
-    }
-
     try {
-        Future<R> waiter = this->_f(std::get<Is>(_args)...);
+        Future<R> future = this->_f(std::get<Is>(_args)...);
         NNATIVE_ASSERT(!this->_instance.expired());
-        waiter.then([](R&& r, std::shared_ptr<ActionCallbackBase<void>> iInstance) {
+        future.then([](R&& r, std::shared_ptr<ActionCallbackBase<void>> iInstance) {
             ActionCallback<Future<R>, Args...> *currPtr = static_cast<ActionCallback<Future<R>, Args...>*>(iInstance.get());
-            currPtr->_future->setValue(std::forward<R>(r));
+            currPtr->getFuture()->setValue(std::forward<R>(r));
         }, this->_instance.lock());
     } catch (const FutureError &e) {
-        this->_future->setError(e);
+        this->getFuture()->setError(e);
     }
 }
 
 template<typename... Args>
 template<std::size_t... Is>
 void ActionCallback<Future<void>, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
-    if(!this->_future) {
-        return;
-    }
-
     try {
-        Future<void> waiter = this->_f(std::get<Is>(_args)...);
+        Future<void> future = this->_f(std::get<Is>(_args)...);
         NNATIVE_ASSERT(!this->_instance.expired());
-        waiter.then([](std::shared_ptr<ActionCallbackBase<void>> iInstance) {
+        future.then([](std::shared_ptr<ActionCallbackBase<void>> iInstance) {
             ActionCallback<Future<void>, Args...> *currPtr = static_cast<ActionCallback<Future<void>, Args...>*>(iInstance.get());
-            currPtr->_future->setValue();
+            currPtr->getFuture()->setValue();
         }, this->_instance.lock());
     } catch (const FutureError &e) {
-        this->_future->setError(e);
+        this->getFuture()->setError(e);
     }
 }
 
 template<typename... Args>
 template<std::size_t... Is>
 void ActionCallback<void, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
-    if(!this->_future) {
-        return;
-    }
-
     try {
         this->_f(std::get<Is>(_args)...);
-        this->_future->setValue();
+        this->getFuture()->setValue();
     } catch (const FutureError &e) {
-        this->_future->setError(e);
+        this->getFuture()->setError(e);
     }
 }
 
 template<typename R, typename P, typename... Args>
 template<std::size_t... Is>
 void ActionCallbackP1<R, P, Args...>::callFn(P&& p, helper::TemplateSeqInd<Is...>) {
-    if(!this->_future) {
-        return;
-    }
-
     try {
-        this->_future->setValue(this->_f(std::forward<P>(p), std::get<Is>(this->_args)...));
+        this->getFuture()->setValue(this->_f(std::forward<P>(p), std::get<Is>(this->_args)...));
     } catch (const FutureError &e) {
-        this->_future->setError(e);
+        this->getFuture()->setError(e);
     }
 }
 
 template<typename R, typename P, typename... Args>
 template<std::size_t... Is>
 void ActionCallbackP1<Future<R>, P, Args...>::callFn(P&& p, helper::TemplateSeqInd<Is...>) {
-    if(!this->_future) {
-        return;
-    }
-
     try {
         Future<R> future = this->_f(std::forward<P>(p), std::get<Is>(this->_args)...);
         NNATIVE_ASSERT(!this->_instance.expired());
         future.then([](R&& r, std::shared_ptr<ActionCallbackBase<P>> iInstance) {
             ActionCallbackP1<Future<R>, P, Args...> *currPtr = static_cast<ActionCallbackP1<Future<R>, P, Args...>*>(iInstance.get());
-            currPtr->_future->setValue(std::forward<R>(r));
+            currPtr->getFuture()->setValue(std::forward<R>(r));
         }, this->_instance.lock());
     } catch (const FutureError &e) {
-        this->_future->setError(e);
+        this->getFuture()->setError(e);
     }
 }
 
 template<typename P, typename... Args>
 template<std::size_t... Is>
 void ActionCallbackP1<Future<void>, P, Args...>::callFn(P&& p, helper::TemplateSeqInd<Is...>) {
-    if(!this->_future) {
-        return;
-    }
-
     try {
         Future<void> future = this->_f(std::forward<P>(p), std::get<Is>(this->_args)...);
         NNATIVE_ASSERT(!this->_instance.expired());
         future.then([](std::shared_ptr<ActionCallbackBase<P>> iInstance) {
             ActionCallbackP1<Future<void>, P, Args...> *currPtr = static_cast<ActionCallbackP1<Future<void>, P, Args...>*>(iInstance.get());
-            currPtr->_future->setValue();
+            currPtr->getFuture()->setValue();
         }, this->_instance.lock());
     } catch (const FutureError &e) {
-        this->_future->setError(e);
+        this->getFuture()->setError(e);
     }
 }
 
 template<typename P, typename... Args>
 template<std::size_t... Is>
 void ActionCallbackP1<void, P, Args...>::callFn(P&& p, helper::TemplateSeqInd<Is...>) {
-    if(!this->_future) {
-        return;
-    }
-
     try {
         this->_f(std::forward<P>(p), std::get<Is>(_args)...);
-        this->_future->setValue();
+        this->getFuture()->setValue();
     } catch (const FutureError &e) {
-        this->_future->setError(e);
+        this->getFuture()->setError(e);
     }
 }
 
@@ -423,58 +362,42 @@ void ActionCallbackP1<void, P, Args...>::setValueCb(P&& p) {
 
 template<typename R, typename... Args>
 void ActionCallback<R, Args...>::setErrorCb(const FutureError &iError) {
-    if(this->_future) {
-        this->_future->setError(iError);
-    }
+    this->getFuture()->setError(iError);
 }
 
 template<typename R, typename... Args>
 void ActionCallback<Future<R>, Args...>::setErrorCb(const FutureError &iError) {
-    if(this->_future) {
-        this->_future->setError(iError);
-    }
+    this->getFuture()->setError(iError);
 }
 
 template<typename... Args>
 void ActionCallback<Future<void>, Args...>::setErrorCb(const FutureError &iError) {
-    if(this->_future) {
-        this->_future->setError(iError);
-    }
+    this->getFuture()->setError(iError);
 }
 
 template<typename... Args>
 void ActionCallback<void, Args...>::setErrorCb(const FutureError &iError) {
-    if(this->_future) {
-        this->_future->setError(iError);
-    }
+    this->getFuture()->setError(iError);
 }
 
 template<typename R, typename P, typename... Args>
 void ActionCallbackP1<R, P, Args...>::setErrorCb(const FutureError &iError) {
-    if(_future) {
-        _future->setError(iError);
-    }
+    this->getFuture()->setError(iError);
 }
 
 template<typename R, typename P, typename... Args>
 void ActionCallbackP1<Future<R>, P, Args...>::setErrorCb(const FutureError &iError) {
-    if(_future) {
-        _future->setError(iError);
-    }
+    this->getFuture()->setError(iError);
 }
 
 template<typename P, typename... Args>
 void ActionCallbackP1<Future<void>, P, Args...>::setErrorCb(const FutureError &iError) {
-    if(_future) {
-        _future->setError(iError);
-    }
+    this->getFuture()->setError(iError);
 }
 
 template<typename P, typename... Args>
 void ActionCallbackP1<void, P, Args...>::setErrorCb(const FutureError &iError) {
-    if(this->_future) {
-        this->_future->setError(iError);
-    }
+    this->getFuture()->setError(iError);
 }
 
 // Error
@@ -520,44 +443,32 @@ std::shared_ptr<uv_loop_t> ActionCallbackErrorP1<R, Args...>::getLoop() {
 template<typename R, typename... Args>
 template<std::size_t... Is>
 void ActionCallbackErrorP1<R, Args...>::callFn(const FutureError& iError, helper::TemplateSeqInd<Is...>) {
-    if(!this->_future) {
-        return;
-    }
-
     try {
-        this->_future->setValue(this->_f(iError, std::get<Is>(this->_args)...));
+        this->getFuture()->setValue(this->_f(iError, std::get<Is>(this->_args)...));
     } catch (const FutureError& e) {
-        this->_future->setError(e);
+        this->getFuture()->setError(e);
     }
 }
 
 template<typename... Args>
 template<std::size_t... Is>
 void ActionCallbackError<Args...>::callFn(const FutureError& iError, helper::TemplateSeqInd<Is...>) {
-    if(!this->_future) {
-        return;
-    }
-
     try {
         this->_f(iError, std::get<Is>(_args)...);
-        this->_future->setValue();
+        this->getFuture()->setValue();
     } catch (const FutureError &e) {
-        this->_future->setError(e);
+        this->getFuture()->setError(e);
     }
 }
 
 template<typename... Args>
 void ActionCallbackError<Args...>::setValueCb() {
-    if(this->_future) {
-        this->_future->setValue();
-    }
+    this->getFuture()->setValue();
 }
 
 template<typename R, typename... Args>
 void ActionCallbackErrorP1<R, Args...>::setValueCb(R&& r) {
-    if(_future) {
-        _future->setValue(std::forward<R>(r));
-    }
+    this->getFuture()->setValue(std::forward<R>(r));
 }
 
 template<typename... Args>

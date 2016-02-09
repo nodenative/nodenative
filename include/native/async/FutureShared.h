@@ -42,13 +42,6 @@ private:
     std::shared_ptr<uv_loop_t> _loop;
     bool _satisfied;
     std::vector<std::shared_ptr<ActionCallbackBase<void>>> _actions;
-
-    // TODO: without template method it doesn't allow to decouple the implementation method
-    template<typename T>
-    void setValueT();
-
-    template<typename T>
-    void setErrorT(const FutureError &iError);
 public:
     typedef void result_type;
 
@@ -56,14 +49,8 @@ public:
     FutureShared(loop &iLoop) : _loop(iLoop.getShared()), _satisfied(false) {}
     FutureShared(std::shared_ptr<uv_loop_t> iLoop) : _loop(iLoop), _satisfied(false) {}
 
-    // TODO: without template method it doesn't allow to decouple the implementation method.
-    void setValue() {
-        setValueT<void>();
-    }
-
-    void setError(const FutureError& iError) {
-        setErrorT<void>(iError);
-    }
+    void setValue();
+    void setError(const FutureError& iError);
 
     std::shared_ptr<uv_loop_t> getLoop() { return _loop; }
 

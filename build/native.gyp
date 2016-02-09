@@ -18,6 +18,10 @@
             ],
             'sources' : [
                 '../src/async/AsyncBase.cc',
+                '../src/async/ActionCallback.cc',
+                '../src/async/FutureShared.cc',
+                '../src/worker/WorkerBase.cc',
+                '../src/worker/WorkerCallback.cc',
                 '../src/loop.cc',
                 '../src/stream.cc',
                 '../src/handle.cc',

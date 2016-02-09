@@ -45,20 +45,8 @@ protected:
 public:
     virtual ~ActionCallbackBase() {}
 
-    // TODO: resolve why method from specialization class cannot be decouple
-    template<typename T>
-    static void SetValueT(std::shared_ptr<ActionCallbackBase<void>> iInstance);
-
-    template<typename T>
-    static void SetErrorT(std::shared_ptr<ActionCallbackBase<void>> iInstance, const FutureError &iError);
-
-    static void SetValue(std::shared_ptr<ActionCallbackBase<void>> iInstance) {
-        SetValueT<void>(iInstance);
-    }
-
-    static void SetError(std::shared_ptr<ActionCallbackBase<void>> iInstance, const FutureError &iError) {
-        SetErrorT<void>(iInstance, iError);
-    }
+    static void SetValue(std::shared_ptr<ActionCallbackBase<void>> iInstance);
+    static void SetError(std::shared_ptr<ActionCallbackBase<void>> iInstance, const FutureError &iError);
 
     virtual void setValueCb() = 0;
     virtual void setErrorCb(const FutureError&) = 0;
@@ -77,6 +65,7 @@ public:
     ~ActionCallbackBaseDetached() {
         NNATIVE_FCALL();
     }
+
     void executeAsync() override;
 
     static void Enqueue(std::shared_ptr<ActionCallbackBase<P>> iInstance, P&& p);
@@ -87,12 +76,6 @@ class ActionCallbackBaseDetached<void> : public AsyncBase {
 private:
     std::shared_ptr<ActionCallbackBase<void>> _instance;
 
-    template<typename T>
-    static void EnqueueT(std::shared_ptr<ActionCallbackBase<void>> iInstance);
-
-    template<typename T>
-    void executeAsyncT();
-
 public:
     ActionCallbackBaseDetached() = delete;
     ActionCallbackBaseDetached(std::shared_ptr<ActionCallbackBase<void>> iInstance) : AsyncBase(iInstance->getLoop()), _instance(iInstance) {}
@@ -100,11 +83,9 @@ public:
         NNATIVE_FCALL();
     }
 
-    // TODO: resolve decouple method from class specializations
-    void executeAsync() override { executeAsyncT<void>(); }
+    void executeAsync() override;
 
-    // TODO: resolve decouple method from class specializations
-    static void Enqueue(std::shared_ptr<ActionCallbackBase<void>> iInstance) { EnqueueT<void>(iInstance); }
+    static void Enqueue(std::shared_ptr<ActionCallbackBase<void>> iInstance);
 };
 
 template<typename P>

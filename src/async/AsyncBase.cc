@@ -1,13 +1,11 @@
 #include "native/async/AsyncBase.h"
-#include "native/helper/ContainerHelper.h"
-#include "native/helper/ContainerHelper.i"
 #include "native/helper/trace.h"
 
 namespace native {
 
 AsyncBase::AsyncBase(loop &iLoop) {
     NNATIVE_FCALL();
-    _loop = iLoop._uv_loop;
+    _loop = iLoop.getShared();
 }
 
 AsyncBase::AsyncBase(std::shared_ptr<uv_loop_t> iLoop) {
@@ -55,7 +53,8 @@ void AsyncBase::AsyncClosed(uv_handle_t* iAsync) {
     AsyncBase* currobj = static_cast<AsyncBase*>(iAsync->data);
     iAsync->data = nullptr;
 
-    // Move the shared pointer to a temporary variable.
-    std::shared_ptr<AsyncBase> currInst(currobj);
+    // Move the pointer to a temporary variable.
+    std::unique_ptr<AsyncBase> currInst(currobj);
+    currobj->closeAsync(std::move(currInst));
 }
 } /* namespace native */

@@ -16,19 +16,6 @@ void FutureShared<R>::setValue(R&& iVal) {
     }
 }
 
-template<typename T>
-void FutureShared<void>::setValueT() {
-    if(this->_satisfied) {
-        throw PromiseAlreadySatisfied();
-    }
-
-    this->_satisfied = true;
-
-    for(std::shared_ptr<ActionCallbackBase<void>> action : this->_actions) {
-        action->SetValue(action);
-    }
-}
-
 template<typename R>
 void FutureShared<R>::setError(const FutureError& iError) {
     if(this->_satisfied) {
@@ -38,19 +25,6 @@ void FutureShared<R>::setError(const FutureError& iError) {
     this->_satisfied = true;
 
     for(std::shared_ptr<ActionCallbackBase<R>> action : this->_actions) {
-        action->SetError(action, iError);
-    }
-}
-
-template<typename T>
-void FutureShared<void>::setErrorT(const FutureError& iError) {
-    if(this->_satisfied) {
-        throw PromiseAlreadySatisfied();
-    }
-
-    this->_satisfied = true;
-
-    for(std::shared_ptr<ActionCallbackBase<void>> action : this->_actions) {
         action->SetError(action, iError);
     }
 }

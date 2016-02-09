@@ -23,7 +23,7 @@ protected:
      * Extend this class for custom usage
      */
     virtual void executeAsync() = 0;
-    virtual void closeAsync(std::shared_ptr<AsyncBase>) {}
+    virtual void closeAsync(std::unique_ptr<AsyncBase>) {}
     void enqueue();
     AsyncBase() = delete;
     AsyncBase(loop &iLoop);

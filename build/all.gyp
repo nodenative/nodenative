@@ -38,6 +38,7 @@
                 '../test/async_test.cpp',
                 '../test/future_then_test.cpp',
                 '../test/future_error_test.cpp',
+                '../test/worker_test.cpp',
             ]
         }
     ]

@@ -10,6 +10,7 @@
 // TODO: cleanup first to resolve multiple definition conflicts
 //#include "fs.h"
 #include "async.h"
+#include "worker.h"
 #include "helper.h"
 
 #endif /* __NATIVE_DEF_H__ */

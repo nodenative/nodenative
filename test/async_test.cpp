@@ -1,7 +1,7 @@
 #include "native/native.h"
 #include "gtest/gtest.h"
 
-TEST(Asynctest, async)
+TEST(AsyncTest, async)
 {
     bool called = false;
     native::loop currLoop(true);
@@ -17,7 +17,7 @@ TEST(Asynctest, async)
     EXPECT_EQ(called, true);
 }
 
-TEST(Asynctest, asyncDefaultLoop)
+TEST(AsyncTest, asyncDefaultLoop)
 {
     bool called = false;
     {
@@ -32,7 +32,7 @@ TEST(Asynctest, asyncDefaultLoop)
     EXPECT_EQ(called, true);
 }
 
-TEST(Asynctest, asyncWithParamaterRef)
+TEST(AsyncTest, asyncWithParamaterRef)
 {
     bool called = false;
     native::loop currLoop(true);
@@ -48,7 +48,7 @@ TEST(Asynctest, asyncWithParamaterRef)
     EXPECT_EQ(called, true);
 }
 
-TEST(Asynctest, asyncWithParamaterValue)
+TEST(AsyncTest, asyncWithParamaterValue)
 {
     bool called = false, asyncCalled = false;
     native::loop currLoop(true);
@@ -67,7 +67,7 @@ TEST(Asynctest, asyncWithParamaterValue)
     EXPECT_EQ(called, false);
 }
 
-TEST(Asynctest, asyncWithReturnRef)
+TEST(AsyncTest, asyncWithReturnRef)
 {
     bool called = false;
     native::loop currLoop(true);
@@ -85,7 +85,7 @@ TEST(Asynctest, asyncWithReturnRef)
     EXPECT_EQ(called, true);
 }
 
-TEST(Asynctest, asyncWithReturnValue)
+TEST(AsyncTest, asyncWithReturnValue)
 {
     bool called = false, asyncCalled = false;
     native::loop currLoop(true);
@@ -106,7 +106,7 @@ TEST(Asynctest, asyncWithReturnValue)
     EXPECT_EQ(called, false);
 }
 
-TEST(Asynctest, asyncMultipThenValueOrder)
+TEST(AsyncTest, asyncMultipThenValueOrder)
 {
     std::string order;
 
@@ -140,7 +140,7 @@ TEST(Asynctest, asyncMultipThenValueOrder)
     EXPECT_EQ(expectedorder, order);
 }
 
-TEST(Asynctest, asyncError)
+TEST(AsyncTest, asyncError)
 {
     bool exceptionReceived = false;
     bool thenProcessed = false;
@@ -174,7 +174,7 @@ TEST(Asynctest, asyncError)
     EXPECT_EQ(afterErrorProcessed, true);
 }
 
-TEST(Asynctest, ReturnFuture)
+TEST(AsyncTest, ReturnFuture)
 {
     bool called_p1 = false;
     bool called_p2 = false;
@@ -210,7 +210,7 @@ TEST(Asynctest, ReturnFuture)
     EXPECT_EQ(called_p1_after, true);
 }
 
-TEST(Asynctest, ReturnFutureWithValue)
+TEST(AsyncTest, ReturnFutureWithValue)
 {
     bool called_p1 = false;
     bool called_p2 = false;

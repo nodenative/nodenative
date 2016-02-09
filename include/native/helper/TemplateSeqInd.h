@@ -1,6 +1,8 @@
 #ifndef __NATIVE_HELPER_TEMPLATRESEQIND_H__
 #define __NATIVE_HELPER_TEMPLATRESEQIND_H__
 
+#include <cstddef>
+
 namespace native {
 namespace helper {
 
