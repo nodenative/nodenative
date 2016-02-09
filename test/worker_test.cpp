@@ -128,8 +128,6 @@ TEST(WorkerTest, ReturnFutureVoid)
     {
         native::worker(currLoop, [&called, &called3, &mainThreadId]() -> native::Future<void> {
             // TODO: fix the future for multithread
-            std::chrono::seconds seconds(1);
-            std::this_thread::sleep_for(seconds);
             native::Future<void> future = native::async([&called, &called3, &mainThreadId](){
                 std::chrono::seconds seconds(1);
                 std::this_thread::sleep_for(seconds);
@@ -170,8 +168,6 @@ TEST(WorkerTest, ReturnFutureValue)
     std::thread::id mainThreadId = std::this_thread::get_id();
     {
         native::worker(currLoop, [&called, &called3, &expectedValue, &mainThreadId]() -> native::Future<int> {
-            std::chrono::seconds seconds(1);
-            std::this_thread::sleep_for(seconds);
             native::Future<int> future = native::async([&called, &called3, expectedValue, &mainThreadId]() -> int {
                 std::chrono::seconds seconds(1);
                 std::this_thread::sleep_for(seconds);
@@ -217,8 +213,6 @@ TEST(WorkerTest, ReturnFutureVoidError)
     std::thread::id mainThreadId = std::this_thread::get_id();
     {
         native::worker(currLoop, [&called, &called3, &mainThreadId, &expectedError]() -> native::Future<void> {
-            std::chrono::seconds seconds(1);
-            std::this_thread::sleep_for(seconds);
             native::Future<void> future = native::async([&called, &called3, &mainThreadId, &expectedError](){
                 std::chrono::seconds seconds(1);
                 std::this_thread::sleep_for(seconds);
