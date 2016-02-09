@@ -5,11 +5,10 @@ namespace native {
 
 template<class R>
 void FutureShared<R>::setValue(R&& iVal) {
-    if(this->_satisfied) {
+    bool expected = false;
+    if(!this->_satisfied.compare_exchange_strong(expected, true)) {
         throw PromiseAlreadySatisfied();
     }
-
-    this->_satisfied = true;
 
     for(std::shared_ptr<ActionCallbackBase<R>> action : this->_actions) {
         action->SetValue(action, std::forward<R>(iVal));
@@ -18,11 +17,10 @@ void FutureShared<R>::setValue(R&& iVal) {
 
 template<typename R>
 void FutureShared<R>::setError(const FutureError& iError) {
-    if(this->_satisfied) {
+    bool expected = false;
+    if(!this->_satisfied.compare_exchange_strong(expected, true)) {
         throw PromiseAlreadySatisfied();
     }
-
-    this->_satisfied = true;
 
     for(std::shared_ptr<ActionCallbackBase<R>> action : this->_actions) {
         action->SetError(action, iError);

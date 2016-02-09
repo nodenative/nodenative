@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <memory>
+#include <atomic>
 
 namespace native {
 
@@ -13,13 +14,14 @@ template<class R>
 class FutureShared {
 private:
     std::shared_ptr<uv_loop_t> _loop;
-    bool _satisfied;
+    std::atomic<bool> _satisfied;
     std::vector<std::shared_ptr<ActionCallbackBase<R>>> _actions;
 
 public:
     typedef R result_type;
 
     FutureShared() = delete;
+    FutureShared(const FutureShared<R>&) = delete;
     FutureShared(loop &iLoop) : _loop(iLoop.getShared()), _satisfied(false) {}
     FutureShared(std::shared_ptr<uv_loop_t> iLoop) : _loop(iLoop), _satisfied(false) {}
 
@@ -40,12 +42,13 @@ template<>
 class FutureShared<void> {
 private:
     std::shared_ptr<uv_loop_t> _loop;
-    bool _satisfied;
+    std::atomic<bool> _satisfied;
     std::vector<std::shared_ptr<ActionCallbackBase<void>>> _actions;
 public:
     typedef void result_type;
 
     FutureShared() = delete;
+    FutureShared(const FutureShared<void>&) = delete;
     FutureShared(loop &iLoop) : _loop(iLoop.getShared()), _satisfied(false) {}
     FutureShared(std::shared_ptr<uv_loop_t> iLoop) : _loop(iLoop), _satisfied(false) {}
 
