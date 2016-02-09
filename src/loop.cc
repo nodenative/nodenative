@@ -18,14 +18,10 @@ loop::loop(bool use_default) {
         // don't delete the default loop
         _uv_loop = std::shared_ptr<uv_loop_t>(uv_default_loop(), [](uv_loop_t* iLoop){
                 NNATIVE_DEBUG("destroying default loop...");
-                // TODO Default loop wait forever
-                uv_loop_close(iLoop);
-                /*
                 int res = 1;
                 do {
                     res = uv_loop_close(iLoop);
                 } while (res != 0);
-                */
             });
 
         if(0 != uv_loop_init(_uv_loop.get())) {
@@ -78,17 +74,20 @@ int64_t loop::now()
 
 bool run()
 {
-    return (uv_run(uv_default_loop(), UV_RUN_DEFAULT) == 0);
+    loop currLoop(true);
+    return (uv_run(currLoop.get(), UV_RUN_DEFAULT) == 0);
 }
 
 bool run_once()
 {
-    return (uv_run(uv_default_loop(), UV_RUN_ONCE) == 0);
+    loop currLoop(true);
+    return (uv_run(currLoop.get(), UV_RUN_ONCE) == 0);
 }
 
 bool run_nowait()
 {
-    return (uv_run(uv_default_loop(), UV_RUN_NOWAIT) == 0);
+    loop currLoop(true);
+    return (uv_run(currLoop.get(), UV_RUN_NOWAIT) == 0);
 }
 
 } /* namespace native */

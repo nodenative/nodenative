@@ -6,7 +6,8 @@ using namespace net;
 tcp::tcp() :
     native::base::stream(new uv_tcp_t)
 {
-    uv_tcp_init(uv_default_loop(), get<uv_tcp_t>());
+    loop currLoop(true);
+    uv_tcp_init(currLoop.get(), get<uv_tcp_t>());
 }
 
 tcp::tcp(native::loop& l) :

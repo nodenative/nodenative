@@ -43,13 +43,17 @@ void WorkerBase::Worker(uv_work_t* iHandle) {
 void WorkerBase::WorkerAfter(uv_work_t* iHandle, int iStatus) {
     NNATIVE_FCALL();
     NNATIVE_ASSERT(iHandle->data != nullptr);
+    NNATIVE_DEBUG("iStatus: " << iStatus);
+
     WorkerBase* currobj = static_cast<WorkerBase*>(iHandle->data);
     iHandle->data = nullptr;
 
+    currobj->executeWorkerAfter(iStatus);
+
     // Move the pointer to a temporary variable.
     std::unique_ptr<WorkerBase> currInst(currobj);
-    currobj->executeWorkerAfter(iStatus);
     currobj->closeWorker(std::move(currInst));
 }
+
 } /* namespace native */
 

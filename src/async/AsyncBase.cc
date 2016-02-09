@@ -36,25 +36,27 @@ void AsyncBase::enqueue() {
     NNATIVE_DEBUG("Enqueued");
 }
 
-void AsyncBase::Async(uv_async_t* iAsync) {
+void AsyncBase::Async(uv_async_t* iHandle) {
     NNATIVE_FCALL();
 
-    //AsyncBase* currobj = helper::Containerof(AsyncBase::_uv_async, iAsync);
-    NNATIVE_ASSERT(iAsync->data != nullptr);
-    AsyncBase* currobj = static_cast<AsyncBase*>(iAsync->data);
+    NNATIVE_ASSERT(iHandle->data != nullptr);
+    AsyncBase* currobj = static_cast<AsyncBase*>(iHandle->data);
 
-    uv_close((uv_handle_t*)&(currobj->_uv_async), &AsyncBase::AsyncClosed);
+    uv_close((uv_handle_t*)(iHandle), &AsyncBase::AsyncClosed);
 
     currobj->executeAsync();
 }
 
-void AsyncBase::AsyncClosed(uv_handle_t* iAsync) {
+void AsyncBase::AsyncClosed(uv_handle_t* iHandle) {
     NNATIVE_FCALL();
-    AsyncBase* currobj = static_cast<AsyncBase*>(iAsync->data);
-    iAsync->data = nullptr;
+    NNATIVE_ASSERT(iHandle->data != nullptr);
+
+    AsyncBase* currobj = static_cast<AsyncBase*>(iHandle->data);
+    iHandle->data = nullptr;
 
     // Move the pointer to a temporary variable.
     std::unique_ptr<AsyncBase> currInst(currobj);
     currobj->closeAsync(std::move(currInst));
 }
+
 } /* namespace native */
