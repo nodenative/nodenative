@@ -6,7 +6,6 @@
 #include "async/FutureShared.h"
 #include "async/Future.h"
 #include "async/Promise.h"
-#include "async/AsyncCallback.h"
 #include "helper/trace.h"
 #include <uv.h>
 
@@ -25,7 +24,7 @@ namespace native {
  *
  */
 template<class F, class... Args>
-Future<typename std::result_of<F(Args...)>::type>
+Future<typename ActionCallback<typename std::result_of<F(Args...)>::type, Args...>::ResultType>
 async(F&& f, Args&&... args) {
     NNATIVE_FCALL();
     loop default_loop(true);
@@ -43,10 +42,13 @@ async(F&& f, Args&&... args) {
  * @note The function object may be copied, internally, the shared area will not be copied.
  */
 template<class F, class... Args>
-Future<typename std::result_of<F(Args...)>::type>
+Future<typename ActionCallback<typename std::result_of<F(Args...)>::type, Args...>::ResultType>
 async(loop &iLoop, F&& f, Args&&... args) {
     NNATIVE_FCALL();
-    return AsyncCallback<typename std::result_of<F(Args...)>::type, Args...>::Create(iLoop, std::forward<F>(f), std::forward<Args>(args)...);
+    using return_type = typename std::result_of<F(Args...)>::type;
+    std::shared_ptr<ActionCallback<return_type, Args...>> action(new ActionCallback<return_type, Args...>(iLoop.getShared(), std::forward<F>(f), std::forward<Args>(args)...));
+    action->SetValue(action);
+    return Future<typename ActionCallback<typename std::result_of<F(Args...)>::type, Args...>::ResultType>(action->getFuture());
 }
 
 } // namespace native
