@@ -97,15 +97,17 @@ template<typename R, typename... Args>
 template<std::size_t... Is>
 void WorkerCallback<Future<R>, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
     try {
-        Future<R> future(this->_f(std::get<Is>(_args)...));
         NNATIVE_ASSERT(!this->_instance.expired());
-        future.then([](R&& r, std::shared_ptr<WorkerCallbackBase> iInstance) {
-            WorkerCallback<Future<R>, Args...> *currPtr = static_cast<WorkerCallback<Future<R>, Args...>*>(iInstance.get());
-            currPtr->getFuture()->setValue(std::forward<R>(r));
-        }, this->_instance.lock()).error([](const FutureError &iError, std::shared_ptr<WorkerCallbackBase> iInstance){
-            WorkerCallback<Future<R>, Args...> *currPtr = static_cast<WorkerCallback<Future<R>, Args...>*>(iInstance.get());
-            currPtr->getFuture()->setError(iError);
-        }, this->_instance.lock());
+
+        this->_f(std::get<Is>(_args)...)
+            .then([](R&& r, std::shared_ptr<WorkerCallbackBase> iInstance) {
+                WorkerCallback<Future<R>, Args...> *currPtr = static_cast<WorkerCallback<Future<R>, Args...>*>(iInstance.get());
+                currPtr->getFuture()->setValue(std::forward<R>(r));
+            }, this->_instance.lock())
+            .error([](const FutureError &iError, std::shared_ptr<WorkerCallbackBase> iInstance){
+                WorkerCallback<Future<R>, Args...> *currPtr = static_cast<WorkerCallback<Future<R>, Args...>*>(iInstance.get());
+                currPtr->getFuture()->setError(iError);
+            }, this->_instance.lock());
     } catch (const FutureError &e) {
         this->getFuture()->setError(e);
     }
@@ -115,15 +117,17 @@ template<typename... Args>
 template<std::size_t... Is>
 void WorkerCallback<Future<void>, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
     try {
-        Future<void> future(this->_f(std::get<Is>(_args)...));
         NNATIVE_ASSERT(!this->_instance.expired());
-        future.then([](std::shared_ptr<WorkerCallbackBase> iInstance) {
-            WorkerCallback<Future<void>, Args...> *currPtr = static_cast<WorkerCallback<Future<void>, Args...>*>(iInstance.get());
-            currPtr->getFuture()->setValue();
-        }, this->_instance.lock()).error([](const FutureError &iError, std::shared_ptr<WorkerCallbackBase> iInstance){
-            WorkerCallback<Future<void>, Args...> *currPtr = static_cast<WorkerCallback<Future<void>, Args...>*>(iInstance.get());
-            currPtr->getFuture()->setError(iError);
-        }, this->_instance.lock());
+
+        this->_f(std::get<Is>(_args)...)
+            .then([](std::shared_ptr<WorkerCallbackBase> iInstance) {
+                WorkerCallback<Future<void>, Args...> *currPtr = static_cast<WorkerCallback<Future<void>, Args...>*>(iInstance.get());
+                currPtr->getFuture()->setValue();
+            }, this->_instance.lock())
+            .error([](const FutureError &iError, std::shared_ptr<WorkerCallbackBase> iInstance){
+                WorkerCallback<Future<void>, Args...> *currPtr = static_cast<WorkerCallback<Future<void>, Args...>*>(iInstance.get());
+                currPtr->getFuture()->setError(iError);
+            }, this->_instance.lock());
     } catch (const FutureError &e) {
         this->getFuture()->setError(e);
     }
