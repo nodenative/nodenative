@@ -124,9 +124,9 @@ void UriTemplate::parse()
 bool UriTemplate::extract(UriTemplateValue &oValues, const std::string &iUri) const
 {
     NNATIVE_DEBUG("Extract values from \"" << iUri << "\" by using URI template \"" << _template << "\", pattern: \"" << _extractPattern << "\")");
-    boost::smatch matchResults;
+    std::smatch matchResults;
     const boost::regex rePattern(_extractPattern);
-    if(!boost::regex_match(iUri, matchResults, rePattern, boost::match_extra /*consider capturing subgroups also*/))
+    if(!std::regex_match(iUri, matchResults, rePattern, std::match_extra /*consider capturing subgroups also*/))
     {
         NNATIVE_DEBUG("No match found");
         return false;
