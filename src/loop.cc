@@ -6,12 +6,12 @@
 #include <thread>
 
 namespace {
-    typedef std::map<std::thread::id, std::weak_ptr<uv_loop_t>> LoopMapType;
+    typedef std::map<uv_loop_t*, std::thread::id> LoopMapType;
     LoopMapType _loopMap;
 
     void deregisterLoop(uv_loop_t *iLoopPtr) {
         for(LoopMapType::iterator it = _loopMap.begin(); it != _loopMap.end(); ++it) {
-            if(!it->second.expired() && it->second.lock().get() == iLoopPtr) {
+            if(it->first == iLoopPtr) {
                 _loopMap.erase(it);
                 return;
             }
@@ -20,19 +20,15 @@ namespace {
 
     void registerLoop(std::shared_ptr<uv_loop_t> iLoop) {
         deregisterLoop(iLoop.get());
-        _loopMap[std::this_thread::get_id()] = iLoop;
+        _loopMap[iLoop.get()] = std::this_thread::get_id();
     }
 }
 
 namespace native {
 
 bool isOnEventloopThread(std::shared_ptr<uv_loop_t> iLoop) {
-    for(LoopMapType::iterator it = _loopMap.begin(); it != _loopMap.end(); ++it) {
-        if(!it->second.expired() && it->second.lock().get() == iLoop.get()) {
-            return it->first == std::this_thread::get_id();
-        }
-    }
-    return true;
+    LoopMapType::iterator it = _loopMap.find(iLoop.get());
+    return ((it == _loopMap.end()) || (it->second == std::this_thread::get_id()));
 }
 
 loop::loop(bool use_default) {
@@ -75,8 +71,6 @@ loop::loop(bool use_default) {
                 });
         }
     }
-
-    registerLoop(_uv_loop);
 }
 
 loop::~loop()
@@ -87,6 +81,7 @@ loop::~loop()
 bool loop::run() {
     NNATIVE_FCALL();
     NNATIVE_ASSERT(_uv_loop);
+    registerLoop(_uv_loop);
     return (uv_run(_uv_loop.get(), UV_RUN_DEFAULT) == 0); 
 }
 
@@ -108,13 +103,13 @@ int64_t loop::now()
 bool run()
 {
     loop currLoop(true);
-    return (uv_run(currLoop.get(), UV_RUN_DEFAULT) == 0);
+    return currLoop.run();
 }
 
 bool run_once()
 {
     loop currLoop(true);
-    return (uv_run(currLoop.get(), UV_RUN_ONCE) == 0);
+    return currLoop.run_once();
 }
 
 bool run_nowait()

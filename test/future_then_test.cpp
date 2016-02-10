@@ -11,13 +11,16 @@ TEST(FutureThenTest, SetValueOnDifferentThread) {
     bool promiseResolved = false;
     bool calledPromise = false;
 
-    promise.getFuture().then([&calledPromise, &calledOtherThread, &promiseResolved](){
+    std::thread::id mainThreadId = std::this_thread::get_id();
+
+    promise.getFuture().then([&calledPromise, &calledOtherThread, &promiseResolved, &mainThreadId](){
+        std::thread::id currThreadId = std::this_thread::get_id();
+        EXPECT_EQ(mainThreadId, currThreadId);
+
         EXPECT_EQ(calledOtherThread, true);
         EXPECT_EQ(promiseResolved, true);
         calledPromise = true;
     });
-
-    std::thread::id mainThreadId = std::this_thread::get_id();
 
     native::worker([&promise, &calledOtherThread, &mainThreadId](){
         calledOtherThread = true;
@@ -25,16 +28,16 @@ TEST(FutureThenTest, SetValueOnDifferentThread) {
         std::thread::id currThreadId = std::this_thread::get_id();
         EXPECT_NE(mainThreadId, currThreadId);
 
-        std::chrono::milliseconds time(100);
+        std::chrono::milliseconds time(400);
         std::this_thread::sleep_for(time);
 
         EXPECT_ANY_THROW(promise.setValue());
     }).then([&promise, &promiseResolved, &mainThreadId](){
         promiseResolved = true;
-        promise.setValue();
 
         std::thread::id currThreadId = std::this_thread::get_id();
         EXPECT_EQ(mainThreadId, currThreadId);
+        promise.setValue();
     });
 
     currLoop.run();
