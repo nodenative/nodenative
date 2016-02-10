@@ -1,9 +1,9 @@
-#include "native/UriTemplate.h"
+#include "native/UriTemplate.hh"
 
-#include "native/UriTemplateFormat.h"
-#include "native/UriTemplateValue.h"
+#include "native/UriTemplateFormat.hh"
+#include "native/UriTemplateValue.hh"
 
-#include <boost/regex.hpp>
+#include <regex>
 
 using namespace native;
 
@@ -72,11 +72,7 @@ void UriTemplate::parse()
 {
     NNATIVE_DEBUG("New URI Template \"" << _template << "\"");
     // should not contain capturing groups. e.g. "/path/(caputeText)/{param1:format1}"
-    if(ContainCapturingGroup(_template))
-    {
-        NNATIVE_DEBUG("URI template \"" << _template << "\" contain capturing groups");
-        NNATIVE_ASSERT(0);
-    }
+    NNATIVE_ASSERT_MSG(!ContainCapturingGroup(_template), "URI template \"" << _template << "\" contain capturing groups");
 
     _matchPattern = "";
     _extractPattern = "";
@@ -87,12 +83,12 @@ void UriTemplate::parse()
     // extract format names
     std::string::const_iterator begin = _template.begin();
     std::string::const_iterator end = _template.end();
-    boost::smatch results;
+    std::smatch results;
     // regex is compiled only at the first call
     //TODO: switch to re2 to gain even more performance
-    static const boost::regex reParam("\\{([a-zA-Z][a-zA-Z0-9]*):([a-zA-Z][a-zA-Z0-9]*)\\}"); //e.g.: {param:formatName}
+    static const std::regex reParam("\\{([a-zA-Z][a-zA-Z0-9]*):([a-zA-Z][a-zA-Z0-9]*)\\}"); //e.g.: {param:formatName}
 
-    while (boost::regex_search(begin, end, results, reParam))
+    while (std::regex_search(begin, end, results, reParam))
     {
         const std::string paramName = results.str(1);
         const std::string formatName = results.str(2);

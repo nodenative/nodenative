@@ -1,7 +1,7 @@
 #ifndef _NATIVE_URITEMPLATEFORMAT_H_
 #define _NATIVE_URITEMPLATEFORMAT_H_
 
-#include "UriTemplate.h"
+#include "UriTemplate.hh"
 
 #include <map>
 
