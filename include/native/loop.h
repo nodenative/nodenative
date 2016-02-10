@@ -94,6 +94,11 @@ namespace native
      */
     bool run_nowait();
 
+    /**
+     * Returns true if the current thread is the same as event loop thread;
+     */
+    bool isOnEventloopThread(std::shared_ptr<uv_loop_t> iloop);
+
 }
 
 

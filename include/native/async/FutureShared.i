@@ -5,8 +5,9 @@ namespace native {
 
 template<class R>
 void FutureShared<R>::setValue(R&& iVal) {
+    NNATIVE_ASSERT(isOnEventloopThread(this->_loop));
     bool expected = false;
-    if(!this->_satisfied.compare_exchange_strong(expected, true)) {
+    if(!this->_satisfied.compare_exchange_weak(expected, true, std::memory_order_relaxed)) {
         throw PromiseAlreadySatisfied();
     }
 
@@ -17,8 +18,9 @@ void FutureShared<R>::setValue(R&& iVal) {
 
 template<typename R>
 void FutureShared<R>::setError(const FutureError& iError) {
+    NNATIVE_ASSERT(isOnEventloopThread(this->_loop));
     bool expected = false;
-    if(!this->_satisfied.compare_exchange_strong(expected, true)) {
+    if(!this->_satisfied.compare_exchange_weak(expected, true, std::memory_order_relaxed)) {
         throw PromiseAlreadySatisfied();
     }
 
@@ -31,7 +33,7 @@ template<class R>
 template<class F, typename... Args>
 std::shared_ptr<FutureShared<typename ActionCallbackP1<typename std::result_of<F(R, Args...)>::type, R, Args...>::ResultType>>
 FutureShared<R>::then(F&& f, Args&&... args) {
-    if(this->_satisfied) {
+    if(this->_satisfied.load(std::memory_order_relaxed)) {
         throw FutureAlreadyRetrieved();
     }
 
@@ -44,7 +46,7 @@ FutureShared<R>::then(F&& f, Args&&... args) {
 template<class F, typename... Args>
 std::shared_ptr<FutureShared<typename ActionCallback<typename std::result_of<F(Args...)>::type, Args...>::ResultType>>
 FutureShared<void>::then(F&& f, Args&&... args) {
-    if(_satisfied) {
+    if(_satisfied.load(std::memory_order_relaxed)) {
         throw FutureAlreadyRetrieved();
     }
 
@@ -58,7 +60,7 @@ template<class R>
 template<class F, typename... Args>
 std::shared_ptr<FutureShared<R>>
 FutureShared<R>::error(F&& f, Args&&... args) {
-    if(_satisfied) {
+    if(_satisfied.load(std::memory_order_relaxed)) {
         throw FutureAlreadyRetrieved();
     }
 
@@ -71,7 +73,7 @@ FutureShared<R>::error(F&& f, Args&&... args) {
 template<class F, typename... Args>
 std::shared_ptr<FutureShared<void>>
 FutureShared<void>::error(F&& f, Args&&... args) {
-    if(_satisfied) {
+    if(_satisfied.load(std::memory_order_relaxed)) {
         throw FutureAlreadyRetrieved();
     }
 

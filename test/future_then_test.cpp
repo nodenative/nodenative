@@ -3,6 +3,47 @@
 
 #include <thread>
 
+TEST(FutureThenTest, SetValueOnDifferentThread) {
+    native::loop currLoop(true);
+    native::Promise<void> promise(currLoop);
+
+    bool calledOtherThread = false;
+    bool promiseResolved = false;
+    bool calledPromise = false;
+
+    promise.getFuture().then([&calledPromise, &calledOtherThread, &promiseResolved](){
+        EXPECT_EQ(calledOtherThread, true);
+        EXPECT_EQ(promiseResolved, true);
+        calledPromise = true;
+    });
+
+    std::thread::id mainThreadId = std::this_thread::get_id();
+
+    native::worker([&promise, &calledOtherThread, &mainThreadId](){
+        calledOtherThread = true;
+
+        std::thread::id currThreadId = std::this_thread::get_id();
+        EXPECT_NE(mainThreadId, currThreadId);
+
+        std::chrono::milliseconds time(100);
+        std::this_thread::sleep_for(time);
+
+        EXPECT_ANY_THROW(promise.setValue());
+    }).then([&promise, &promiseResolved, &mainThreadId](){
+        promiseResolved = true;
+        promise.setValue();
+
+        std::thread::id currThreadId = std::this_thread::get_id();
+        EXPECT_EQ(mainThreadId, currThreadId);
+    });
+
+    currLoop.run();
+
+    EXPECT_EQ(calledOtherThread, true);
+    EXPECT_EQ(promiseResolved, true);
+    EXPECT_EQ(calledPromise, true);
+}
+
 TEST(FutureThenTest, order)
 {
     std::string order;

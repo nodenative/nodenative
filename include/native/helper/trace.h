@@ -6,14 +6,18 @@
 #include <string>
 #include <iostream>
 #include <cstdlib>
+#include <sstream>
+#include <stdexcept>
 
 #define NNATIVE_DEBUG(log) std::cout << __FILE__ << ":" << __LINE__ << ": " << log << "\n";
 #define NNATIVE_FCALL() native::helper::TraceFunction __currFunction(__FILE__, __LINE__, __PRETTY_FUNCTION__);
 #define NNATIVE_MCALL() native::helper::TraceFunction __currFunction(__FILE__, __LINE__, __PRETTY_FUNCTION__);
 
 #define NNATIVE_ASSERT(condition) if(!(condition)) {\
-    NNATIVE_DEBUG("" << __PRETTY_FUNCTION__ << ": Assertion \"" << #condition << "\" failed");\
-    std::abort();\
+    std::stringstream ss;\
+    ss << __PRETTY_FUNCTION__ << ": Assertion \"" << #condition << "\" failed";\
+    NNATIVE_DEBUG(ss.str());\
+    throw std::runtime_error(ss.str());\
 }
 
 namespace native {
