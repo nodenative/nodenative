@@ -22,16 +22,14 @@ TEST(FutureThenTest, SetValueOnDifferentThread) {
         calledPromise = true;
     });
 
-    native::worker([&promise, &calledOtherThread, &mainThreadId](){
-        calledOtherThread = true;
+    native::async([&promise, &calledOtherThread, &mainThreadId](){
+		return native::worker([&promise, &calledOtherThread, &mainThreadId](){
+			calledOtherThread = true;
 
-        std::thread::id currThreadId = std::this_thread::get_id();
-        EXPECT_NE(mainThreadId, currThreadId);
-
-        std::chrono::milliseconds time(400);
-        std::this_thread::sleep_for(time);
-
-        EXPECT_ANY_THROW(promise.setValue());
+			std::thread::id currThreadId = std::this_thread::get_id();
+			EXPECT_NE(mainThreadId, currThreadId);
+			EXPECT_ANY_THROW(promise.setValue());
+		});
     }).then([&promise, &promiseResolved, &mainThreadId](){
         promiseResolved = true;
 
@@ -39,6 +37,10 @@ TEST(FutureThenTest, SetValueOnDifferentThread) {
         EXPECT_EQ(mainThreadId, currThreadId);
         promise.setValue();
     });
+
+    EXPECT_EQ(calledOtherThread, false);
+    EXPECT_EQ(promiseResolved, false);
+    EXPECT_EQ(calledPromise, false);
 
     currLoop.run();
 

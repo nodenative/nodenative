@@ -5,7 +5,7 @@ namespace native {
 
 template<class R>
 void FutureShared<R>::setValue(R&& iVal) {
-    NNATIVE_ASSERT(isOnEventloopThread(this->_loop));
+    NNATIVE_ASSERT_MSG(isOnEventloopThread(this->_loop), "Not on the event loop thread");
     bool expected = false;
     if(!this->_satisfied.compare_exchange_weak(expected, true, std::memory_order_relaxed)) {
         throw PromiseAlreadySatisfied();
@@ -18,7 +18,7 @@ void FutureShared<R>::setValue(R&& iVal) {
 
 template<typename R>
 void FutureShared<R>::setError(const FutureError& iError) {
-    NNATIVE_ASSERT(isOnEventloopThread(this->_loop));
+    NNATIVE_ASSERT_MSG(isOnEventloopThread(this->_loop), "Not on the event loop thread");
     bool expected = false;
     if(!this->_satisfied.compare_exchange_weak(expected, true, std::memory_order_relaxed)) {
         throw PromiseAlreadySatisfied();

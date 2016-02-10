@@ -82,12 +82,20 @@ bool loop::run() {
     NNATIVE_FCALL();
     NNATIVE_ASSERT(_uv_loop);
     registerLoop(_uv_loop);
-    return (uv_run(_uv_loop.get(), UV_RUN_DEFAULT) == 0); 
+    return (uv_run(_uv_loop.get(), UV_RUN_DEFAULT) == 0);
 }
 
 bool loop::run_once() {
     NNATIVE_FCALL();
-    return (uv_run(_uv_loop.get(), UV_RUN_ONCE) == 0); 
+    NNATIVE_ASSERT(_uv_loop);
+    registerLoop(_uv_loop);
+    return (uv_run(_uv_loop.get(), UV_RUN_ONCE) == 0);
+}
+
+bool loop::run_nowait()
+{
+    registerLoop(_uv_loop);
+    return (uv_run(_uv_loop.get(), UV_RUN_NOWAIT) == 0);
 }
 
 void loop::update_time()
@@ -115,7 +123,7 @@ bool run_once()
 bool run_nowait()
 {
     loop currLoop(true);
-    return (uv_run(currLoop.get(), UV_RUN_NOWAIT) == 0);
+	return currLoop.run_nowait();
 }
 
 } /* namespace native */
