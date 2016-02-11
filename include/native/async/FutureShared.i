@@ -67,14 +67,15 @@ FutureShared<R>::then(F&& f, Args&&... args) {
         _actions.push_back(action);
     } else {
         // avoid race condition
-        async([](std::shared_ptr<FutureShared<R>> iInstance, std::shared_ptr<ActionCallbackP1<return_type, R, Args...>> iAction){
+        std::shared_ptr<FutureShared<R>> iInstance = _instance.lock();
+        async([iInstance, action](){
             if(iInstance->_satisfied) {
                 // TODO: add post action
                 throw FutureAlreadyRetrieved();
             } else {
-                iInstance->_actions.push_back(iAction);
+                iInstance->_actions.push_back(action);
             }
-        }, _instance.lock(), action);
+        });
     }
 
     return currFuture;
@@ -93,14 +94,16 @@ FutureShared<void>::then(F&& f, Args&&... args) {
         _actions.push_back(action);
     } else {
         // avoid race condition
-        async([](std::shared_ptr<FutureShared<void>> iInstance, std::shared_ptr<ActionCallback<return_type, Args...>> iAction){
+        std::shared_ptr<FutureShared<void>> iInstance = _instance.lock();
+        std::shared_ptr<ActionCallback<return_type, Args...>> iAction = action;
+        async([iInstance, action](){
             if(iInstance->_satisfied) {
                 // TODO: add post action
                 throw FutureAlreadyRetrieved();
             } else {
-                iInstance->_actions.push_back(iAction);
+                iInstance->_actions.push_back(action);
             }
-        }, _instance.lock(), action);
+        });
     }
     return currFuture;
 }
@@ -117,16 +120,16 @@ FutureShared<R>::error(F&& f, Args&&... args) {
     if(isOnEventloopThread(this->_loop) && !this->_satisfied) {
         _actions.push_back(action);
     } else {
-        auto actionCopy = action;
         // avoid race condition
-        async([](std::shared_ptr<FutureShared<R>> iInstance, std::shared_ptr<ActionCallbackErrorP1<R, Args...>> iAction){
+        std::shared_ptr<FutureShared<R>> iInstance = _instance.lock();
+        async([iInstance, action](){
             if(iInstance->_satisfied) {
                 // TODO: add post action
                 throw FutureAlreadyRetrieved();
             } else {
-                iInstance->_actions.push_back(iAction);
+                iInstance->_actions.push_back(action);
             }
-        }, _instance.lock(), actionCopy);
+        });
     }
 
     return currFuture;
@@ -144,15 +147,15 @@ FutureShared<void>::error(F&& f, Args&&... args) {
         _actions.push_back(action);
     } else {
         // avoid race condition
-        auto actionCopy = action;
-        async([](std::shared_ptr<FutureShared<void>> iInstance, std::shared_ptr<ActionCallbackError<Args...>> iAction){
+        std::shared_ptr<FutureShared<void>> iInstance = _instance.lock();
+        async([iInstance, action](){
             if(iInstance->_satisfied) {
                 // TODO: add post action
                 throw FutureAlreadyRetrieved();
             } else {
-                iInstance->_actions.push_back(iAction);
+                iInstance->_actions.push_back(action);
             }
-        }, _instance.lock(), actionCopy);
+        });
     }
 
     return currFuture;

@@ -10,7 +10,7 @@ namespace native {
 template<typename R, typename... Args>
 WorkerCallback<R, Args...>::WorkerCallback(std::shared_ptr<uv_loop_t> iLoop, std::function<R(Args...)> f, Args&&... args) :
          _f(f),
-         _args(args...),
+         _args(std::forward<Args>(args)...),
          _future(FutureShared<R>::Create(iLoop))
 {
 }
@@ -18,7 +18,7 @@ WorkerCallback<R, Args...>::WorkerCallback(std::shared_ptr<uv_loop_t> iLoop, std
 template<typename R, typename... Args>
 WorkerCallback<Future<R>, Args...>::WorkerCallback(std::shared_ptr<uv_loop_t> iLoop, std::function<Future<R>(Args...)> f, Args&&... args) :
          _f(f),
-         _args(args...),
+         _args(std::forward<Args>(args)...),
          _future(FutureShared<R>::Create(iLoop))
 {
 }
@@ -26,7 +26,7 @@ WorkerCallback<Future<R>, Args...>::WorkerCallback(std::shared_ptr<uv_loop_t> iL
 template<typename... Args>
 WorkerCallback<Future<void>, Args...>::WorkerCallback(std::shared_ptr<uv_loop_t> iLoop, std::function<Future<void>(Args...)> f, Args&&... args) :
          _f(f),
-         _args(args...),
+         _args(std::forward<Args>(args)...),
          _future(FutureShared<void>::Create(iLoop))
 {
 }
@@ -34,7 +34,7 @@ WorkerCallback<Future<void>, Args...>::WorkerCallback(std::shared_ptr<uv_loop_t>
 template<typename... Args>
 WorkerCallback<void, Args...>::WorkerCallback(std::shared_ptr<uv_loop_t> iLoop, std::function<void(Args...)> f, Args&&... args) :
          _f(f),
-         _args(args...),
+         _args(std::forward<Args>(args)...),
          _future(FutureShared<void>::Create(iLoop))
 {
 }
@@ -90,7 +90,7 @@ void WorkerCallback<R, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
         async([](std::shared_ptr<WorkerCallbackBase> iInstance, R&& r){
             WorkerCallback<R, Args...> *currPtr = static_cast<WorkerCallback<R, Args...>*>(iInstance.get());
             currPtr->getFuture()->setValue(std::forward<R>(r));
-        }, this->_instance.lock(), std::forward<R>(this->_f(std::get<Is>(this->_args)...)));
+        }, this->_instance.lock(), this->_f(std::get<Is>(this->_args)...));
     } catch (const FutureError &e) {
         async([](std::shared_ptr<WorkerCallbackBase> iInstance, FutureError iError){
             WorkerCallback<R, Args...> *currPtr = static_cast<WorkerCallback<R, Args...>*>(iInstance.get());
@@ -102,46 +102,46 @@ void WorkerCallback<R, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
 template<typename R, typename... Args>
 template<std::size_t... Is>
 void WorkerCallback<Future<R>, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
+    NNATIVE_ASSERT(!this->_instance.expired());
+    std::shared_ptr<WorkerCallbackBase> iInstance = this->_instance.lock();
     try {
-        NNATIVE_ASSERT(!this->_instance.expired());
-
         this->_f(std::get<Is>(this->_args)...)
-            .then([](R&& r, std::shared_ptr<WorkerCallbackBase> iInstance) {
+            .then([iInstance](R&& r) {
                 WorkerCallback<Future<R>, Args...> *currPtr = static_cast<WorkerCallback<Future<R>, Args...>*>(iInstance.get());
                 currPtr->getFuture()->setValue(std::forward<R>(r));
-            }, this->_instance.lock())
-            .error([](const FutureError &iError, std::shared_ptr<WorkerCallbackBase> iInstance){
+            })
+            .error([iInstance](const FutureError &iError){
                 WorkerCallback<Future<R>, Args...> *currPtr = static_cast<WorkerCallback<Future<R>, Args...>*>(iInstance.get());
                 currPtr->getFuture()->setError(iError);
-            }, this->_instance.lock());
+            });
     } catch (const FutureError &e) {
-        async([](std::shared_ptr<WorkerCallbackBase> iInstance, FutureError iError){
+        async([iInstance](FutureError iError){
             WorkerCallback<Future<R>, Args...> *currPtr = static_cast<WorkerCallback<Future<R>, Args...>*>(iInstance.get());
             currPtr->getFuture()->setError(iError);
-        }, this->_instance.lock(), e);
+        }, e);
     }
 }
 
 template<typename... Args>
 template<std::size_t... Is>
 void WorkerCallback<Future<void>, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
+    NNATIVE_ASSERT(!this->_instance.expired());
+    std::shared_ptr<WorkerCallbackBase> iInstance = this->_instance.lock();
     try {
-        NNATIVE_ASSERT(!this->_instance.expired());
-
         this->_f(std::get<Is>(this->_args)...)
-            .then([](std::shared_ptr<WorkerCallbackBase> iInstance) {
+            .then([iInstance]() {
                 WorkerCallback<Future<void>, Args...> *currPtr = static_cast<WorkerCallback<Future<void>, Args...>*>(iInstance.get());
                 currPtr->getFuture()->setValue();
-            }, this->_instance.lock())
-            .error([](const FutureError &iError, std::shared_ptr<WorkerCallbackBase> iInstance){
+            })
+            .error([iInstance](const FutureError &iError){
                 WorkerCallback<Future<void>, Args...> *currPtr = static_cast<WorkerCallback<Future<void>, Args...>*>(iInstance.get());
                 currPtr->getFuture()->setError(iError);
-            }, this->_instance.lock());
+            });
     } catch (const FutureError &e) {
-        async([](std::shared_ptr<WorkerCallbackBase> iInstance, FutureError iError){
+        async([iInstance](FutureError iError){
             WorkerCallback<Future<void>, Args...> *currPtr = static_cast<WorkerCallback<Future<void>, Args...>*>(iInstance.get());
             currPtr->getFuture()->setError(iError);
-        }, this->_instance.lock(), e);
+        }, e);
     }
 }
 

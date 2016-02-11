@@ -127,20 +127,22 @@ TEST(WorkerTest, ReturnFutureVoid)
     std::thread::id mainThreadId = std::this_thread::get_id();
     {
         native::worker(currLoop, [&called, &called3, &mainThreadId]() -> native::Future<void> {
+            std::cout<<"!!! Inside the worker start\n";
             // TODO: fix the future for multithread
             native::Future<void> future = native::async([&called, &called3, &mainThreadId](){
-                std::chrono::milliseconds time(100);
-                std::this_thread::sleep_for(time);
                 called3 = true;
                 std::thread::id currThreadId = std::this_thread::get_id();
                 EXPECT_EQ(mainThreadId, currThreadId);
+                std::cout<<"!!! Future inside the worker\n";
             });
 
             called = true;
             std::thread::id currThreadId = std::this_thread::get_id();
             EXPECT_NE(mainThreadId, currThreadId);
+            std::cout<<"!!! Inside the worker\n";
             return future;
         }).then([&called, &called2, &called3, &mainThreadId](){
+            std::cout<<"!!! Inside the then\n";
             EXPECT_EQ(called, true);
             EXPECT_EQ(called3, true);
             called2 = true;
