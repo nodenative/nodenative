@@ -63,7 +63,7 @@ FutureShared<R>::then(F&& f, Args&&... args) {
     std::shared_ptr<ActionCallbackP1<return_type, R, Args...>> action(new ActionCallbackP1<return_type, R, Args...>(_loop, std::forward<F>(f), std::forward<Args>(args)...));
     auto currFuture = action->getFuture();
 
-    if(isOnEventloopThread(this->_loop)) {
+    if(isOnEventloopThread(this->_loop) && !this->_satisfied) {
         _actions.push_back(action);
     } else {
         // avoid race condition
@@ -89,7 +89,7 @@ FutureShared<void>::then(F&& f, Args&&... args) {
     std::shared_ptr<ActionCallback<return_type, Args...>> action(new ActionCallback<return_type, Args...>(_loop, std::forward<F>(f), std::forward<Args>(args)...));
     auto currFuture = action->getFuture();
 
-    if(isOnEventloopThread(this->_loop)) {
+    if(isOnEventloopThread(this->_loop) && !this->_satisfied) {
         _actions.push_back(action);
     } else {
         // avoid race condition
@@ -114,9 +114,10 @@ FutureShared<R>::error(F&& f, Args&&... args) {
     std::shared_ptr<ActionCallbackErrorP1<R, Args...>> action(new ActionCallbackErrorP1<R, Args...>(_loop, std::forward<F>(f), std::forward<Args>(args)...));
     std::shared_ptr<FutureShared<R>> currFuture = action->getFuture();
 
-    if(isOnEventloopThread(this->_loop)) {
+    if(isOnEventloopThread(this->_loop) && !this->_satisfied) {
         _actions.push_back(action);
     } else {
+        auto actionCopy = action;
         // avoid race condition
         async([](std::shared_ptr<FutureShared<R>> iInstance, std::shared_ptr<ActionCallbackErrorP1<R, Args...>> iAction){
             if(iInstance->_satisfied) {
@@ -125,7 +126,7 @@ FutureShared<R>::error(F&& f, Args&&... args) {
             } else {
                 iInstance->_actions.push_back(iAction);
             }
-        }, _instance.lock(), action);
+        }, _instance.lock(), actionCopy);
     }
 
     return currFuture;
@@ -139,10 +140,11 @@ FutureShared<void>::error(F&& f, Args&&... args) {
     std::shared_ptr<ActionCallbackError<Args...>> action(new ActionCallbackError<Args...>(_loop, std::forward<F>(f), std::forward<Args>(args)...));
     std::shared_ptr<FutureShared<void>> currFuture = action->getFuture();
 
-    if(isOnEventloopThread(this->_loop)) {
+    if(isOnEventloopThread(this->_loop) && !this->_satisfied) {
         _actions.push_back(action);
     } else {
         // avoid race condition
+        auto actionCopy = action;
         async([](std::shared_ptr<FutureShared<void>> iInstance, std::shared_ptr<ActionCallbackError<Args...>> iAction){
             if(iInstance->_satisfied) {
                 // TODO: add post action
@@ -150,7 +152,7 @@ FutureShared<void>::error(F&& f, Args&&... args) {
             } else {
                 iInstance->_actions.push_back(iAction);
             }
-        }, _instance.lock(), action);
+        }, _instance.lock(), actionCopy);
     }
 
     return currFuture;

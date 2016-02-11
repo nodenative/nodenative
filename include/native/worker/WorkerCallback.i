@@ -90,7 +90,7 @@ void WorkerCallback<R, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
         async([](std::shared_ptr<WorkerCallbackBase> iInstance, R&& r){
             WorkerCallback<R, Args...> *currPtr = static_cast<WorkerCallback<R, Args...>*>(iInstance.get());
             currPtr->getFuture()->setValue(std::forward<R>(r));
-        }, this->_instance.lock(), this->_f(std::get<Is>(_args)...));
+        }, this->_instance.lock(), std::forward<R>(this->_f(std::get<Is>(this->_args)...)));
     } catch (const FutureError &e) {
         async([](std::shared_ptr<WorkerCallbackBase> iInstance, FutureError iError){
             WorkerCallback<R, Args...> *currPtr = static_cast<WorkerCallback<R, Args...>*>(iInstance.get());
@@ -105,7 +105,7 @@ void WorkerCallback<Future<R>, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
     try {
         NNATIVE_ASSERT(!this->_instance.expired());
 
-        this->_f(std::get<Is>(_args)...)
+        this->_f(std::get<Is>(this->_args)...)
             .then([](R&& r, std::shared_ptr<WorkerCallbackBase> iInstance) {
                 WorkerCallback<Future<R>, Args...> *currPtr = static_cast<WorkerCallback<Future<R>, Args...>*>(iInstance.get());
                 currPtr->getFuture()->setValue(std::forward<R>(r));
@@ -128,7 +128,7 @@ void WorkerCallback<Future<void>, Args...>::callFn(helper::TemplateSeqInd<Is...>
     try {
         NNATIVE_ASSERT(!this->_instance.expired());
 
-        this->_f(std::get<Is>(_args)...)
+        this->_f(std::get<Is>(this->_args)...)
             .then([](std::shared_ptr<WorkerCallbackBase> iInstance) {
                 WorkerCallback<Future<void>, Args...> *currPtr = static_cast<WorkerCallback<Future<void>, Args...>*>(iInstance.get());
                 currPtr->getFuture()->setValue();
@@ -150,7 +150,7 @@ template<std::size_t... Is>
 void WorkerCallback<void, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
     try {
         NNATIVE_ASSERT(!this->_instance.expired());
-        this->_f(std::get<Is>(_args)...);
+        this->_f(std::get<Is>(this->_args)...);
         async([](std::shared_ptr<WorkerCallbackBase> iInstance){
             WorkerCallback<void, Args...> *currPtr = static_cast<WorkerCallback<void, Args...>*>(iInstance.get());
             currPtr->getFuture()->setValue();
