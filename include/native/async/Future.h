@@ -31,7 +31,7 @@ public:
 
     /** Constructor from Loop object
      */
-    Future(loop &iLoop) : _p(std::make_shared<FutureShared<R>>(iLoop)) {}
+    Future(loop &iLoop) : _p(FutureShared<R>::Create(iLoop)) {}
 
     /** Constructor from FutureShared object
      */
@@ -76,7 +76,7 @@ public:
     typedef void result_type;
 
     Future() = delete;
-    Future(loop &iLoop) : _p(std::make_shared<FutureShared<void>>(iLoop)) {}
+    Future(loop &iLoop) : _p(FutureShared<void>::Create(iLoop)) {}
     Future(std::shared_ptr<FutureShared<void>> p) : _p(p) {}
 
     template<class F, typename... Args>
