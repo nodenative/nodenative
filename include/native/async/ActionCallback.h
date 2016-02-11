@@ -27,10 +27,10 @@ protected:
 public:
     virtual ~ActionCallbackBase() {}
 
-    static void SetValue(std::shared_ptr<ActionCallbackBase<P>> iInstance, P&& p);
+    static void SetValue(std::shared_ptr<ActionCallbackBase<P>> iInstance, P p);
     static void SetError(std::shared_ptr<ActionCallbackBase<P>> iInstance, const FutureError&);
 
-    virtual void setValueCb(P&&) = 0;
+    virtual void setValueCb(P) = 0;
     virtual void setErrorCb(const FutureError&) = 0;
     virtual std::shared_ptr<uv_loop_t> getLoop() = 0;
 };
@@ -61,14 +61,14 @@ private:
 
 public:
     ActionCallbackBaseDetached() = delete;
-    ActionCallbackBaseDetached(std::shared_ptr<ActionCallbackBase<P>> iInstance, P&& p);
+    ActionCallbackBaseDetached(std::shared_ptr<ActionCallbackBase<P>> iInstance, P p);
     ~ActionCallbackBaseDetached() {
         NNATIVE_FCALL();
     }
 
     void executeAsync() override;
 
-    static void Enqueue(std::shared_ptr<ActionCallbackBase<P>> iInstance, P&& p);
+    static void Enqueue(std::shared_ptr<ActionCallbackBase<P>> iInstance, P p);
 };
 
 template<>
@@ -202,9 +202,9 @@ class ActionCallbackP1: public ActionCallbackBase<P> {
     std::shared_ptr<FutureShared<R>> _future;
 
     template<std::size_t... Is>
-    void callFn(P&& p, helper::TemplateSeqInd<Is...>);
+    void callFn(P p, helper::TemplateSeqInd<Is...>);
 
-    void setValueCb(P&& p) override;
+    void setValueCb(P p) override;
     void setErrorCb(const FutureError& iError) override;
 
 public:
@@ -224,9 +224,9 @@ class ActionCallbackP1<Future<R>, P, Args...>: public ActionCallbackBase<P> {
     std::shared_ptr<FutureShared<R>> _future;
 
     template<std::size_t... Is>
-    void callFn(P&& p, helper::TemplateSeqInd<Is...>);
+    void callFn(P p, helper::TemplateSeqInd<Is...>);
 
-    void setValueCb(P&& p) override;
+    void setValueCb(P p) override;
     void setErrorCb(const FutureError& iError) override;
 
 public:
@@ -246,9 +246,9 @@ class ActionCallbackP1<Future<void>, P, Args...>: public ActionCallbackBase<P> {
     std::shared_ptr<FutureShared<void>> _future;
 
     template<std::size_t... Is>
-    void callFn(P&& p, helper::TemplateSeqInd<Is...>);
+    void callFn(P p, helper::TemplateSeqInd<Is...>);
 
-    void setValueCb(P&& p) override;
+    void setValueCb(P p) override;
     void setErrorCb(const FutureError& iError) override;
 
 public:
@@ -268,9 +268,9 @@ class ActionCallbackP1<void, P, Args...>: public ActionCallbackBase<P> {
     std::shared_ptr<FutureShared<void>> _future;
 
     template<std::size_t... Is>
-    void callFn(P&& p, helper::TemplateSeqInd<Is...>);
+    void callFn(P p, helper::TemplateSeqInd<Is...>);
 
-    void setValueCb(P&& p) override;
+    void setValueCb(P p) override;
     void setErrorCb(const FutureError& iError) override;
 
 public:
@@ -316,7 +316,7 @@ class ActionCallbackErrorP1: public ActionCallbackBase<R> {
     template<std::size_t... Is>
     void callFn(const FutureError& iError, helper::TemplateSeqInd<Is...>);
 
-    void setValueCb(R&& r) override;
+    void setValueCb(R r) override;
     void setErrorCb(const FutureError& iError) override;
 
 public:

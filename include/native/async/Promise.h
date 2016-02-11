@@ -12,7 +12,7 @@ public:
     Promise() = delete;
     Promise(loop& iLoop) : _future(iLoop) {};
 
-    void setValue(R&& iVal) {
+    void setValue(R iVal) {
         _future.setValue(std::forward<R>(iVal));
     }
 

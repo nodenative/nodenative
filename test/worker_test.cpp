@@ -199,6 +199,7 @@ TEST(WorkerTest, ReturnFutureValue)
     currLoop.run();
 
     EXPECT_EQ(called, true);
+    // TODO: Finish the possibility to call the waiter after the future object is resolved
     EXPECT_EQ(called2, true);
     EXPECT_EQ(called3, true);
 }

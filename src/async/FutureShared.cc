@@ -36,6 +36,8 @@ void FutureShared<void>::setError(const FutureError& iError) {
     }
 
     this->_satisfied = true;
+    this->_isError = true;
+    this->_error = iError;
 
     for(std::shared_ptr<ActionCallbackBase<void>> action : this->_actions) {
         action->SetError(action, iError);

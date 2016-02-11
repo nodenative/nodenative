@@ -20,13 +20,14 @@ std::shared_ptr<FutureShared<R>> FutureShared<R>::Create(std::shared_ptr<uv_loop
 }
 
 template<class R>
-void FutureShared<R>::setValue(R&& iVal) {
+void FutureShared<R>::setValue(R iVal) {
     NNATIVE_ASSERT_MSG(isOnEventloopThread(this->_loop), "Not on the event loop thread");
     if(this->_satisfied) {
         throw PromiseAlreadySatisfied();
     }
 
     this->_satisfied = true;
+    this->_value = std::forward<R>(iVal);
 
     for(std::shared_ptr<ActionCallbackBase<R>> action : this->_actions) {
         action->SetValue(action, std::forward<R>(iVal));
@@ -41,6 +42,8 @@ void FutureShared<R>::setError(const FutureError& iError) {
     }
 
     this->_satisfied = true;
+    this->_isError = true;
+    this->_error = iError;
 
     for(std::shared_ptr<ActionCallbackBase<R>> action : this->_actions) {
         action->SetError(action, iError);
@@ -69,11 +72,15 @@ FutureShared<R>::then(F&& f, Args&&... args) {
         // avoid race condition
         std::shared_ptr<FutureShared<R>> iInstance = _instance.lock();
         async([iInstance, action](){
+            iInstance->_actions.push_back(action);
+
             if(iInstance->_satisfied) {
-                // TODO: add post action
-                throw FutureAlreadyRetrieved();
-            } else {
-                iInstance->_actions.push_back(action);
+                if(!iInstance->_isError) {
+                    // TODO: add post action
+                    action->SetValue(action, iInstance->_value.value());
+                } else {
+                    action->SetError(action, iInstance->_error);
+                }
             }
         });
     }
@@ -97,11 +104,14 @@ FutureShared<void>::then(F&& f, Args&&... args) {
         std::shared_ptr<FutureShared<void>> iInstance = _instance.lock();
         std::shared_ptr<ActionCallback<return_type, Args...>> iAction = action;
         async([iInstance, action](){
+            iInstance->_actions.push_back(action);
+
             if(iInstance->_satisfied) {
-                // TODO: add post action
-                throw FutureAlreadyRetrieved();
-            } else {
-                iInstance->_actions.push_back(action);
+                if(!iInstance->_isError) {
+                    action->SetValue(action);
+                } else {
+                    action->SetError(action, iInstance->_error);
+                }
             }
         });
     }
@@ -123,11 +133,15 @@ FutureShared<R>::error(F&& f, Args&&... args) {
         // avoid race condition
         std::shared_ptr<FutureShared<R>> iInstance = _instance.lock();
         async([iInstance, action](){
+            iInstance->_actions.push_back(action);
+
             if(iInstance->_satisfied) {
-                // TODO: add post action
-                throw FutureAlreadyRetrieved();
-            } else {
-                iInstance->_actions.push_back(action);
+                if(!iInstance->_isError) {
+                    // TODO: add post action
+                    //action->SetValue(action, value);
+                } else {
+                    action->SetError(action, iInstance->_error);
+                }
             }
         });
     }
@@ -149,11 +163,14 @@ FutureShared<void>::error(F&& f, Args&&... args) {
         // avoid race condition
         std::shared_ptr<FutureShared<void>> iInstance = _instance.lock();
         async([iInstance, action](){
+            iInstance->_actions.push_back(action);
+
             if(iInstance->_satisfied) {
-                // TODO: add post action
-                throw FutureAlreadyRetrieved();
-            } else {
-                iInstance->_actions.push_back(action);
+                if(!iInstance->_isError) {
+                    action->SetValue(action);
+                } else {
+                    action->SetError(action, iInstance->_error);
+                }
             }
         });
     }

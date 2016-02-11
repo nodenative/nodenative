@@ -3,6 +3,8 @@
 
 #include "../loop.h"
 #include "ActionCallback.h"
+// TODO: replace by std::optional
+#include "../helper/optional.hh"
 
 #include <vector>
 #include <memory>
@@ -16,10 +18,13 @@ private:
     std::weak_ptr<FutureShared<R>> _instance;
     std::shared_ptr<uv_loop_t> _loop;
     bool _satisfied;
+    bool _isError;
+    FutureError _error;
     std::vector<std::shared_ptr<ActionCallbackBase<R>>> _actions;
+    helper::optional<R> _value;
 
-    FutureShared(loop &iLoop) : _loop(iLoop.getShared()), _satisfied(false) {}
-    FutureShared(std::shared_ptr<uv_loop_t> iLoop) : _loop(iLoop), _satisfied(false) {}
+    FutureShared(loop &iLoop) : _loop(iLoop.getShared()), _satisfied(false), _isError(false), _error("") {}
+    FutureShared(std::shared_ptr<uv_loop_t> iLoop) : _loop(iLoop), _satisfied(false), _isError(false), _error("") {}
 
 public:
     typedef R result_type;
@@ -30,7 +35,7 @@ public:
     static std::shared_ptr<FutureShared<R>> Create(loop &iLoop);
     static std::shared_ptr<FutureShared<R>> Create(std::shared_ptr<uv_loop_t> iLoop);
 
-    void setValue(R&& iVal);
+    void setValue(R iVal);
     void setError(const FutureError& iError);
     void setInstance(std::shared_ptr<FutureShared<R>> iInstance);
 
@@ -52,10 +57,12 @@ private:
     std::weak_ptr<FutureShared<void>> _instance;
     std::shared_ptr<uv_loop_t> _loop;
     bool _satisfied;
+    bool _isError;
+    FutureError _error;
     std::vector<std::shared_ptr<ActionCallbackBase<void>>> _actions;
 
-    FutureShared(loop &iLoop) : _loop(iLoop.getShared()), _satisfied(false) {}
-    FutureShared(std::shared_ptr<uv_loop_t> iLoop) : _loop(iLoop), _satisfied(false) {}
+    FutureShared(loop &iLoop) : _loop(iLoop.getShared()), _satisfied(false), _isError(false), _error("") {}
+    FutureShared(std::shared_ptr<uv_loop_t> iLoop) : _loop(iLoop), _satisfied(false), _isError(false), _error("") {}
 public:
     typedef void result_type;
 

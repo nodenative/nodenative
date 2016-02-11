@@ -21,7 +21,7 @@ template<class R>
 class Future {
     friend Promise<R>;
 
-    void setValue(R&& iVal) { _p->setValue(std::forward<R>(iVal)); }
+    void setValue(R iVal) { _p->setValue(std::forward<R>(iVal)); }
     void setError(const FutureError& iException) { _p->setError(iException); }
 public:
     /// Result type for the future

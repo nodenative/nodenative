@@ -8,7 +8,7 @@
 namespace native {
 
 template<typename P>
-ActionCallbackBaseDetached<P>::ActionCallbackBaseDetached(std::shared_ptr<ActionCallbackBase<P>> iInstance, P&& p) :
+ActionCallbackBaseDetached<P>::ActionCallbackBaseDetached(std::shared_ptr<ActionCallbackBase<P>> iInstance, P p) :
         AsyncBase(iInstance->getLoop()),
         _instance(iInstance),
         _args(p) {
@@ -35,7 +35,7 @@ void ActionCallbackBaseDetachedError<P>::executeAsync() {
 }
 
 template<typename P>
-void ActionCallbackBaseDetached<P>::Enqueue(std::shared_ptr<ActionCallbackBase<P>> iInstance, P&& p) {
+void ActionCallbackBaseDetached<P>::Enqueue(std::shared_ptr<ActionCallbackBase<P>> iInstance, P p) {
     NNATIVE_FCALL();
     NNATIVE_ASSERT(iInstance);
     std::unique_ptr<ActionCallbackBaseDetached<P>> detachedInst(new ActionCallbackBaseDetached<P>(iInstance, std::forward<P>(p)));
@@ -53,7 +53,7 @@ void ActionCallbackBaseDetachedError<P>::Enqueue(std::shared_ptr<ActionCallbackB
 }
 
 template<typename P>
-void ActionCallbackBase<P>::SetValue(std::shared_ptr<ActionCallbackBase<P>> iInstance, P&& p) {
+void ActionCallbackBase<P>::SetValue(std::shared_ptr<ActionCallbackBase<P>> iInstance, P p) {
     NNATIVE_ASSERT(iInstance);
     iInstance->_instance = iInstance;
     ActionCallbackBaseDetached<P>::Enqueue(iInstance, std::forward<P>(p));
@@ -237,7 +237,7 @@ void ActionCallback<Future<R>, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
         NNATIVE_ASSERT(!this->_instance.expired());
 
         this->_f(std::get<Is>(this->_args)...)
-            .then([iInstance](R&& r) {
+            .then([iInstance](R r) {
                 ActionCallback<Future<R>, Args...> *currPtr = static_cast<ActionCallback<Future<R>, Args...>*>(iInstance.get());
                 currPtr->getFuture()->setValue(std::forward<R>(r));
             })
@@ -283,7 +283,7 @@ void ActionCallback<void, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
 
 template<typename R, typename P, typename... Args>
 template<std::size_t... Is>
-void ActionCallbackP1<R, P, Args...>::callFn(P&& p, helper::TemplateSeqInd<Is...>) {
+void ActionCallbackP1<R, P, Args...>::callFn(P p, helper::TemplateSeqInd<Is...>) {
     try {
         this->getFuture()->setValue(this->_f(std::forward<P>(p), std::get<Is>(this->_args)...));
     } catch (const FutureError &e) {
@@ -293,12 +293,12 @@ void ActionCallbackP1<R, P, Args...>::callFn(P&& p, helper::TemplateSeqInd<Is...
 
 template<typename R, typename P, typename... Args>
 template<std::size_t... Is>
-void ActionCallbackP1<Future<R>, P, Args...>::callFn(P&& p, helper::TemplateSeqInd<Is...>) {
+void ActionCallbackP1<Future<R>, P, Args...>::callFn(P p, helper::TemplateSeqInd<Is...>) {
     NNATIVE_ASSERT(!this->_instance.expired());
     std::shared_ptr<ActionCallbackBase<P>> iInstance = this->_instance.lock();
     try {
         this->_f(std::forward<P>(p), std::get<Is>(this->_args)...)
-            .then([iInstance](R&& r) {
+            .then([iInstance](R r) {
                 ActionCallbackP1<Future<R>, P, Args...> *currPtr = static_cast<ActionCallbackP1<Future<R>, P, Args...>*>(iInstance.get());
                 currPtr->getFuture()->setValue(std::forward<R>(r));
             })
@@ -313,7 +313,7 @@ void ActionCallbackP1<Future<R>, P, Args...>::callFn(P&& p, helper::TemplateSeqI
 
 template<typename P, typename... Args>
 template<std::size_t... Is>
-void ActionCallbackP1<Future<void>, P, Args...>::callFn(P&& p, helper::TemplateSeqInd<Is...>) {
+void ActionCallbackP1<Future<void>, P, Args...>::callFn(P p, helper::TemplateSeqInd<Is...>) {
     NNATIVE_ASSERT(!this->_instance.expired());
     std::shared_ptr<ActionCallbackBase<P>> iInstance = this->_instance.lock();
     try {
@@ -333,7 +333,7 @@ void ActionCallbackP1<Future<void>, P, Args...>::callFn(P&& p, helper::TemplateS
 
 template<typename P, typename... Args>
 template<std::size_t... Is>
-void ActionCallbackP1<void, P, Args...>::callFn(P&& p, helper::TemplateSeqInd<Is...>) {
+void ActionCallbackP1<void, P, Args...>::callFn(P p, helper::TemplateSeqInd<Is...>) {
     try {
         this->_f(std::forward<P>(p), std::get<Is>(this->_args)...);
         this->getFuture()->setValue();
@@ -363,22 +363,22 @@ void ActionCallback<void, Args...>::setValueCb() {
 }
 
 template<typename R, typename P, typename... Args>
-void ActionCallbackP1<R, P, Args...>::setValueCb(P&& p) {
+void ActionCallbackP1<R, P, Args...>::setValueCb(P p) {
     this->template callFn(std::forward<P>(p), helper::TemplateSeqIndGen<sizeof...(Args)>());
 }
 
 template<typename R, typename P, typename... Args>
-void ActionCallbackP1<Future<R>, P, Args...>::setValueCb(P&& p) {
+void ActionCallbackP1<Future<R>, P, Args...>::setValueCb(P p) {
     this->template callFn(std::forward<P>(p), helper::TemplateSeqIndGen<sizeof...(Args)>());
 }
 
 template<typename P, typename... Args>
-void ActionCallbackP1<Future<void>, P, Args...>::setValueCb(P&& p) {
+void ActionCallbackP1<Future<void>, P, Args...>::setValueCb(P p) {
     this->template callFn(std::forward<P>(p), helper::TemplateSeqIndGen<sizeof...(Args)>());
 }
 
 template<typename P, typename... Args>
-void ActionCallbackP1<void, P, Args...>::setValueCb(P&& p) {
+void ActionCallbackP1<void, P, Args...>::setValueCb(P p) {
     this->template callFn(std::forward<P>(p), helper::TemplateSeqIndGen<sizeof...(Args)>());
 }
 
@@ -489,7 +489,7 @@ void ActionCallbackError<Args...>::setValueCb() {
 }
 
 template<typename R, typename... Args>
-void ActionCallbackErrorP1<R, Args...>::setValueCb(R&& r) {
+void ActionCallbackErrorP1<R, Args...>::setValueCb(R r) {
     this->getFuture()->setValue(std::forward<R>(r));
 }
 

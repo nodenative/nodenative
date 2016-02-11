@@ -257,7 +257,7 @@ TEST(FutureThenTest, ValueParamReturnFutureWithValue)
         EXPECT_EQ(called_p2, false);
         EXPECT_EQ(called_p1_after, false);
 
-        promise.setValue(std::move(expectedValue));
+        promise.setValue(expectedValue);
 
         EXPECT_EQ(called_p1, false);
         EXPECT_EQ(called_p2, false);
