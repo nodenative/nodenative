@@ -237,7 +237,7 @@ void ActionCallback<Future<R>, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
         NNATIVE_ASSERT(!this->_instance.expired());
 
         this->_f(std::get<Is>(this->_args)...)
-            .then([iInstance](R r) {
+            .then([iInstance](R&& r) {
                 ActionCallback<Future<R>, Args...> *currPtr = static_cast<ActionCallback<Future<R>, Args...>*>(iInstance.get());
                 currPtr->getFuture()->setValue(std::forward<R>(r));
             })
@@ -298,11 +298,11 @@ void ActionCallbackP1<Future<R>, P, Args...>::callFn(P p, helper::TemplateSeqInd
     std::shared_ptr<ActionCallbackBase<P>> iInstance = this->_instance.lock();
     try {
         this->_f(std::forward<P>(p), std::get<Is>(this->_args)...)
-            .then([iInstance](R r) {
+            .template then([iInstance](R r) {
                 ActionCallbackP1<Future<R>, P, Args...> *currPtr = static_cast<ActionCallbackP1<Future<R>, P, Args...>*>(iInstance.get());
                 currPtr->getFuture()->setValue(std::forward<R>(r));
             })
-            .error([iInstance](const FutureError& iError){
+            .template error([iInstance](const FutureError& iError){
                 ActionCallbackP1<Future<R>, P, Args...> *currPtr = static_cast<ActionCallbackP1<Future<R>, P, Args...>*>(iInstance.get());
                 currPtr->getFuture()->setError(iError);
             });
@@ -318,11 +318,11 @@ void ActionCallbackP1<Future<void>, P, Args...>::callFn(P p, helper::TemplateSeq
     std::shared_ptr<ActionCallbackBase<P>> iInstance = this->_instance.lock();
     try {
         this->_f(std::forward<P>(p), std::get<Is>(this->_args)...)
-            .then([iInstance]() {
+            .template then([iInstance]() {
                 ActionCallbackP1<Future<void>, P, Args...> *currPtr = static_cast<ActionCallbackP1<Future<void>, P, Args...>*>(iInstance.get());
                 currPtr->getFuture()->setValue();
             })
-            .error([iInstance](const FutureError& iError){
+            .template error([iInstance](const FutureError& iError){
                 ActionCallbackP1<Future<void>, P, Args...> *currPtr = static_cast<ActionCallbackP1<Future<void>, P, Args...>*>(iInstance.get());
                 currPtr->getFuture()->setError(iError);
             });
