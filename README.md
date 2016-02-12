@@ -38,6 +38,14 @@ int main() {
     return native::run();
 }
 ```
+
+## Feature highlights
+ * Promises/Future functionality based on system event pool (`native::Promise<R>`, `native::Future<R>`)
+ * Asynchronous callbacks on system event pool (`native::async(F, Args...)`)
+ * Thread pool based on uv_work* (`native::worker(F, Args...)`)
+ * HTTP protocol
+
+
 ## Getting started
 
 <em>node.native</em> requires [libuv](https://github.com/libuv/libuv) and [http-parser](https://github.com/joyent/http-parser) lib to use.
