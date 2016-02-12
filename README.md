@@ -5,12 +5,16 @@
   <thead>
     <tr>
       <th>Linux and OSX</th>
+      <th>Coverage Status</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td align="center">
         <a href="https://travis-ci.org/tojocky/node.native"><img src="https://travis-ci.org/tojocky/node.native.svg?branch=master"></a>
+      </td>
+      <td>
+      <a href="https://coveralls.io/github/tojocky/node.native?branch=master)"><img src="https://coveralls.io/repos/github/tojocky/node.native/badge.svg?branch=master"></a>
       </td>
     </tr>
   </tbody>
