@@ -1,5 +1,5 @@
-#ifndef __NATIVE_LOOP_H__
-#define __NATIVE_LOOP_H__
+#ifndef __NATIVE_LOOP_HH__
+#define __NATIVE_LOOP_HH__
 
 #include "base.h"
 #include "error.h"
@@ -9,24 +9,24 @@ namespace native
 {
     class AsyncBase;
     /**
-     *  Class that represents the loop instance.
+     *  Class that represents the Loop instance.
      */
-    class loop
+    class Loop
     {
     public:
         /**
          *  Default constructor
-         *  @param use_default indicates whether to use default loop or create a new loop.
+         *  @param use_default indicates whether to use default Loop or create a new Loop.
          */
-        loop(bool use_default);
-        loop() : loop(false) { NNATIVE_MCALL(); };
+        Loop(bool use_default);
+        Loop() : Loop(false) { NNATIVE_MCALL(); };
 
-        loop(std::shared_ptr<uv_loop_t> iLoop) : _uv_loop(iLoop) {}
+        Loop(std::shared_ptr<uv_loop_t> iLoop) : _uv_loop(iLoop) {}
 
         /**
          *  Destructor
          */
-        ~loop();
+        ~Loop();
 
         /**
          *  Returns internal handle for libuv functions.
@@ -36,7 +36,7 @@ namespace native
         std::shared_ptr<uv_loop_t> getShared() { return _uv_loop; }
 
         /**
-         *  Runs the event loop until the reference count drops to zero. Always returns zero.
+         *  Runs the event Loop until the reference count drops to zero. Always returns zero.
          *  Internally, this function just calls uv_run() function.
          */
         bool run();
@@ -44,7 +44,7 @@ namespace native
         /**
          *  Poll for new events once. Note that this function blocks if there are no pending events. Returns true when done (no active handles
          *  or requests left), or non-zero if more events are expected (meaning you
-         *  should run the event loop again sometime in the future).
+         *  should run the event Loop again sometime in the future).
          *  Internally, this function just calls uv_run_once() function.
          */
         bool run_once();
@@ -69,33 +69,33 @@ namespace native
     protected:
 
     private:
-        loop(const loop&);
-        void operator =(const loop&);
+        Loop(const Loop&);
+        void operator =(const Loop&);
 
     private:
         std::shared_ptr<uv_loop_t> _uv_loop;
     };
 
     /**
-     *  Starts the default loop.
+     *  Starts the default Loop.
      */
     bool run();
 
     /**
-     *  Polls for new events once for the default loop.
+     *  Polls for new events once for the default Loop.
      *  Note that this function blocks if there are no pending events. Returns true when done (no active handles
      *  or requests left), or non-zero if more events are expected (meaning you
-     *  should run the event loop again sometime in the future).
+     *  should run the event Loop again sometime in the future).
      */
     bool run_once();
 
     /**
-     *  Polls for new events once but don't block if there are no pending events for the default loop.
+     *  Polls for new events once but don't block if there are no pending events for the default Loop.
      */
     bool run_nowait();
 
     /**
-     * Returns true if the current thread is the same as event loop thread;
+     * Returns true if the current thread is the same as event Loop thread;
      */
     bool isOnEventloopThread(std::shared_ptr<uv_loop_t> iloop);
 

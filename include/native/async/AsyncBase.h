@@ -2,7 +2,7 @@
 #define __NATIVE_ASYNC_ASYNCBASE_H__
 
 #include <uv.h>
-#include "../loop.h"
+#include "../Loop.hh"
 #include "../helper/trace.h"
 
 #include <memory>
@@ -19,18 +19,18 @@ class AsyncBase {
 protected:
     uv_async_t _uv_async;
 
-    /** Public method called at event loop
+    /** Public method called at event Loop
      * Extend this class for custom usage
      */
     virtual void executeAsync() = 0;
     virtual void closeAsync(std::unique_ptr<AsyncBase>) {}
     void enqueue();
     AsyncBase() = delete;
-    AsyncBase(loop &iLoop);
+    AsyncBase(Loop &iLoop);
     AsyncBase(std::shared_ptr<uv_loop_t> iLoop);
 public:
     template<class Child, typename... Args>
-    static Child* Create(loop& iLoop, Args&&... args);
+    static Child* Create(Loop& iLoop, Args&&... args);
     virtual ~AsyncBase();
 };
 

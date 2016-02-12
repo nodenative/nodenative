@@ -6,11 +6,11 @@ using namespace net;
 tcp::tcp() :
     native::base::stream(new uv_tcp_t)
 {
-    loop currLoop(true);
+    Loop currLoop(true);
     uv_tcp_init(currLoop.get(), get<uv_tcp_t>());
 }
 
-tcp::tcp(native::loop& l) :
+tcp::tcp(native::Loop& l) :
     native::base::stream(new uv_tcp_t)
 {
     uv_tcp_init(l.get(), get<uv_tcp_t>());

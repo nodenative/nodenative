@@ -10,7 +10,7 @@
 
 namespace native
 {
-    // TODO: implement functions that accept loop pointer as extra argument.
+    // TODO: implement functions that accept Loop pointer as extra argument.
     namespace fs
     {
         typedef uv_file file_handle;

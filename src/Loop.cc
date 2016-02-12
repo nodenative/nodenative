@@ -1,4 +1,4 @@
-#include "native/loop.h"
+#include "native/Loop.hh"
 #include "native/helper/trace.h"
 
 #include <memory>
@@ -31,7 +31,7 @@ bool isOnEventloopThread(std::shared_ptr<uv_loop_t> iLoop) {
     return ((it == _loopMap.end()) || (it->second == std::this_thread::get_id()));
 }
 
-loop::loop(bool use_default) {
+Loop::Loop(bool use_default) {
     NNATIVE_FCALL();
     if(use_default) {
         static std::weak_ptr<uv_loop_t> savedPtr;
@@ -41,9 +41,9 @@ loop::loop(bool use_default) {
             return;
         }
 
-        // don't delete the default loop
+        // don't delete the default Loop
         _uv_loop = std::shared_ptr<uv_loop_t>(uv_default_loop(), [](uv_loop_t* iLoop){
-                NNATIVE_DEBUG("destroying default loop...");
+                NNATIVE_DEBUG("destroying default Loop...");
                 deregisterLoop(iLoop);
                 int res = 1;
                 do {
@@ -52,7 +52,7 @@ loop::loop(bool use_default) {
             });
 
         if(0 != uv_loop_init(_uv_loop.get())) {
-            NNATIVE_DEBUG("error to init loop " << (_uv_loop.get()));
+            NNATIVE_DEBUG("error to init Loop " << (_uv_loop.get()));
             _uv_loop.reset();
         }
 
@@ -61,7 +61,7 @@ loop::loop(bool use_default) {
         std::unique_ptr<uv_loop_t> loopInstance(new uv_loop_t);
         if(0 == uv_loop_init(loopInstance.get())) {
             _uv_loop = std::shared_ptr<uv_loop_t>(loopInstance.release(), [](uv_loop_t* iLoop){
-                    NNATIVE_DEBUG("destroying specified loop..");
+                    NNATIVE_DEBUG("destroying specified Loop..");
                     deregisterLoop(iLoop);
                     int res = 1;
                     do {
@@ -73,56 +73,56 @@ loop::loop(bool use_default) {
     }
 }
 
-loop::~loop()
+Loop::~Loop()
 {
     NNATIVE_FCALL();
 }
 
-bool loop::run() {
+bool Loop::run() {
     NNATIVE_FCALL();
     NNATIVE_ASSERT(_uv_loop);
     registerLoop(_uv_loop);
     return (uv_run(_uv_loop.get(), UV_RUN_DEFAULT) == 0);
 }
 
-bool loop::run_once() {
+bool Loop::run_once() {
     NNATIVE_FCALL();
     NNATIVE_ASSERT(_uv_loop);
     registerLoop(_uv_loop);
     return (uv_run(_uv_loop.get(), UV_RUN_ONCE) == 0);
 }
 
-bool loop::run_nowait()
+bool Loop::run_nowait()
 {
     registerLoop(_uv_loop);
     return (uv_run(_uv_loop.get(), UV_RUN_NOWAIT) == 0);
 }
 
-void loop::update_time()
+void Loop::update_time()
 {
     uv_update_time(_uv_loop.get());
 }
 
-int64_t loop::now()
+int64_t Loop::now()
 {
     return uv_now(_uv_loop.get());
 }
 
 bool run()
 {
-    loop currLoop(true);
+    Loop currLoop(true);
     return currLoop.run();
 }
 
 bool run_once()
 {
-    loop currLoop(true);
+    Loop currLoop(true);
     return currLoop.run_once();
 }
 
 bool run_nowait()
 {
-    loop currLoop(true);
+    Loop currLoop(true);
 	return currLoop.run_nowait();
 }
 

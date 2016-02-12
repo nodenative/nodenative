@@ -4,7 +4,7 @@
 namespace native {
 
 template<class R>
-std::shared_ptr<FutureShared<R>> FutureShared<R>::Create(loop &iLoop) {
+std::shared_ptr<FutureShared<R>> FutureShared<R>::Create(Loop &iLoop) {
     std::shared_ptr<FutureShared<R>> instance(new FutureShared<R>(iLoop));
     instance->setInstance(instance);
 
@@ -21,7 +21,7 @@ std::shared_ptr<FutureShared<R>> FutureShared<R>::Create(std::shared_ptr<uv_loop
 
 template<class R>
 void FutureShared<R>::setValue(R iVal) {
-    NNATIVE_ASSERT_MSG(isOnEventloopThread(this->_loop), "Not on the event loop thread");
+    NNATIVE_ASSERT_MSG(isOnEventloopThread(this->_loop), "Not on the event Loop thread");
     if(this->_satisfied) {
         throw PromiseAlreadySatisfied();
     }
@@ -36,7 +36,7 @@ void FutureShared<R>::setValue(R iVal) {
 
 template<typename R>
 void FutureShared<R>::setError(const FutureError& iError) {
-    NNATIVE_ASSERT_MSG(isOnEventloopThread(this->_loop), "Not on the event loop thread");
+    NNATIVE_ASSERT_MSG(isOnEventloopThread(this->_loop), "Not on the event Loop thread");
     if(this->_satisfied) {
         throw PromiseAlreadySatisfied();
     }
@@ -71,7 +71,7 @@ FutureShared<R>::then(F&& f, Args&&... args) {
     } else {
         // avoid race condition
         std::shared_ptr<FutureShared<R>> iInstance = _instance.lock();
-        loop currloop(this->_loop);
+        Loop currloop(this->_loop);
         async(currloop, [iInstance, action](){
             iInstance->_actions.push_back(action);
 
@@ -104,7 +104,7 @@ FutureShared<void>::then(F&& f, Args&&... args) {
         // avoid race condition
         std::shared_ptr<FutureShared<void>> iInstance = _instance.lock();
         std::shared_ptr<ActionCallback<return_type, Args...>> iAction = action;
-        loop currloop(this->_loop);
+        Loop currloop(this->_loop);
         async(currloop, [iInstance, action](){
             iInstance->_actions.push_back(action);
 
@@ -134,7 +134,7 @@ FutureShared<R>::error(F&& f, Args&&... args) {
     } else {
         // avoid race condition
         std::shared_ptr<FutureShared<R>> iInstance = _instance.lock();
-        loop currloop(this->_loop);
+        Loop currloop(this->_loop);
         async(currloop, [iInstance, action](){
             iInstance->_actions.push_back(action);
 
@@ -165,7 +165,7 @@ FutureShared<void>::error(F&& f, Args&&... args) {
     } else {
         // avoid race condition
         std::shared_ptr<FutureShared<void>> iInstance = _instance.lock();
-        loop currloop(this->_loop);
+        Loop currloop(this->_loop);
         async(currloop, [iInstance, action](){
             iInstance->_actions.push_back(action);
 

@@ -2,7 +2,7 @@
 
 namespace native {
 
-std::shared_ptr<FutureShared<void>> FutureShared<void>::Create(loop &iLoop) {
+std::shared_ptr<FutureShared<void>> FutureShared<void>::Create(Loop &iLoop) {
     std::shared_ptr<FutureShared<void>> instance(new FutureShared<void>(iLoop));
     instance->setInstance(instance);
 
@@ -17,7 +17,7 @@ std::shared_ptr<FutureShared<void>> FutureShared<void>::Create(std::shared_ptr<u
 }
 
 void FutureShared<void>::setValue() {
-    NNATIVE_ASSERT_MSG(isOnEventloopThread(this->_loop), "Not on the event loop thread");
+    NNATIVE_ASSERT_MSG(isOnEventloopThread(this->_loop), "Not on the event Loop thread");
     if(this->_satisfied) {
         throw PromiseAlreadySatisfied();
     }
@@ -30,7 +30,7 @@ void FutureShared<void>::setValue() {
 }
 
 void FutureShared<void>::setError(const FutureError& iError) {
-    NNATIVE_ASSERT_MSG(isOnEventloopThread(this->_loop), "Not on the event loop thread");
+    NNATIVE_ASSERT_MSG(isOnEventloopThread(this->_loop), "Not on the event Loop thread");
     if(this->_satisfied) {
         throw PromiseAlreadySatisfied();
     }

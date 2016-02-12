@@ -7,7 +7,7 @@ TEST(WorkerTest, simple)
 {
     bool called = false;
     bool called2 = false;
-    native::loop currLoop(true);
+    native::Loop currLoop(true);
     std::thread::id mainThreadId = std::this_thread::get_id();
     {
         native::worker(currLoop, [&called, &mainThreadId](){
@@ -61,7 +61,7 @@ TEST(WorkerTest, ReturnValue)
     bool called = false;
     bool called2 = false;
     int expectedValue = 1;
-    native::loop currLoop(true);
+    native::Loop currLoop(true);
     std::thread::id mainThreadId = std::this_thread::get_id();
     {
         native::worker(currLoop, [&called, &mainThreadId, &expectedValue]() -> int {
@@ -92,7 +92,7 @@ TEST(WorkerTest, ReturnValueRef)
     bool called = false;
     bool called2 = false;
     int expectedValue = 1;
-    native::loop currLoop(true);
+    native::Loop currLoop(true);
     std::thread::id mainThreadId = std::this_thread::get_id();
     {
         native::worker(currLoop, [&called, &mainThreadId, &expectedValue]() -> int& {
@@ -123,7 +123,7 @@ TEST(WorkerTest, ReturnFutureVoid)
     bool called = false;
     bool called2 = false;
     bool called3 = false;
-    native::loop currLoop(true);
+    native::Loop currLoop(true);
     std::thread::id mainThreadId = std::this_thread::get_id();
     {
         native::worker(currLoop, [&called, &called3, &mainThreadId]() -> native::Future<void> {
@@ -166,7 +166,7 @@ TEST(WorkerTest, ReturnFutureValue)
     bool called2 = false;
     bool called3 = false;
     int expectedValue = 1;
-    native::loop currLoop(true);
+    native::Loop currLoop(true);
     std::thread::id mainThreadId = std::this_thread::get_id();
     {
         native::worker(currLoop, [&called, &called3, &expectedValue, &mainThreadId]() -> native::Future<int> {
@@ -209,7 +209,7 @@ TEST(WorkerTest, ReturnFutureVoidError)
     bool called4 = false;
     native::FutureError expectedError("ErrorTest1");
 
-    native::loop currLoop(true);
+    native::Loop currLoop(true);
     std::thread::id mainThreadId = std::this_thread::get_id();
     {
         native::worker(currLoop, [&called, &called3, &mainThreadId, &expectedError]() -> native::Future<void> {

@@ -2,7 +2,7 @@
 #define __NATIVE_WORKER_WORKERBASE_H__
 
 #include <uv.h>
-#include "../loop.h"
+#include "../Loop.hh"
 #include "../helper/trace.h"
 
 #include <memory>
@@ -19,7 +19,7 @@ class WorkerBase {
 protected:
     uv_work_t _uvWork;
 
-    /** Public method called at event loop
+    /** Public method called at event Loop
      * Extend this class for custom usage
      */
     virtual void executeWorker() = 0;
@@ -27,11 +27,11 @@ protected:
     virtual void closeWorker(std::unique_ptr<WorkerBase>) {}
     void enqueue();
     WorkerBase() = delete;
-    WorkerBase(loop &iLoop);
+    WorkerBase(Loop &iLoop);
     WorkerBase(std::shared_ptr<uv_loop_t> iLoop);
 public:
     template<class Child, typename... Args>
-    static Child* Create(loop& iLoop, Args&&... args);
+    static Child* Create(Loop& iLoop, Args&&... args);
     virtual ~WorkerBase();
 };
 

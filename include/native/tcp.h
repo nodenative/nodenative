@@ -3,7 +3,7 @@
 
 #include "base.h"
 #include "handle.h"
-#include "loop.h"
+#include "Loop.hh"
 #include "stream.h"
 #include "net.h"
 #include "callback.h"
@@ -23,7 +23,7 @@ namespace native
         public:
             tcp();
 
-            tcp(native::loop& l);
+            tcp(native::Loop& l);
 
             static std::shared_ptr<tcp> create();
 

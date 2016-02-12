@@ -3,7 +3,7 @@
 
 #include "base.h"
 #include "events.h"
-#include "loop.h"
+#include "Loop.hh"
 #include "error.h"
 #include "tcp.h"
 #include "http.h"

@@ -3,7 +3,7 @@
 
 namespace native {
 
-WorkerBase::WorkerBase(loop &iLoop) {
+WorkerBase::WorkerBase(Loop &iLoop) {
     NNATIVE_FCALL();
     _loop = iLoop.getShared();
 }

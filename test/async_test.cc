@@ -8,7 +8,7 @@ TEST(AsyncTest, async)
     bool called = false;
     std::thread::id mainThreadId = std::this_thread::get_id();
 
-    native::loop currLoop(true);
+    native::Loop currLoop(true);
     {
         native::async(currLoop, [&called, &mainThreadId](){
             called = true;
@@ -45,7 +45,7 @@ TEST(AsyncTest, asyncWithParamaterRef)
 {
     bool called = false;
     std::thread::id mainThreadId = std::this_thread::get_id();
-    native::loop currLoop(true);
+    native::Loop currLoop(true);
     {
         native::async(currLoop, [&mainThreadId](bool &iCalled){
             iCalled = true;
@@ -64,7 +64,7 @@ TEST(AsyncTest, asyncWithParamaterValue)
 {
     bool called = false, asyncCalled = false;
     std::thread::id mainThreadId = std::this_thread::get_id();
-    native::loop currLoop(true);
+    native::Loop currLoop(true);
     {
         native::async(currLoop, [&asyncCalled, &mainThreadId](bool iCalled){
             iCalled = true;
@@ -86,7 +86,7 @@ TEST(AsyncTest, asyncWithReturnRef)
 {
     bool called = false;
     std::thread::id mainThreadId = std::this_thread::get_id();
-    native::loop currLoop(true);
+    native::Loop currLoop(true);
     {
         native::async(currLoop, [&called, &mainThreadId]() -> bool&{
             return called;
@@ -109,7 +109,7 @@ TEST(AsyncTest, asyncWithReturnValue)
 {
     bool called = false, asyncCalled = false;
     std::thread::id mainThreadId = std::this_thread::get_id();
-    native::loop currLoop(true);
+    native::Loop currLoop(true);
     {
         native::async(currLoop, [&called, &mainThreadId]() -> bool {
             std::thread::id currThreadId = std::this_thread::get_id();
@@ -136,7 +136,7 @@ TEST(AsyncTest, asyncMultipThenValueOrder)
     std::string order;
     std::thread::id mainThreadId = std::this_thread::get_id();
 
-    native::loop currLoop(true);
+    native::Loop currLoop(true);
     {
         auto async1 = native::async(currLoop, [&order, &mainThreadId]() {
             order += "1";
@@ -184,7 +184,7 @@ TEST(AsyncTest, asyncError)
     const std::string errorText("TestError");
     std::thread::id mainThreadId = std::this_thread::get_id();
 
-    native::loop currLoop(true);
+    native::Loop currLoop(true);
     {
         native::async(currLoop, [&errorText, &mainThreadId]() {
             std::thread::id currThreadId = std::this_thread::get_id();

@@ -1,7 +1,7 @@
 #ifndef __NATIVE_ASYNC_FEATURESHARED_H__
 #define __NATIVE_ASYNC_FEATURESHARED_H__
 
-#include "../loop.h"
+#include "../Loop.hh"
 #include "ActionCallback.h"
 // TODO: replace by std::optional
 #include "../helper/optional.hh"
@@ -23,7 +23,7 @@ private:
     std::vector<std::shared_ptr<ActionCallbackBase<R>>> _actions;
     helper::optional<R> _value;
 
-    FutureShared(loop &iLoop) : _loop(iLoop.getShared()), _satisfied(false), _isError(false), _error("") {}
+    FutureShared(Loop &iLoop) : _loop(iLoop.getShared()), _satisfied(false), _isError(false), _error("") {}
     FutureShared(std::shared_ptr<uv_loop_t> iLoop) : _loop(iLoop), _satisfied(false), _isError(false), _error("") {}
 
 public:
@@ -32,7 +32,7 @@ public:
     FutureShared() = delete;
     FutureShared(const FutureShared<R>&) = delete;
 
-    static std::shared_ptr<FutureShared<R>> Create(loop &iLoop);
+    static std::shared_ptr<FutureShared<R>> Create(Loop &iLoop);
     static std::shared_ptr<FutureShared<R>> Create(std::shared_ptr<uv_loop_t> iLoop);
 
     void setValue(R iVal);
@@ -61,7 +61,7 @@ private:
     FutureError _error;
     std::vector<std::shared_ptr<ActionCallbackBase<void>>> _actions;
 
-    FutureShared(loop &iLoop) : _loop(iLoop.getShared()), _satisfied(false), _isError(false), _error("") {}
+    FutureShared(Loop &iLoop) : _loop(iLoop.getShared()), _satisfied(false), _isError(false), _error("") {}
     FutureShared(std::shared_ptr<uv_loop_t> iLoop) : _loop(iLoop), _satisfied(false), _isError(false), _error("") {}
 public:
     typedef void result_type;
@@ -69,7 +69,7 @@ public:
     FutureShared() = delete;
     FutureShared(const FutureShared<void>&) = delete;
 
-    static std::shared_ptr<FutureShared<void>> Create(loop &iLoop);
+    static std::shared_ptr<FutureShared<void>> Create(Loop &iLoop);
     static std::shared_ptr<FutureShared<void>> Create(std::shared_ptr<uv_loop_t> iLoop);
 
     void setValue();

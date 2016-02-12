@@ -4,7 +4,7 @@
 #include <thread>
 
 TEST(FutureThenTest, SetValueOnDifferentThread) {
-    native::loop currLoop(true);
+    native::Loop currLoop(true);
     native::Promise<void> promise(currLoop);
 
     bool calledOtherThread = false;
@@ -53,7 +53,7 @@ TEST(FutureThenTest, order)
 {
     std::string order;
     std::string expectedOrder;
-    native::loop currLoop(true);
+    native::Loop currLoop(true);
     std::thread::id mainThreadId = std::this_thread::get_id();
     //{
         native::Promise<void> p(currLoop);
@@ -120,7 +120,7 @@ TEST(FutureThenTest, ReturnFuture)
     bool called_p1 = false;
     bool called_p2 = false;
     bool called_p1_after = false;
-    native::loop currLoop(true);
+    native::Loop currLoop(true);
     std::thread::id mainThreadId = std::this_thread::get_id();
     {
         native::Promise<void> promise(currLoop);
@@ -171,7 +171,7 @@ TEST(FutureThenTest, ReturnFutureWithValue)
     bool called_p1 = false;
     bool called_p2 = false;
     bool called_p1_after = false;
-    native::loop currLoop(true);
+    native::Loop currLoop(true);
     std::thread::id mainThreadId = std::this_thread::get_id();
     {
         native::Promise<void> promise(currLoop);
@@ -226,7 +226,7 @@ TEST(FutureThenTest, ValueParamReturnFutureWithValue)
     bool called_p2 = false;
     bool called_p1_after = false;
     double expectedValue(1.0);
-    native::loop currLoop(true);
+    native::Loop currLoop(true);
     std::thread::id mainThreadId = std::this_thread::get_id();
     {
         native::Promise<double> promise(currLoop);

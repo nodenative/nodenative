@@ -3,7 +3,7 @@
 
 namespace native {
 
-AsyncBase::AsyncBase(loop &iLoop) {
+AsyncBase::AsyncBase(Loop &iLoop) {
     NNATIVE_FCALL();
     _loop = iLoop.getShared();
 }

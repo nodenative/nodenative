@@ -63,7 +63,7 @@ namespace native
                     if(nread < 0)
                     {
                         //TODO: to find workaround
-                        //assert(uv_last_error(s->loop).code == UV_EOF);
+                        //assert(uv_last_error(s->Loop).code == UV_EOF);
                         callbacks::invoke<decltype(callback)>(s->data, native::internal::uv_cid_read_start, nullptr, nread);
                     }
                     else if(nread >= 0)
