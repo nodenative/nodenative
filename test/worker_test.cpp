@@ -171,10 +171,7 @@ TEST(WorkerTest, ReturnFutureValue)
     {
         native::worker(currLoop, [&called, &called3, &expectedValue, &mainThreadId]() -> native::Future<int> {
             native::Future<int> future = native::async([&called, &called3, expectedValue, &mainThreadId]() -> int {
-                std::chrono::milliseconds time(100);
-                std::this_thread::sleep_for(time);
                 called3 = true;
-                EXPECT_EQ(called, true);
                 std::thread::id currThreadId = std::this_thread::get_id();
                 EXPECT_EQ(mainThreadId, currThreadId);
                 return expectedValue;
@@ -219,7 +216,6 @@ TEST(WorkerTest, ReturnFutureVoidError)
             native::Future<void> future = native::async([&called, &called3, &mainThreadId, &expectedError](){
                 std::chrono::milliseconds time(100);
                 std::this_thread::sleep_for(time);
-                EXPECT_EQ(called, true);
                 called3 = true;
                 std::thread::id currThreadId = std::this_thread::get_id();
                 EXPECT_EQ(mainThreadId, currThreadId);
