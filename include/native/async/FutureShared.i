@@ -71,7 +71,8 @@ FutureShared<R>::then(F&& f, Args&&... args) {
     } else {
         // avoid race condition
         std::shared_ptr<FutureShared<R>> iInstance = _instance.lock();
-        async([iInstance, action](){
+        loop currloop(this->_loop);
+        async(currloop, [iInstance, action](){
             iInstance->_actions.push_back(action);
 
             if(iInstance->_satisfied) {
@@ -103,7 +104,8 @@ FutureShared<void>::then(F&& f, Args&&... args) {
         // avoid race condition
         std::shared_ptr<FutureShared<void>> iInstance = _instance.lock();
         std::shared_ptr<ActionCallback<return_type, Args...>> iAction = action;
-        async([iInstance, action](){
+        loop currloop(this->_loop);
+        async(currloop, [iInstance, action](){
             iInstance->_actions.push_back(action);
 
             if(iInstance->_satisfied) {
@@ -132,7 +134,8 @@ FutureShared<R>::error(F&& f, Args&&... args) {
     } else {
         // avoid race condition
         std::shared_ptr<FutureShared<R>> iInstance = _instance.lock();
-        async([iInstance, action](){
+        loop currloop(this->_loop);
+        async(currloop, [iInstance, action](){
             iInstance->_actions.push_back(action);
 
             if(iInstance->_satisfied) {
@@ -162,7 +165,8 @@ FutureShared<void>::error(F&& f, Args&&... args) {
     } else {
         // avoid race condition
         std::shared_ptr<FutureShared<void>> iInstance = _instance.lock();
-        async([iInstance, action](){
+        loop currloop(this->_loop);
+        async(currloop, [iInstance, action](){
             iInstance->_actions.push_back(action);
 
             if(iInstance->_satisfied) {
