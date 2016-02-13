@@ -7,8 +7,7 @@
 #include <http_parser.h>
 #include "../base.h"
 #include "../handle.h"
-#include "../net.h"
-#include "../tcp.h"
+#include "../net.hh"
 #include "../text.h"
 #include "../callback.h"
 
@@ -70,7 +69,7 @@ namespace native
             friend class client_context;
 
         private:
-            response(client_context* client, native::net::tcp* socket);
+            response(client_context* client, native::net::Tcp* socket);
             ~response();
 
         public:
@@ -81,7 +80,7 @@ namespace native
 
         private:
             http_client_ptr client_;
-            native::net::tcp* socket_;
+            native::net::Tcp* socket_;
             std::map<std::string, std::string, native::text::ci_less> headers_;
             int status_;
         };
@@ -114,7 +113,7 @@ namespace native
             friend class Server;
 
         private:
-            client_context(native::net::tcp* server);
+            client_context(native::net::Tcp* server);
 
         public:
             ~client_context();
@@ -129,7 +128,7 @@ namespace native
             std::string last_header_field_;
             std::string last_header_value_;
 
-            std::shared_ptr<native::net::tcp> socket_;
+            std::shared_ptr<native::net::Tcp> socket_;
             request* request_;
             response* response_;
 

@@ -5,7 +5,7 @@
 #include "events.h"
 #include "Loop.hh"
 #include "error.h"
-#include "tcp.h"
+#include "net.hh"
 #include "http.h"
 // TODO: cleanup first to resolve multiple definition conflicts
 //#include "fs.h"

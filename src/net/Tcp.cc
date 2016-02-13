@@ -1,40 +1,40 @@
-#include "native/tcp.h"
+#include "native/net/Tcp.hh"
 
 using namespace native;
 using namespace net;
 
-tcp::tcp() :
+Tcp::Tcp() :
     native::base::stream(new uv_tcp_t)
 {
     Loop currLoop(true);
     uv_tcp_init(currLoop.get(), get<uv_tcp_t>());
 }
 
-tcp::tcp(native::Loop& l) :
+Tcp::Tcp(native::Loop& l) :
     native::base::stream(new uv_tcp_t)
 {
     uv_tcp_init(l.get(), get<uv_tcp_t>());
 }
 
-std::shared_ptr<tcp> tcp::create()
+std::shared_ptr<Tcp> Tcp::Create()
 {
-    return std::shared_ptr<tcp>(new tcp);
+    return std::shared_ptr<Tcp>(new Tcp);
 }
 
 // TODO: bind and listen
-std::shared_ptr<tcp> tcp::create_server(const std::string& ip, int port)
+std::shared_ptr<Tcp> Tcp::CreateServer(const std::string& ip, int port)
 {
     return nullptr;
 }
 
-bool tcp::bind(const sockaddr* iAddr, error& oError)
+bool Tcp::bind(const sockaddr* iAddr, error& oError)
 {
     //TODO: add flags
     oError = uv_tcp_bind(get<uv_tcp_t>(), iAddr, 0);
     return !oError;
 }
 
-bool tcp::bind(const std::string& ip, int port, error& oError)
+bool Tcp::bind(const std::string& ip, int port, error& oError)
 {
     ip4_addr addr;
     to_ip4_addr(ip.c_str(), port, addr, oError);
@@ -44,13 +44,13 @@ bool tcp::bind(const std::string& ip, int port, error& oError)
     return bind(reinterpret_cast<const sockaddr*>(&addr), oError);
 }
 
-bool tcp::bind(const std::string& ip, int port)
+bool Tcp::bind(const std::string& ip, int port)
 {
     error err;
     return bind(ip, port, err);
 }
 
-bool tcp::bind6(const std::string& ip, int port, error& oError)
+bool Tcp::bind6(const std::string& ip, int port, error& oError)
 {
     ip6_addr addr;
     to_ip6_addr(ip.c_str(), port, addr, oError);
@@ -60,13 +60,13 @@ bool tcp::bind6(const std::string& ip, int port, error& oError)
     return bind(reinterpret_cast<const sockaddr*>(&addr), oError);
 }
 
-bool tcp::bind6(const std::string& ip, int port)
+bool Tcp::bind6(const std::string& ip, int port)
 {
     error err;
     return bind(ip, port, err);
 }
 
-bool tcp::connect(const std::string& ip, int port, std::function<void(error)> callback, error& oError)
+bool Tcp::connect(const std::string& ip, int port, std::function<void(error)> callback, error& oError)
 {
     callbacks::store(get()->data, native::internal::uv_cid_connect, callback);
     ip4_addr addr;
@@ -87,13 +87,13 @@ bool tcp::connect(const std::string& ip, int port, std::function<void(error)> ca
     return !oError;
 }
 
-bool tcp::connect(const std::string& ip, int port, std::function<void(error)> callback)
+bool Tcp::connect(const std::string& ip, int port, std::function<void(error)> callback)
 {
     error err;
     return connect(ip, port, callback, err);
 }
 
-bool tcp::connect6(const std::string& ip, int port, std::function<void(error)> callback, error& oError)
+bool Tcp::connect6(const std::string& ip, int port, std::function<void(error)> callback, error& oError)
 {
     callbacks::store(get()->data, native::internal::uv_cid_connect6, callback);
     ip6_addr addr;
@@ -114,13 +114,13 @@ bool tcp::connect6(const std::string& ip, int port, std::function<void(error)> c
     return !oError;
 }
 
-bool tcp::connect6(const std::string& ip, int port, std::function<void(error)> callback)
+bool Tcp::connect6(const std::string& ip, int port, std::function<void(error)> callback)
 {
     error err;
     return connect6(ip, port, callback, err);
 }
 
-bool tcp::getsockname(bool& ip4, std::string& ip, int& port)
+bool Tcp::getsockname(bool& ip4, std::string& ip, int& port)
 {
     struct sockaddr_storage addr;
     int len = sizeof(addr);
@@ -133,7 +133,7 @@ bool tcp::getsockname(bool& ip4, std::string& ip, int& port)
     return false;
 }
 
-bool tcp::getpeername(bool& ip4, std::string& ip, int& port)
+bool Tcp::getpeername(bool& ip4, std::string& ip, int& port)
 {
     struct sockaddr_storage addr;
     int len = sizeof(addr);

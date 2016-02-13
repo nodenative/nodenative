@@ -3,32 +3,32 @@
 using namespace native;
 using namespace http;
 
-Server::Server() : socket_(new native::net::tcp)
+Server::Server() : _socket(new native::net::Tcp)
 {
 }
 
 Server::~Server()
 {
-    if(socket_)
+    if(_socket)
     {
-        socket_->close([](){});
+        _socket->close([](){});
     }
 }
 
 bool Server::listen(const std::string& ip, int port, std::function<void(request&, response&)> callback)
 {
-    if(!socket_->bind(ip, port)) {
+    if(!_socket->bind(ip, port)) {
         return false;
     }
 
-    if(!socket_->listen([=](native::error e) {
+    if(!_socket->listen([=](native::error e) {
         if(e)
         {
             // TODO: handle client connection error
         }
         else
         {
-            auto client = new client_context(socket_.get());
+            auto client = new client_context(_socket.get());
             client->parse(callback);
         }
     })) return false;

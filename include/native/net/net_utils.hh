@@ -1,8 +1,8 @@
-#ifndef __NET_H__
-#define __NET_H__
+#ifndef __NET_NETUTILS_H__
+#define __NET_NETUTILS_H__
 
-#include "base.h"
-#include "callback.h"
+#include "../base.h"
+#include "../callback.h"
 
 namespace native
 {
@@ -24,4 +24,5 @@ namespace native
     }
 }
 
-#endif
+#endif /* __NET_NETUTILS_H__ */
+

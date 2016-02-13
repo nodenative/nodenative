@@ -7,7 +7,7 @@
 using namespace native;
 
 int main() {
-    auto client = net::tcp::create();
+    auto client = net::Tcp::Create();
     client->connect("127.0.0.1", 8080, [=](error e){
         client->write("GET / HTTP/1.1\r\n\r\n", [=](error e){
             std::shared_ptr<std::string> response(new std::string);

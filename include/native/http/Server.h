@@ -1,7 +1,7 @@
 #ifndef __NATIVE_HTTP_SERVER_H__
 #define __NATIVE_HTTP_SERVER_H__
 
-#include "../tcp.h"
+#include "../net.hh"
 
 namespace native {
 namespace http {
@@ -19,7 +19,7 @@ public:
     bool listen(const std::string& ip, int port, std::function<void(request&, response&)> callback);
 
 private:
-    std::shared_ptr<native::net::tcp> socket_;
+    std::shared_ptr<native::net::Tcp> _socket;
 };
 
 } // namespace http

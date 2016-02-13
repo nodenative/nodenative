@@ -89,7 +89,7 @@ void http::url_obj::from_buf(const char* buf, std::size_t len, bool is_connect)
     }
 }
 
-http::response::response(client_context* client, native::net::tcp* socket) :
+http::response::response(client_context* client, native::net::Tcp* socket) :
     client_(client),
     socket_(socket),
     headers_(),
@@ -242,7 +242,7 @@ bool http::request::get_header(const std::string& key, std::string& value) const
     return false;
 }
 
-http::client_context::client_context(native::net::tcp* server):
+http::client_context::client_context(native::net::Tcp* server):
     parser_(),
     parser_settings_(),
     was_header_value_(true),
@@ -257,7 +257,7 @@ http::client_context::client_context(native::net::tcp* server):
     assert(server);
 
     // TODO: check error
-    socket_ = std::shared_ptr<native::net::tcp> (new native::net::tcp);
+    socket_ = std::shared_ptr<native::net::Tcp> (new native::net::Tcp);
     server->accept(socket_.get());
 }
 
