@@ -13,14 +13,14 @@ http::response_exception::response_exception(const std::string& message) :
 }
 
 http::url_obj::url_obj() :
-        handle_(),
+        _handle(),
         buf_()
 {
     //printf("url_obj() %x\n", this);
 }
 
 http::url_obj::url_obj(const url_obj& c) :
-        handle_(c.handle_),
+        _handle(c._handle),
         buf_(c.buf_)
 {
     //printf("url_obj(const url_obj&) %x\n", this);
@@ -29,7 +29,7 @@ http::url_obj::url_obj(const url_obj& c) :
 http::url_obj& http::url_obj::operator =(const url_obj& c)
 {
     //printf("url_obj::operator =(const url_obj&) %x\n", this);
-    handle_ = c.handle_;
+    _handle = c._handle;
     buf_ = c.buf_;
     return *this;
 }
@@ -41,38 +41,38 @@ http::url_obj::~url_obj()
 
 std::string http::url_obj::schema() const
 {
-    if(has_schema()) return buf_.substr(handle_.field_data[UF_SCHEMA].off, handle_.field_data[UF_SCHEMA].len);
+    if(has_schema()) return buf_.substr(_handle.field_data[UF_SCHEMA].off, _handle.field_data[UF_SCHEMA].len);
     return "HTTP";
 }
 
 std::string http::url_obj::host() const
 {
     // TODO: if not specified, use host name
-    if(has_schema()) return buf_.substr(handle_.field_data[UF_HOST].off, handle_.field_data[UF_HOST].len);
+    if(has_schema()) return buf_.substr(_handle.field_data[UF_HOST].off, _handle.field_data[UF_HOST].len);
     return std::string("localhost");
 }
 
 int http::url_obj::port() const
 {
-    if(has_path()) return static_cast<int>(handle_.port);
+    if(has_path()) return static_cast<int>(_handle.port);
     return (schema() == "HTTP" ? 80 : 443);
 }
 
 std::string http::url_obj::path() const
 {
-    if(has_path()) return buf_.substr(handle_.field_data[UF_PATH].off, handle_.field_data[UF_PATH].len);
+    if(has_path()) return buf_.substr(_handle.field_data[UF_PATH].off, _handle.field_data[UF_PATH].len);
     return std::string("/");
 }
 
 std::string http::url_obj::query() const
 {
-    if(has_query()) return buf_.substr(handle_.field_data[UF_QUERY].off, handle_.field_data[UF_QUERY].len);
+    if(has_query()) return buf_.substr(_handle.field_data[UF_QUERY].off, _handle.field_data[UF_QUERY].len);
     return std::string();
 }
 
 std::string http::url_obj::fragment() const
 {
-    if(has_query()) return buf_.substr(handle_.field_data[UF_FRAGMENT].off, handle_.field_data[UF_FRAGMENT].len);
+    if(has_query()) return buf_.substr(_handle.field_data[UF_FRAGMENT].off, _handle.field_data[UF_FRAGMENT].len);
     return std::string();
 }
 
@@ -81,7 +81,7 @@ void http::url_obj::from_buf(const char* buf, std::size_t len, bool is_connect)
     // TODO: validate input parameters
 
     buf_ = std::string(buf, len);
-    if(http_parser_parse_url(buf, len, is_connect, &handle_) != 0)
+    if(http_parser_parse_url(buf, len, is_connect, &_handle) != 0)
     {
         // failed for some reason
         // TODO: let the caller know the error code (or error message)

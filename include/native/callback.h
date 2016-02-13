@@ -1,7 +1,8 @@
 #ifndef __CALLBACK_H__
 #define __CALLBACK_H__
+// TODO: remove it
 
-#include "base.h"
+#include "base/base_utils.hh"
 
 namespace native
 {

@@ -2,7 +2,7 @@
 #define __TEXT_H__
 
 #include <functional>
-#include "base.h"
+#include "base.hh"
 
 namespace native
 {

@@ -1,41 +1,39 @@
 #ifndef __NATIVE_HANDLE_H__
 #define __NATIVE_HANDLE_H__
 
-#include "base.h"
-#include "callback.h"
+#include "base_utils.hh"
+#include "../callback.h"
 
 namespace native
 {
     namespace base
     {
-        class handle;
-
         void _delete_handle(uv_handle_t* h);
 
-        class handle
+        class Handle
         {
         public:
             template<typename T>
-            handle(T* x)
+            Handle(T* x)
                 : uv_handle_(reinterpret_cast<uv_handle_t*>(x))
             {
-                //printf("handle(): %x\n", this);
+                //printf("Handle(): %x\n", this);
                 assert(uv_handle_);
 
                 uv_handle_->data = new callbacks(native::internal::uv_cid_max);
                 assert(uv_handle_->data);
             }
 
-            virtual ~handle()
+            virtual ~Handle()
             {
-                //printf("~handle(): %x\n", this);
+                //printf("~Handle(): %x\n", this);
                 uv_handle_ = nullptr;
             }
 
-            handle(const handle& h)
+            Handle(const Handle& h)
                 : uv_handle_(h.uv_handle_)
             {
-                //printf("handle(const handle&): %x\n", this);
+                //printf("Handle(const Handle&): %x\n", this);
             }
 
         public:
@@ -57,7 +55,7 @@ namespace native
                     });
             }
 
-            handle& operator =(const handle& h)
+            Handle& operator =(const Handle& h)
             {
                 uv_handle_ = h.uv_handle_;
                 return *this;

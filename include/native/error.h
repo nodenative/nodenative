@@ -1,7 +1,7 @@
 #ifndef __ERROR_H__
 #define __ERROR_H__
 
-#include "base.h"
+#include "base/base_utils.hh"
 
 namespace native
 {

@@ -1,7 +1,7 @@
 #ifndef __NET_NETUTILS_H__
 #define __NET_NETUTILS_H__
 
-#include "../base.h"
+#include "../base.hh"
 #include "../callback.h"
 
 namespace native

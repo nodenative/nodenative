@@ -5,8 +5,7 @@
 
 #include <sstream>
 #include <http_parser.h>
-#include "../base.h"
-#include "../handle.h"
+#include "../base.hh"
 #include "../net.hh"
 #include "../text.h"
 #include "../callback.h"
@@ -49,15 +48,15 @@ namespace native
         private:
             void from_buf(const char* buf, std::size_t len, bool is_connect=false);
 
-            bool has_schema() const { return handle_.field_set & (1<<UF_SCHEMA); }
-            bool has_host() const { return handle_.field_set & (1<<UF_HOST); }
-            bool has_port() const { return handle_.field_set & (1<<UF_PORT); }
-            bool has_path() const { return handle_.field_set & (1<<UF_PATH); }
-            bool has_query() const { return handle_.field_set & (1<<UF_QUERY); }
-            bool has_fragment() const { return handle_.field_set & (1<<UF_FRAGMENT); }
+            bool has_schema() const { return _handle.field_set & (1<<UF_SCHEMA); }
+            bool has_host() const { return _handle.field_set & (1<<UF_HOST); }
+            bool has_port() const { return _handle.field_set & (1<<UF_PORT); }
+            bool has_path() const { return _handle.field_set & (1<<UF_PATH); }
+            bool has_query() const { return _handle.field_set & (1<<UF_QUERY); }
+            bool has_fragment() const { return _handle.field_set & (1<<UF_FRAGMENT); }
 
         private:
-            http_parser_url handle_;
+            http_parser_url _handle;
             std::string buf_;
         };
 

@@ -1,23 +1,20 @@
 #ifndef __NATIVE_NET_TCP_H__
 #define __NATIVE_NET_TCP_H__
 
-#include "../base.h"
-#include "../handle.h"
+#include "../base.hh"
 #include "../Loop.hh"
-#include "../stream.h"
 #include "net_utils.hh"
-#include "../callback.h"
 
 namespace native
 {
     namespace net
     {
-        class Tcp : public native::base::stream
+        class Tcp : public native::base::Stream
         {
         public:
             template<typename X>
             Tcp(X* x)
-                : stream(x)
+                : Stream(x)
             { }
 
         public:

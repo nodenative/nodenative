@@ -1,10 +1,10 @@
 #ifndef __NATIVE_STREAM_H__
 #define __NATIVE_STREAM_H__
 
-#include "base.h"
-#include "error.h"
-#include "handle.h"
-#include "callback.h"
+#include "base_utils.hh"
+#include "../error.h"
+#include "Handle.hh"
+#include "../callback.h"
 
 #include <algorithm>
 
@@ -12,17 +12,17 @@ namespace native
 {
     namespace base
     {
-        class stream : public handle
+        class Stream : public Handle
         {
         public:
             template<typename T>
-            stream(T* x)
-                : handle(x)
+            Stream(T* x)
+                : Handle(x)
             { }
 
             bool listen(std::function<void(native::error)> callback, int backlog=128);
 
-            bool accept(stream* client);
+            bool accept(Stream* client);
 
             bool read_start(std::function<void(const char* buf, ssize_t len)> callback);
 
@@ -44,7 +44,7 @@ namespace native
         // template body
 
         template<size_t max_alloc_size>
-        bool stream::read_start(std::function<void(const char* buf, ssize_t len)> callback)
+        bool Stream::read_start(std::function<void(const char* buf, ssize_t len)> callback)
         {
             callbacks::store(get()->data, native::internal::uv_cid_read_start, callback);
 

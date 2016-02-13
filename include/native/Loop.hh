@@ -1,7 +1,7 @@
 #ifndef __NATIVE_LOOP_HH__
 #define __NATIVE_LOOP_HH__
 
-#include "base.h"
+#include "base.hh"
 #include "error.h"
 #include "helper/trace.h"
 

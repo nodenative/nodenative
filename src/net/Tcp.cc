@@ -4,14 +4,14 @@ using namespace native;
 using namespace net;
 
 Tcp::Tcp() :
-    native::base::stream(new uv_tcp_t)
+    native::base::Stream(new uv_tcp_t)
 {
     Loop currLoop(true);
     uv_tcp_init(currLoop.get(), get<uv_tcp_t>());
 }
 
 Tcp::Tcp(native::Loop& l) :
-    native::base::stream(new uv_tcp_t)
+    native::base::Stream(new uv_tcp_t)
 {
     uv_tcp_init(l.get(), get<uv_tcp_t>());
 }

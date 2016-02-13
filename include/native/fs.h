@@ -1,7 +1,7 @@
 #ifndef __NATIVE_FS_H__
 #define __NATIVE_FS_H__
 
-#include "base.h"
+#include "base.hh"
 #include <functional>
 #include <algorithm>
 #include <fcntl.h>
