@@ -13,3 +13,6 @@
 [submodule "deps/concurrentqueue"]
 	path = deps/concurrentqueue
 	url = https://github.com/tojocky/concurrentqueue.git
+[submodule "deps/re2"]
+	path = deps/re2
+	url = https://github.com/google/re2.git
