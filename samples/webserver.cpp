@@ -52,7 +52,7 @@ namespace
 
     int run_server()
     {
-        std::shared_ptr<Server> server(new Server);
+        std::shared_ptr<Server> server = Server::Create();
         int port = 8080;
 
         std::vector<std::string>::iterator portVarItem(std::find(geArgList().begin(), geArgList().end(), "-p"));

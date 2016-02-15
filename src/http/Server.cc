@@ -1,7 +1,14 @@
 #include "native/http.h"
 
-using namespace native;
-using namespace http;
+namespace native {
+namespace http {
+
+std::shared_ptr<Server> Server::Create()
+{
+    std::shared_ptr<Server> instance(new Server());
+    instance->_instance = instance;
+    return instance;
+}
 
 Server::Server() : _socket(new native::net::Tcp)
 {
@@ -35,3 +42,6 @@ bool Server::listen(const std::string& ip, int port, std::function<void(request&
 
     return true;
 }
+
+} /* namespace http */
+} /* namespace native */
