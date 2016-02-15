@@ -1,7 +1,21 @@
 #include "native/net/Tcp.hh"
 
-using namespace native;
-using namespace net;
+namespace native {
+namespace net {
+
+std::shared_ptr<Tcp> Tcp::Create()
+{
+    std::shared_ptr<Tcp> instance(new Tcp);
+    instance->_instance = instance;
+    return instance;
+}
+
+std::shared_ptr<Tcp> Tcp::Create(native::Loop& iLoop)
+{
+    std::shared_ptr<Tcp> instance(new Tcp(iLoop));
+    instance->_instance = instance;
+    return instance;
+}
 
 Tcp::Tcp() :
     native::base::Stream(new uv_tcp_t)
@@ -14,11 +28,6 @@ Tcp::Tcp(native::Loop& l) :
     native::base::Stream(new uv_tcp_t)
 {
     uv_tcp_init(l.get(), get<uv_tcp_t>());
-}
-
-std::shared_ptr<Tcp> Tcp::Create()
-{
-    return std::shared_ptr<Tcp>(new Tcp);
 }
 
 // TODO: bind and listen
@@ -145,3 +154,6 @@ bool Tcp::getpeername(bool& ip4, std::string& ip, int& port)
     }
     return false;
 }
+
+} /* namespace native */
+} /* namespace net */

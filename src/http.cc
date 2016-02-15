@@ -242,7 +242,7 @@ bool http::request::get_header(const std::string& key, std::string& value) const
     return false;
 }
 
-http::client_context::client_context(native::net::Tcp* server):
+http::client_context::client_context(std::shared_ptr<native::net::Tcp> server):
     parser_(),
     parser_settings_(),
     was_header_value_(true),
@@ -257,7 +257,7 @@ http::client_context::client_context(native::net::Tcp* server):
     assert(server);
 
     // TODO: check error
-    socket_ = std::shared_ptr<native::net::Tcp> (new native::net::Tcp);
+    socket_ = std::shared_ptr<native::net::Tcp> (native::net::Tcp::Create());
     server->accept(socket_.get());
 }
 

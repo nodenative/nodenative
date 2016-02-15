@@ -112,7 +112,7 @@ namespace native
             friend class Server;
 
         private:
-            client_context(native::net::Tcp* server);
+            client_context(std::shared_ptr<native::net::Tcp> server);
 
         public:
             ~client_context();

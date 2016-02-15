@@ -13,16 +13,17 @@ class Server
 {
 protected:
     Server();
+    Server(Loop &iLoop);
 
 public:
     virtual ~Server();
 
-public:
     bool listen(const std::string& ip, int port, std::function<void(request&, response&)> callback);
 
     static std::shared_ptr<Server> Create();
+    static std::shared_ptr<Server> Create(Loop &iLoop);
 
-private:
+protected:
     std::shared_ptr<native::net::Tcp> _socket;
     std::weak_ptr<Server> _instance;
 };

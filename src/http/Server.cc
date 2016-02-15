@@ -1,16 +1,28 @@
 #include "native/http.h"
+#include "native/Loop.hh"
 
 namespace native {
 namespace http {
 
 std::shared_ptr<Server> Server::Create()
 {
-    std::shared_ptr<Server> instance(new Server());
+    std::shared_ptr<Server> instance(Server::Create());
     instance->_instance = instance;
     return instance;
 }
 
-Server::Server() : _socket(new native::net::Tcp)
+std::shared_ptr<Server> Server::Create(Loop &iLoop)
+{
+    std::shared_ptr<Server> instance(Server::Create(iLoop));
+    instance->_instance = instance;
+    return instance;
+}
+
+Server::Server(Loop &iLoop) : _socket(native::net::Tcp::Create(iLoop))
+{
+}
+
+Server::Server() : _socket(native::net::Tcp::Create())
 {
 }
 
@@ -35,7 +47,7 @@ bool Server::listen(const std::string& ip, int port, std::function<void(request&
         }
         else
         {
-            auto client = new client_context(_socket.get());
+            auto client = new client_context(_socket);
             client->parse(callback);
         }
     })) return false;
