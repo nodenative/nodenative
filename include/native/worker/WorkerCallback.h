@@ -30,7 +30,7 @@ public:
 
     virtual void setValueCb() = 0;
     virtual void setErrorCb(const FutureError&) = 0;
-    virtual std::shared_ptr<uv_loop_t> getLoop() = 0;
+    virtual std::shared_ptr<Loop> getLoop() = 0;
 };
 
 class WorkerCallbackBaseDetached : public WorkerBase {
@@ -66,10 +66,10 @@ public:
     typedef R ResultType;
 
     WorkerCallback() = delete;
-    WorkerCallback(std::shared_ptr<uv_loop_t> iLoop, std::function<R(Args...)> f, Args&&... args);
+    WorkerCallback(std::shared_ptr<Loop> iLoop, std::function<R(Args...)> f, Args&&... args);
 
     std::shared_ptr<FutureShared<R>> getFuture();
-    std::shared_ptr<uv_loop_t> getLoop() override;
+    std::shared_ptr<Loop> getLoop() override;
 };
 
 template<typename R, typename... Args>
@@ -88,10 +88,10 @@ public:
     typedef R ResultType;
 
     WorkerCallback() = delete;
-    WorkerCallback(std::shared_ptr<uv_loop_t> iLoop, std::function<Future<R>(Args...)> f, Args&&... args);
+    WorkerCallback(std::shared_ptr<Loop> iLoop, std::function<Future<R>(Args...)> f, Args&&... args);
 
     std::shared_ptr<FutureShared<R>> getFuture();
-    std::shared_ptr<uv_loop_t> getLoop() override;
+    std::shared_ptr<Loop> getLoop() override;
 };
 
 template<typename... Args>
@@ -110,10 +110,10 @@ public:
     typedef void ResultType;
 
     WorkerCallback() = delete;
-    WorkerCallback(std::shared_ptr<uv_loop_t> iLoop, std::function<Future<void>(Args...)> f, Args&&... args);
+    WorkerCallback(std::shared_ptr<Loop> iLoop, std::function<Future<void>(Args...)> f, Args&&... args);
 
     std::shared_ptr<FutureShared<void>> getFuture();
-    std::shared_ptr<uv_loop_t> getLoop() override;
+    std::shared_ptr<Loop> getLoop() override;
 };
 
 template<typename... Args>
@@ -132,10 +132,10 @@ public:
     typedef void ResultType;
 
     WorkerCallback() = delete;
-    WorkerCallback(std::shared_ptr<uv_loop_t> iLoop, std::function<void(Args...)> f, Args&&... args);
+    WorkerCallback(std::shared_ptr<Loop> iLoop, std::function<void(Args...)> f, Args&&... args);
 
     std::shared_ptr<FutureShared<void>> getFuture();
-    std::shared_ptr<uv_loop_t> getLoop() override;
+    std::shared_ptr<Loop> getLoop() override;
 };
 
 } /* namespace native */

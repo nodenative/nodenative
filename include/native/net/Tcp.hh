@@ -17,7 +17,7 @@ public:
     { }
 
     static std::shared_ptr<Tcp> Create();
-    static std::shared_ptr<Tcp> Create(native::Loop& l);
+    static std::shared_ptr<Tcp> Create(std::shared_ptr<native::Loop> iLoop);
 
     // TODO: bind and listen
     static std::shared_ptr<Tcp> CreateServer(const std::string& ip, int port);
@@ -51,7 +51,7 @@ public:
 
 protected:
     Tcp();
-    Tcp(native::Loop& l);
+    Tcp(std::shared_ptr<native::Loop> l);
 
     std::weak_ptr<Tcp> _instance;
 };

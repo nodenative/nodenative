@@ -3,14 +3,8 @@
 
 namespace native {
 
-WorkerBase::WorkerBase(Loop &iLoop) {
+WorkerBase::WorkerBase(std::shared_ptr<Loop> iLoop) : _loop(iLoop) {
     NNATIVE_FCALL();
-    _loop = iLoop.getShared();
-}
-
-WorkerBase::WorkerBase(std::shared_ptr<uv_loop_t> iLoop) {
-    NNATIVE_FCALL();
-    _loop = iLoop;
 }
 
 WorkerBase::~WorkerBase() {
@@ -24,7 +18,7 @@ void WorkerBase::enqueue() {
     _uvWork.data = this;
     NNATIVE_ASSERT(_loop);
 
-    if(uv_queue_work(_loop.get(), &_uvWork, &WorkerBase::Worker, &WorkerBase::WorkerAfter) != 0) {
+    if(uv_queue_work(_loop->get(), &_uvWork, &WorkerBase::Worker, &WorkerBase::WorkerAfter) != 0) {
         NNATIVE_DEBUG("Error in uv_queue_work");
         throw native::exception("uv_queue_work");
     }

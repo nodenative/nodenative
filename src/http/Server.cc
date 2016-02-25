@@ -6,19 +6,19 @@ namespace http {
 
 std::shared_ptr<Server> Server::Create()
 {
-    std::shared_ptr<Server> instance(Server::Create());
+    std::shared_ptr<Server> instance(new Server());
     instance->_instance = instance;
     return instance;
 }
 
-std::shared_ptr<Server> Server::Create(Loop &iLoop)
+std::shared_ptr<Server> Server::Create(std::shared_ptr<Loop> iLoop)
 {
-    std::shared_ptr<Server> instance(Server::Create(iLoop));
+    std::shared_ptr<Server> instance(new Server(iLoop));
     instance->_instance = instance;
     return instance;
 }
 
-Server::Server(Loop &iLoop) : _socket(native::net::Tcp::Create(iLoop))
+Server::Server(std::shared_ptr<Loop> iLoop) : _socket(native::net::Tcp::Create(iLoop))
 {
 }
 

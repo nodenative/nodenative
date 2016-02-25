@@ -8,7 +8,7 @@ TEST(AsyncTest, async)
     bool called = false;
     std::thread::id mainThreadId = std::this_thread::get_id();
 
-    native::Loop currLoop(true);
+    std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
     {
         native::async(currLoop, [&called, &mainThreadId](){
             called = true;
@@ -18,7 +18,7 @@ TEST(AsyncTest, async)
     }
     EXPECT_EQ(called, false);
 
-    currLoop.run();
+    currLoop->run();
 
     EXPECT_EQ(called, true);
 }
@@ -26,9 +26,10 @@ TEST(AsyncTest, async)
 TEST(AsyncTest, asyncDefaultLoop)
 {
     bool called = false;
+    std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
     std::thread::id mainThreadId = std::this_thread::get_id();
     {
-        native::async([&called, &mainThreadId](){
+        native::async(currLoop, [&called, &mainThreadId](){
             called = true;
             std::thread::id currThreadId = std::this_thread::get_id();
             EXPECT_EQ(mainThreadId, currThreadId);
@@ -45,7 +46,7 @@ TEST(AsyncTest, asyncWithParamaterRef)
 {
     bool called = false;
     std::thread::id mainThreadId = std::this_thread::get_id();
-    native::Loop currLoop(true);
+    std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
     {
         native::async(currLoop, [&mainThreadId](bool &iCalled){
             iCalled = true;
@@ -55,7 +56,7 @@ TEST(AsyncTest, asyncWithParamaterRef)
     }
     EXPECT_EQ(called, false);
 
-    currLoop.run();
+    currLoop->run();
 
     EXPECT_EQ(called, true);
 }
@@ -64,7 +65,7 @@ TEST(AsyncTest, asyncWithParamaterValue)
 {
     bool called = false, asyncCalled = false;
     std::thread::id mainThreadId = std::this_thread::get_id();
-    native::Loop currLoop(true);
+    std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
     {
         native::async(currLoop, [&asyncCalled, &mainThreadId](bool iCalled){
             iCalled = true;
@@ -76,7 +77,7 @@ TEST(AsyncTest, asyncWithParamaterValue)
     EXPECT_EQ(asyncCalled, false);
     EXPECT_EQ(called, false);
 
-    currLoop.run();
+    currLoop->run();
 
     EXPECT_EQ(asyncCalled, true);
     EXPECT_EQ(called, false);
@@ -86,7 +87,7 @@ TEST(AsyncTest, asyncWithReturnRef)
 {
     bool called = false;
     std::thread::id mainThreadId = std::this_thread::get_id();
-    native::Loop currLoop(true);
+    std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
     {
         native::async(currLoop, [&called, &mainThreadId]() -> bool&{
             return called;
@@ -100,7 +101,7 @@ TEST(AsyncTest, asyncWithReturnRef)
     }
     EXPECT_EQ(called, false);
 
-    currLoop.run();
+    currLoop->run();
 
     EXPECT_EQ(called, true);
 }
@@ -109,7 +110,7 @@ TEST(AsyncTest, asyncWithReturnValue)
 {
     bool called = false, asyncCalled = false;
     std::thread::id mainThreadId = std::this_thread::get_id();
-    native::Loop currLoop(true);
+    std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
     {
         native::async(currLoop, [&called, &mainThreadId]() -> bool {
             std::thread::id currThreadId = std::this_thread::get_id();
@@ -125,7 +126,7 @@ TEST(AsyncTest, asyncWithReturnValue)
     EXPECT_EQ(asyncCalled, false);
     EXPECT_EQ(called, false);
 
-    currLoop.run();
+    currLoop->run();
 
     EXPECT_EQ(asyncCalled, true);
     EXPECT_EQ(called, false);
@@ -136,7 +137,7 @@ TEST(AsyncTest, asyncMultipThenValueOrder)
     std::string order;
     std::thread::id mainThreadId = std::this_thread::get_id();
 
-    native::Loop currLoop(true);
+    std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
     {
         auto async1 = native::async(currLoop, [&order, &mainThreadId]() {
             order += "1";
@@ -168,7 +169,7 @@ TEST(AsyncTest, asyncMultipThenValueOrder)
     std::string expectedorder;
     EXPECT_EQ(order, expectedorder);
 
-    currLoop.run();
+    currLoop->run();
 
     // Maybe this is an issue, for non async callback first are resolved dependences callbacks
     // An solution would be each callback from "then" to call async, this may resolve the issue
@@ -184,7 +185,8 @@ TEST(AsyncTest, asyncError)
     const std::string errorText("TestError");
     std::thread::id mainThreadId = std::this_thread::get_id();
 
-    native::Loop currLoop(true);
+    std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
+
     {
         native::async(currLoop, [&errorText, &mainThreadId]() {
             std::thread::id currThreadId = std::this_thread::get_id();
@@ -212,7 +214,7 @@ TEST(AsyncTest, asyncError)
     EXPECT_EQ(thenProcessed, false);
     EXPECT_EQ(afterErrorProcessed, false);
 
-    currLoop.run();
+    currLoop->run();
 
     EXPECT_EQ(exceptionReceived, true);
     EXPECT_EQ(thenProcessed, false);

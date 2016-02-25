@@ -11,7 +11,7 @@ namespace native {
 
 class WorkerBase {
     std::shared_ptr<WorkerBase> _self;
-    std::shared_ptr<uv_loop_t> _loop;
+    std::shared_ptr<Loop> _loop;
 
     // This method will be called from uv
     static void Worker(uv_work_t* iHandle);
@@ -27,8 +27,7 @@ protected:
     virtual void closeWorker(std::unique_ptr<WorkerBase>) {}
     void enqueue();
     WorkerBase() = delete;
-    WorkerBase(Loop &iLoop);
-    WorkerBase(std::shared_ptr<uv_loop_t> iLoop);
+    WorkerBase(std::shared_ptr<Loop> iLoop);
 public:
     template<class Child, typename... Args>
     static Child* Create(Loop& iLoop, Args&&... args);

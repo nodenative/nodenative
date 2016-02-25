@@ -10,7 +10,7 @@ class Promise {
     Future<R> _future;
 public:
     Promise() = delete;
-    Promise(Loop& iLoop) : _future(iLoop) {};
+    Promise(std::shared_ptr<Loop> iLoop) : _future(iLoop) {};
 
     void setValue(R iVal) {
         _future.setValue(std::forward<R>(iVal));
@@ -28,7 +28,7 @@ class Promise<void> {
     Future<void> _future;
 public:
     Promise() = delete;
-    Promise(Loop& iLoop) : _future(iLoop) {};
+    Promise(std::shared_ptr<Loop> iLoop) : _future(iLoop) {};
 
     void setValue() {
         _future.setValue();

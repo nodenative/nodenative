@@ -22,10 +22,14 @@
     NNATIVE_INFO(msg);\
     throw std::runtime_error(ss.str());\
 }
+
+#define NNATIVE_CHECK_LOOP_THREAD(iLoop) NNATIVE_ASSERT_MSG(iLoop && !iLoop->isNotOnEventLoopThread(), "Not on the event Loop thread")
+
 #else /* NNATIVE_NO_ASSERT */
 
 #define NNATIVE_ASSERT(condition)
 #define NNATIVE_ASSERT_MSG(condition, msg)
+#define NNATIVE_CHECK_LOOP_THREAD(iLoop)
 
 #endif /* NNATIVE_NO_ASSERT */
 

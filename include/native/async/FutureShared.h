@@ -16,15 +16,14 @@ template<class R>
 class FutureShared {
 private:
     std::weak_ptr<FutureShared<R>> _instance;
-    std::shared_ptr<uv_loop_t> _loop;
+    std::shared_ptr<Loop> _loop;
     bool _satisfied;
     bool _isError;
     FutureError _error;
     std::vector<std::shared_ptr<ActionCallbackBase<R>>> _actions;
     helper::optional<R> _value;
 
-    FutureShared(Loop &iLoop) : _loop(iLoop.getShared()), _satisfied(false), _isError(false), _error("") {}
-    FutureShared(std::shared_ptr<uv_loop_t> iLoop) : _loop(iLoop), _satisfied(false), _isError(false), _error("") {}
+    FutureShared(std::shared_ptr<Loop> iLoop) : _loop(iLoop), _satisfied(false), _isError(false), _error("") {}
 
 public:
     typedef R result_type;
@@ -32,15 +31,14 @@ public:
     FutureShared() = delete;
     FutureShared(const FutureShared<R>&) = delete;
 
-    static std::shared_ptr<FutureShared<R>> Create(Loop &iLoop);
-    static std::shared_ptr<FutureShared<R>> Create(std::shared_ptr<uv_loop_t> iLoop);
+    static std::shared_ptr<FutureShared<R>> Create(std::shared_ptr<Loop> iLoop);
 
     void setValue(R iVal);
     void setError(const FutureError& iError);
     void setInstance(std::shared_ptr<FutureShared<R>> iInstance);
 
 
-    std::shared_ptr<uv_loop_t> getLoop() { return _loop; }
+    std::shared_ptr<Loop> getLoop() { return _loop; }
 
     template<class F, typename... Args>
     std::shared_ptr<FutureShared<typename ActionCallbackP1<typename std::result_of<F(R, Args...)>::type, R, Args...>::ResultType>>
@@ -55,28 +53,26 @@ template<>
 class FutureShared<void> {
 private:
     std::weak_ptr<FutureShared<void>> _instance;
-    std::shared_ptr<uv_loop_t> _loop;
+    std::shared_ptr<Loop> _loop;
     bool _satisfied;
     bool _isError;
     FutureError _error;
     std::vector<std::shared_ptr<ActionCallbackBase<void>>> _actions;
 
-    FutureShared(Loop &iLoop) : _loop(iLoop.getShared()), _satisfied(false), _isError(false), _error("") {}
-    FutureShared(std::shared_ptr<uv_loop_t> iLoop) : _loop(iLoop), _satisfied(false), _isError(false), _error("") {}
+    FutureShared(std::shared_ptr<Loop> iLoop) : _loop(iLoop), _satisfied(false), _isError(false), _error("") {}
 public:
     typedef void result_type;
 
     FutureShared() = delete;
     FutureShared(const FutureShared<void>&) = delete;
 
-    static std::shared_ptr<FutureShared<void>> Create(Loop &iLoop);
-    static std::shared_ptr<FutureShared<void>> Create(std::shared_ptr<uv_loop_t> iLoop);
+    static std::shared_ptr<FutureShared<void>> Create(std::shared_ptr<Loop> iLoop);
 
     void setValue();
     void setError(const FutureError& iError);
     void setInstance(std::shared_ptr<FutureShared<void>> iInstance);
 
-    std::shared_ptr<uv_loop_t> getLoop() { return _loop; }
+    std::shared_ptr<Loop> getLoop() { return _loop; }
 
     template<class F, typename... Args>
     std::shared_ptr<FutureShared<typename ActionCallback<typename std::result_of<F(Args...)>::type, Args...>::ResultType>>

@@ -8,7 +8,7 @@
 namespace native {
 
 template<typename R, typename... Args>
-WorkerCallback<R, Args...>::WorkerCallback(std::shared_ptr<uv_loop_t> iLoop, std::function<R(Args...)> f, Args&&... args) :
+WorkerCallback<R, Args...>::WorkerCallback(std::shared_ptr<Loop> iLoop, std::function<R(Args...)> f, Args&&... args) :
          _f(f),
          _args(std::forward<Args>(args)...),
          _future(FutureShared<R>::Create(iLoop))
@@ -16,7 +16,7 @@ WorkerCallback<R, Args...>::WorkerCallback(std::shared_ptr<uv_loop_t> iLoop, std
 }
 
 template<typename R, typename... Args>
-WorkerCallback<Future<R>, Args...>::WorkerCallback(std::shared_ptr<uv_loop_t> iLoop, std::function<Future<R>(Args...)> f, Args&&... args) :
+WorkerCallback<Future<R>, Args...>::WorkerCallback(std::shared_ptr<Loop> iLoop, std::function<Future<R>(Args...)> f, Args&&... args) :
          _f(f),
          _args(std::forward<Args>(args)...),
          _future(FutureShared<R>::Create(iLoop))
@@ -24,7 +24,7 @@ WorkerCallback<Future<R>, Args...>::WorkerCallback(std::shared_ptr<uv_loop_t> iL
 }
 
 template<typename... Args>
-WorkerCallback<Future<void>, Args...>::WorkerCallback(std::shared_ptr<uv_loop_t> iLoop, std::function<Future<void>(Args...)> f, Args&&... args) :
+WorkerCallback<Future<void>, Args...>::WorkerCallback(std::shared_ptr<Loop> iLoop, std::function<Future<void>(Args...)> f, Args&&... args) :
          _f(f),
          _args(std::forward<Args>(args)...),
          _future(FutureShared<void>::Create(iLoop))
@@ -32,7 +32,7 @@ WorkerCallback<Future<void>, Args...>::WorkerCallback(std::shared_ptr<uv_loop_t>
 }
 
 template<typename... Args>
-WorkerCallback<void, Args...>::WorkerCallback(std::shared_ptr<uv_loop_t> iLoop, std::function<void(Args...)> f, Args&&... args) :
+WorkerCallback<void, Args...>::WorkerCallback(std::shared_ptr<Loop> iLoop, std::function<void(Args...)> f, Args&&... args) :
          _f(f),
          _args(std::forward<Args>(args)...),
          _future(FutureShared<void>::Create(iLoop))
@@ -64,39 +64,38 @@ std::shared_ptr<FutureShared<void>> WorkerCallback<void, Args...>::getFuture() {
 }
 
 template<typename R, typename... Args>
-std::shared_ptr<uv_loop_t> WorkerCallback<R, Args...>::getLoop() {
+std::shared_ptr<Loop> WorkerCallback<R, Args...>::getLoop() {
     return this->getFuture()->getLoop();
 }
 
 template<typename R, typename... Args>
-std::shared_ptr<uv_loop_t> WorkerCallback<Future<R>, Args...>::getLoop() {
+std::shared_ptr<Loop> WorkerCallback<Future<R>, Args...>::getLoop() {
     return this->getFuture()->getLoop();
 }
 
 template<typename... Args>
-std::shared_ptr<uv_loop_t> WorkerCallback<Future<void>, Args...>::getLoop() {
+std::shared_ptr<Loop> WorkerCallback<Future<void>, Args...>::getLoop() {
     return this->getFuture()->getLoop();
 }
 
 template<typename... Args>
-std::shared_ptr<uv_loop_t> WorkerCallback<void, Args...>::getLoop() {
+std::shared_ptr<Loop> WorkerCallback<void, Args...>::getLoop() {
     return this->getFuture()->getLoop();
 }
 
 template<typename R, typename... Args>
 template<std::size_t... Is>
 void WorkerCallback<R, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
-    Loop currloop(this->_future->getLoop());
     NNATIVE_ASSERT(!this->_instance.expired());
     std::shared_ptr<WorkerCallbackBase> iInstance = this->_instance.lock();
 
     try {
-        async(currloop, [iInstance](R&& r){
+        async(this->_future->getLoop(), [iInstance](R&& r){
             WorkerCallback<R, Args...> *currPtr = static_cast<WorkerCallback<R, Args...>*>(iInstance.get());
             currPtr->getFuture()->setValue(std::forward<R>(r));
         }, std::forward<R>(this->_f(std::get<Is>(this->_args)...)));
     } catch (const FutureError &e) {
-        async(currloop, [iInstance, e](){
+        async(this->_future->getLoop(), [iInstance, e](){
             WorkerCallback<R, Args...> *currPtr = static_cast<WorkerCallback<R, Args...>*>(iInstance.get());
             currPtr->getFuture()->setError(e);
         });
@@ -119,8 +118,7 @@ void WorkerCallback<Future<R>, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
                 currPtr->getFuture()->setError(iError);
             });
     } catch (const FutureError &e) {
-        Loop currloop(this->_future->getLoop());
-        async(currloop, [iInstance](FutureError iError){
+        async(this->_future->getLoop(), [iInstance](FutureError iError){
             WorkerCallback<Future<R>, Args...> *currPtr = static_cast<WorkerCallback<Future<R>, Args...>*>(iInstance.get());
             currPtr->getFuture()->setError(iError);
         }, e);
@@ -143,8 +141,7 @@ void WorkerCallback<Future<void>, Args...>::callFn(helper::TemplateSeqInd<Is...>
                 currPtr->getFuture()->setError(iError);
             });
     } catch (const FutureError &e) {
-        Loop currloop(this->_future->getLoop());
-        async(currloop, [iInstance](FutureError iError){
+        async(this->_future->getLoop(), [iInstance](FutureError iError){
             WorkerCallback<Future<void>, Args...> *currPtr = static_cast<WorkerCallback<Future<void>, Args...>*>(iInstance.get());
             currPtr->getFuture()->setError(iError);
         }, e);
@@ -154,19 +151,18 @@ void WorkerCallback<Future<void>, Args...>::callFn(helper::TemplateSeqInd<Is...>
 template<typename... Args>
 template<std::size_t... Is>
 void WorkerCallback<void, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
-    Loop currloop(this->_future->getLoop());
     NNATIVE_ASSERT(!this->_instance.expired());
     std::shared_ptr<WorkerCallbackBase> iInstance = this->_instance.lock();
 
     try {
         this->_f(std::get<Is>(this->_args)...);
 
-        async(currloop, [iInstance](){
+        async(this->_future->getLoop(), [iInstance](){
             WorkerCallback<void, Args...> *currPtr = static_cast<WorkerCallback<void, Args...>*>(iInstance.get());
             currPtr->getFuture()->setValue();
         });
     } catch (const FutureError &e) {
-        async(currloop, [iInstance, e](){
+        async(this->_future->getLoop(), [iInstance, e](){
             WorkerCallback<void, Args...> *currPtr = static_cast<WorkerCallback<void, Args...>*>(iInstance.get());
             currPtr->getFuture()->setError(e);
         });

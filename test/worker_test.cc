@@ -7,7 +7,7 @@ TEST(WorkerTest, simple)
 {
     bool called = false;
     bool called2 = false;
-    native::Loop currLoop(true);
+    std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
     std::thread::id mainThreadId = std::this_thread::get_id();
     {
         native::worker(currLoop, [&called, &mainThreadId](){
@@ -24,7 +24,7 @@ TEST(WorkerTest, simple)
 
     // At this point the worker callback may be called already
 
-    currLoop.run();
+    currLoop->run();
 
     EXPECT_EQ(called, true);
     EXPECT_EQ(called2, true);
@@ -61,7 +61,7 @@ TEST(WorkerTest, ReturnValue)
     bool called = false;
     bool called2 = false;
     int expectedValue = 1;
-    native::Loop currLoop(true);
+    std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
     std::thread::id mainThreadId = std::this_thread::get_id();
     {
         native::worker(currLoop, [&called, &mainThreadId, &expectedValue]() -> int {
@@ -81,7 +81,7 @@ TEST(WorkerTest, ReturnValue)
 
     // At this point the worker callback may be called already
 
-    currLoop.run();
+    currLoop->run();
 
     EXPECT_EQ(called, true);
     EXPECT_EQ(called2, true);
@@ -92,7 +92,7 @@ TEST(WorkerTest, ReturnValueRef)
     bool called = false;
     bool called2 = false;
     int expectedValue = 1;
-    native::Loop currLoop(true);
+    std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
     std::thread::id mainThreadId = std::this_thread::get_id();
     {
         native::worker(currLoop, [&called, &mainThreadId, &expectedValue]() -> int& {
@@ -112,7 +112,7 @@ TEST(WorkerTest, ReturnValueRef)
 
     // At this point the worker callback may be called already
 
-    currLoop.run();
+    currLoop->run();
 
     EXPECT_EQ(called, true);
     EXPECT_EQ(called2, true);
@@ -123,7 +123,7 @@ TEST(WorkerTest, ReturnFutureVoid)
     bool called = false;
     bool called2 = false;
     bool called3 = false;
-    native::Loop currLoop(true);
+    std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
     std::thread::id mainThreadId = std::this_thread::get_id();
     {
         native::worker(currLoop, [&called, &called3, &mainThreadId]() -> native::Future<void> {
@@ -153,7 +153,7 @@ TEST(WorkerTest, ReturnFutureVoid)
 
     // At this point the worker callback may be called already
 
-    currLoop.run();
+    currLoop->run();
 
     EXPECT_EQ(called, true);
     EXPECT_EQ(called2, true);
@@ -166,7 +166,7 @@ TEST(WorkerTest, ReturnFutureValue)
     bool called2 = false;
     bool called3 = false;
     int expectedValue = 1;
-    native::Loop currLoop(true);
+    std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
     std::thread::id mainThreadId = std::this_thread::get_id();
     {
         native::worker(currLoop, [&called, &called3, &expectedValue, &mainThreadId]() -> native::Future<int> {
@@ -193,7 +193,7 @@ TEST(WorkerTest, ReturnFutureValue)
 
     // At this point the worker callback may be called already
 
-    currLoop.run();
+    currLoop->run();
 
     EXPECT_EQ(called, true);
     // TODO: Finish the possibility to call the waiter after the future object is resolved
@@ -209,7 +209,7 @@ TEST(WorkerTest, ReturnFutureVoidError)
     bool called4 = false;
     native::FutureError expectedError("ErrorTest1");
 
-    native::Loop currLoop(true);
+    std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
     std::thread::id mainThreadId = std::this_thread::get_id();
     {
         native::worker(currLoop, [&called, &called3, &mainThreadId, &expectedError]() -> native::Future<void> {
@@ -244,7 +244,7 @@ TEST(WorkerTest, ReturnFutureVoidError)
 
     // At this point the worker callback may be called already
 
-    currLoop.run();
+    currLoop->run();
 
     EXPECT_EQ(called, true);
     EXPECT_EQ(called2, false);

@@ -5,101 +5,134 @@
 #include "error.h"
 #include "helper/trace.h"
 
-namespace native
-{
-    class AsyncBase;
-    /**
-     *  Class that represents the Loop instance.
-     */
-    class Loop
-    {
+#include <thread>
+
+namespace native {
+
+class AsyncBase;
+/**
+ *  Class that represents the Loop instance.
+ */
+class Loop {
+protected:
+
+    class HandleDeleter {
     public:
-        /**
-         *  Default constructor
-         *  @param use_default indicates whether to use default Loop or create a new Loop.
-         */
-        Loop(bool use_default);
-        Loop() : Loop(false) { NNATIVE_MCALL(); };
-
-        Loop(std::shared_ptr<uv_loop_t> iLoop) : _uv_loop(iLoop) {}
-
-        /**
-         *  Destructor
-         */
-        ~Loop();
-
-        /**
-         *  Returns internal handle for libuv functions.
-         */
-        uv_loop_t* get() { return _uv_loop.get(); }
-
-        std::shared_ptr<uv_loop_t> getShared() { return _uv_loop; }
-
-        /**
-         *  Runs the event Loop until the reference count drops to zero. Always returns zero.
-         *  Internally, this function just calls uv_run() function.
-         */
-        bool run();
-
-        /**
-         *  Poll for new events once. Note that this function blocks if there are no pending events. Returns true when done (no active handles
-         *  or requests left), or non-zero if more events are expected (meaning you
-         *  should run the event Loop again sometime in the future).
-         *  Internally, this function just calls uv_run_once() function.
-         */
-        bool run_once();
-
-        /**
-         *  Poll for new events once but don't block if there are no pending events.
-         *  Internally, this function just calls uv_run_once() function.
-         */
-        bool run_nowait();
-
-        /**
-         *  ...
-         *  Internally, this function just calls uv_update_time() function.
-         */
-        void update_time();
-
-        /**
-         *  ...
-         *  Internally, this function just calls uv_now() function.
-         */
-        int64_t now();
-    protected:
-
+        HandleDeleter() : _default(false) {}
+        HandleDeleter(const bool iDefault) : _default(iDefault) {}
+        void operator ()(uv_loop_t* iLoop);
     private:
-        Loop(const Loop&);
-        void operator =(const Loop&);
-
-    private:
-        std::shared_ptr<uv_loop_t> _uv_loop;
+        bool _default;
     };
 
     /**
-     *  Starts the default Loop.
+     *  Default constructor
+     *  @param use_default indicates whether to use default Loop or create a new Loop.
      */
-    bool run();
+    Loop(bool use_default);
+    Loop() : Loop(false) { NNATIVE_MCALL(); };
+
+public:
+    Loop(const Loop&) = delete;
+    void operator =(const Loop&) = delete;
+
+    /** Create Loop instance.
+     * @param iDefault True if the default loop should be used
+     * @return A loop instance
+     */
+    static std::shared_ptr<Loop> Create(const bool iDefault = false);
+
+    /** Get current event loop from current thread if any.
+     * @return The event loop instance from the current thread if exists.
+     */
+    static std::shared_ptr<Loop> GetInstance();
+
+    static std::shared_ptr<Loop> GetInstanceOrCreateDefault();
+
+    /** Get event loop instance from thread id.
+     * @return The loop instance from the specified instance if exists.
+     */
+    static std::shared_ptr<Loop> GetInstance(const std::thread::id &iThreadId);
 
     /**
-     *  Polls for new events once for the default Loop.
-     *  Note that this function blocks if there are no pending events. Returns true when done (no active handles
-     *  or requests left), or non-zero if more events are expected (meaning you
-     *  should run the event Loop again sometime in the future).
+     *  Destructor
      */
-    bool run_once();
+    ~Loop();
 
     /**
-     *  Polls for new events once but don't block if there are no pending events for the default Loop.
+     *  Returns internal handle for libuv functions.
      */
-    bool run_nowait();
+    uv_loop_t* get() { return _uv_loop.get(); }
+
+    std::shared_ptr<Loop> getInstance() { return _instance.lock(); }
 
     /**
      * Returns true if the current thread is the same as event Loop thread;
      */
-    bool isOnEventloopThread(std::shared_ptr<uv_loop_t> iloop);
+    bool isNotOnEventLoopThread() const;
 
-}
+    bool started() const { return _started; }
+
+    const std::thread::id& getThreadId() const { return _threadId; }
+
+    /**
+     *  Runs the event Loop until the reference count drops to zero. Always returns zero.
+     *  Internally, this function just calls uv_run() function.
+     */
+    bool run();
+
+    /**
+     *  Poll for new events once. Note that this function blocks if there are no pending events. Returns true when done (no active handles
+     *  or requests left), or non-zero if more events are expected (meaning you
+     *  should run the event Loop again sometime in the future).
+     *  Internally, this function just calls uv_run_once() function.
+     */
+    bool run_once();
+
+    /**
+     *  Poll for new events once but don't block if there are no pending events.
+     *  Internally, this function just calls uv_run_once() function.
+     */
+    bool run_nowait();
+
+    /**
+     *  ...
+     *  Internally, this function just calls uv_update_time() function.
+     */
+    void update_time();
+
+    /**
+     *  ...
+     *  Internally, this function just calls uv_now() function.
+     */
+    int64_t now();
+
+private:
+    std::unique_ptr<uv_loop_t, HandleDeleter> _uv_loop;
+    std::weak_ptr<Loop> _instance;
+    bool _started;
+    std::thread::id _threadId;
+};
+
+/**
+ *  Starts the default Loop.
+ */
+bool run();
+
+/**
+ *  Polls for new events once for the default Loop.
+ *  Note that this function blocks if there are no pending events. Returns true when done (no active handles
+ *  or requests left), or non-zero if more events are expected (meaning you
+ *  should run the event Loop again sometime in the future).
+ */
+bool run_once();
+
+/**
+ *  Polls for new events once but don't block if there are no pending events for the default Loop.
+ */
+bool run_nowait();
+
+} /* namespace native */
 
 
 #endif

@@ -4,7 +4,7 @@
 #include <thread>
 
 TEST(FutureThenTest, SetValueOnDifferentThread) {
-    native::Loop currLoop(true);
+    std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
     native::Promise<void> promise(currLoop);
 
     bool calledOtherThread = false;
@@ -42,7 +42,7 @@ TEST(FutureThenTest, SetValueOnDifferentThread) {
     EXPECT_EQ(promiseResolved, false);
     EXPECT_EQ(calledPromise, false);
 
-    currLoop.run();
+    currLoop->run();
 
     EXPECT_EQ(calledOtherThread, true);
     EXPECT_EQ(promiseResolved, true);
@@ -53,7 +53,7 @@ TEST(FutureThenTest, order)
 {
     std::string order;
     std::string expectedOrder;
-    native::Loop currLoop(true);
+    std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
     std::thread::id mainThreadId = std::this_thread::get_id();
     //{
         native::Promise<void> p(currLoop);
@@ -109,7 +109,7 @@ TEST(FutureThenTest, order)
 
     EXPECT_EQ(expectedOrder, order);
 
-    currLoop.run();
+    currLoop->run();
 
     expectedOrder = "1,2,21,22,23,3,4";
     EXPECT_EQ(expectedOrder, order);
@@ -120,7 +120,7 @@ TEST(FutureThenTest, ReturnFuture)
     bool called_p1 = false;
     bool called_p2 = false;
     bool called_p1_after = false;
-    native::Loop currLoop(true);
+    std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
     std::thread::id mainThreadId = std::this_thread::get_id();
     {
         native::Promise<void> promise(currLoop);
@@ -159,7 +159,7 @@ TEST(FutureThenTest, ReturnFuture)
     EXPECT_EQ(called_p2, false);
     EXPECT_EQ(called_p1_after, false);
 
-    currLoop.run();
+    currLoop->run();
 
     EXPECT_EQ(called_p1, true);
     EXPECT_EQ(called_p2, true);
@@ -171,7 +171,7 @@ TEST(FutureThenTest, ReturnFutureWithValue)
     bool called_p1 = false;
     bool called_p2 = false;
     bool called_p1_after = false;
-    native::Loop currLoop(true);
+    std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
     std::thread::id mainThreadId = std::this_thread::get_id();
     {
         native::Promise<void> promise(currLoop);
@@ -212,7 +212,7 @@ TEST(FutureThenTest, ReturnFutureWithValue)
     EXPECT_EQ(called_p2, false);
     EXPECT_EQ(called_p1_after, false);
 
-    currLoop.run();
+    currLoop->run();
 
     EXPECT_EQ(called_p1, true);
     EXPECT_EQ(called_p2, true);
@@ -226,7 +226,7 @@ TEST(FutureThenTest, ValueParamReturnFutureWithValue)
     bool called_p2 = false;
     bool called_p1_after = false;
     double expectedValue(1.0);
-    native::Loop currLoop(true);
+    std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
     std::thread::id mainThreadId = std::this_thread::get_id();
     {
         native::Promise<double> promise(currLoop);
@@ -268,7 +268,7 @@ TEST(FutureThenTest, ValueParamReturnFutureWithValue)
     EXPECT_EQ(called_p2, false);
     EXPECT_EQ(called_p1_after, false);
 
-    currLoop.run();
+    currLoop->run();
 
     EXPECT_EQ(called_p1, true);
     EXPECT_EQ(called_p2, true);

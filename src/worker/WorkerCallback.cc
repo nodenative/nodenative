@@ -18,7 +18,6 @@ void WorkerCallbackBaseDetached::executeWorker() {
 
 void WorkerCallbackBaseDetached::executeWorkerAfter(int iStatus) {
     NNATIVE_FCALL();
-    // TODO: Handle the status
     NNATIVE_ASSERT(iStatus==0);
 }
 

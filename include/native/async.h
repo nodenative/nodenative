@@ -13,7 +13,7 @@
 
 namespace native {
 
-/** Enqueue in the default event Loop a function callback.
+/** Enqueue in the current event Loop a function callback.
  *
  * The return callback may accept value or reference parameters
  * The function callback may return a void value, copied value, reference value or Future value.
@@ -21,14 +21,14 @@ namespace native {
  * @Params Args... arguments of the function object
  * @return future object of the callback return, to access the value it can be only accessed via .then method of the function object
  * @note The function object may be copied, internally, the shared area will not be copied.
- *
  */
 template<class F, class... Args>
 Future<typename ActionCallback<typename std::result_of<F(Args...)>::type, Args...>::ResultType>
 async(F&& f, Args&&... args) {
     NNATIVE_FCALL();
-    Loop default_loop(true);
-    return async<F, Args...>(default_loop, std::forward<F>(f), std::forward<Args>(args)...);
+    std::shared_ptr<Loop> currentLoop = Loop::GetInstanceOrCreateDefault();
+
+    return async<F, Args...>(currentLoop, std::forward<F>(f), std::forward<Args>(args)...);
 }
 
 /** Enqueue in the specified event Loop a function callback.
@@ -43,10 +43,11 @@ async(F&& f, Args&&... args) {
  */
 template<class F, class... Args>
 Future<typename ActionCallback<typename std::result_of<F(Args...)>::type, Args...>::ResultType>
-async(Loop &iLoop, F&& f, Args&&... args) {
+async(std::shared_ptr<Loop> iLoop, F&& f, Args&&... args) {
     NNATIVE_FCALL();
+    NNATIVE_ASSERT(iLoop);
     using return_type = typename std::result_of<F(Args...)>::type;
-    std::shared_ptr<ActionCallback<return_type, Args...>> action(new ActionCallback<return_type, Args...>(iLoop.getShared(), std::forward<F>(f), std::forward<Args>(args)...));
+    std::shared_ptr<ActionCallback<return_type, Args...>> action(new ActionCallback<return_type, Args...>(iLoop, std::forward<F>(f), std::forward<Args>(args)...));
     action->SetValue(action);
     return Future<typename ActionCallback<typename std::result_of<F(Args...)>::type, Args...>::ResultType>(action->getFuture());
 }

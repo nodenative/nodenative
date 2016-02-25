@@ -6,69 +6,105 @@
 #include <thread>
 
 namespace {
-    typedef std::map<uv_loop_t*, std::thread::id> LoopMapType;
-    LoopMapType _loopMap;
 
-    void deregisterLoop(uv_loop_t *iLoopPtr) {
-        for(LoopMapType::iterator it = _loopMap.begin(); it != _loopMap.end(); ++it) {
-            if(it->first == iLoopPtr) {
-                _loopMap.erase(it);
-                return;
-            }
+typedef std::map<std::thread::id, std::weak_ptr<native::Loop>> LoopMapType;
+LoopMapType _loopMap;
+
+bool deregisterLoop(native::Loop *iLoopPtr) {
+    for(LoopMapType::iterator it = _loopMap.begin(); it != _loopMap.end(); ++it) {
+        if(!it->second.expired() && it->second.lock().get() == iLoopPtr) {
+            _loopMap.erase(it);
+            return true;
         }
     }
 
-    void registerLoop(std::shared_ptr<uv_loop_t> iLoop) {
-        deregisterLoop(iLoop.get());
-        _loopMap[iLoop.get()] = std::this_thread::get_id();
-    }
+    return false;
 }
+
+void registerLoop(std::shared_ptr<native::Loop> iLoop) {
+    deregisterLoop(iLoop.get());
+    _loopMap[std::this_thread::get_id()] = iLoop;
+}
+
+} /* namespace */
 
 namespace native {
 
-bool isOnEventloopThread(std::shared_ptr<uv_loop_t> iLoop) {
-    LoopMapType::iterator it = _loopMap.find(iLoop.get());
-    return ((it == _loopMap.end()) || (it->second == std::this_thread::get_id()));
+void Loop::HandleDeleter::operator()(uv_loop_t* iLoop) {
+    NNATIVE_DEBUG("destroying Loop.." << iLoop << ", default: " << _default);
+    int res = 1;
+    do {
+        res = uv_loop_close(iLoop);
+    } while (res != 0);
+
+    if(!_default) {
+        delete iLoop;
+    }
 }
 
-Loop::Loop(bool use_default) {
+std::shared_ptr<Loop> Loop::Create(bool iDefault) {
+    NNATIVE_FCALL();
+    static std::weak_ptr<Loop> savedPtr;
+
+    if(iDefault && !savedPtr.expired()) {
+        return savedPtr.lock();
+    }
+
+    std::shared_ptr<Loop> instance(new Loop(iDefault));
+    instance->_instance = instance;
+
+    if(iDefault) {
+        savedPtr = instance;
+    }
+
+    // Register loop in the current thread
+    registerLoop(instance);
+
+    return instance;
+}
+
+std::shared_ptr<Loop> Loop::GetInstance() {
+    NNATIVE_FCALL();
+    return Loop::GetInstance(std::this_thread::get_id());
+}
+
+std::shared_ptr<Loop> Loop::GetInstanceOrCreateDefault() {
+    NNATIVE_FCALL();
+    std::shared_ptr<Loop> currLoop = Loop::GetInstance(std::this_thread::get_id());
+
+    if(!currLoop) {
+        currLoop = Loop::Create(true);
+    }
+
+    return currLoop;
+}
+
+std::shared_ptr<Loop> Loop::GetInstance(const std::thread::id &iThreadId) {
+    NNATIVE_FCALL();
+    LoopMapType::iterator it = _loopMap.find(iThreadId);
+    if(it != _loopMap.end() && !it->second.expired()) {
+        return it->second.lock();
+    }
+    return std::shared_ptr<Loop>();
+}
+
+bool Loop::isNotOnEventLoopThread() const {
+    return (this->started() && (this->getThreadId() != std::this_thread::get_id()));
+}
+
+Loop::Loop(bool use_default) : _started(false) {
     NNATIVE_FCALL();
     if(use_default) {
-        static std::weak_ptr<uv_loop_t> savedPtr;
-
-        if(!savedPtr.expired()) {
-            _uv_loop = savedPtr.lock();
-            return;
-        }
-
         // don't delete the default Loop
-        _uv_loop = std::shared_ptr<uv_loop_t>(uv_default_loop(), [](uv_loop_t* iLoop){
-                NNATIVE_DEBUG("destroying default Loop...");
-                deregisterLoop(iLoop);
-                int res = 1;
-                do {
-                    res = uv_loop_close(iLoop);
-                } while (res != 0);
-            });
+        _uv_loop = std::unique_ptr<uv_loop_t, HandleDeleter>(uv_default_loop(), HandleDeleter(true));
 
         if(0 != uv_loop_init(_uv_loop.get())) {
             NNATIVE_DEBUG("error to init Loop " << (_uv_loop.get()));
-            _uv_loop.reset();
         }
-
-        savedPtr = _uv_loop;
     } else {
         std::unique_ptr<uv_loop_t> loopInstance(new uv_loop_t);
         if(0 == uv_loop_init(loopInstance.get())) {
-            _uv_loop = std::shared_ptr<uv_loop_t>(loopInstance.release(), [](uv_loop_t* iLoop){
-                    NNATIVE_DEBUG("destroying specified Loop..");
-                    deregisterLoop(iLoop);
-                    int res = 1;
-                    do {
-                        res = uv_loop_close(iLoop);
-                    } while (res != 0);
-                    delete iLoop;
-                });
+            _uv_loop = std::unique_ptr<uv_loop_t, HandleDeleter>(loopInstance.release(), HandleDeleter());
         }
     }
 }
@@ -76,26 +112,39 @@ Loop::Loop(bool use_default) {
 Loop::~Loop()
 {
     NNATIVE_FCALL();
+    deregisterLoop(this);
 }
 
 bool Loop::run() {
     NNATIVE_FCALL();
     NNATIVE_ASSERT(_uv_loop);
-    registerLoop(_uv_loop);
-    return (uv_run(_uv_loop.get(), UV_RUN_DEFAULT) == 0);
+    _started = true;
+    _threadId = std::this_thread::get_id();
+    registerLoop(_instance.lock());
+    const bool result = (uv_run(_uv_loop.get(), UV_RUN_DEFAULT) == 0);
+    _started = false;
+    return result;
 }
 
 bool Loop::run_once() {
     NNATIVE_FCALL();
     NNATIVE_ASSERT(_uv_loop);
-    registerLoop(_uv_loop);
-    return (uv_run(_uv_loop.get(), UV_RUN_ONCE) == 0);
+    _started = true;
+    _threadId = std::this_thread::get_id();
+    registerLoop(_instance.lock());
+    const bool result = (uv_run(_uv_loop.get(), UV_RUN_ONCE) == 0);
+    _started = false;
+    return result;
 }
 
 bool Loop::run_nowait()
 {
-    registerLoop(_uv_loop);
-    return (uv_run(_uv_loop.get(), UV_RUN_NOWAIT) == 0);
+    _started = true;
+    _threadId = std::this_thread::get_id();
+    registerLoop(_instance.lock());
+    const bool result = (uv_run(_uv_loop.get(), UV_RUN_NOWAIT) == 0);
+    _started = false;
+    return result;
 }
 
 void Loop::update_time()
@@ -110,20 +159,17 @@ int64_t Loop::now()
 
 bool run()
 {
-    Loop currLoop(true);
-    return currLoop.run();
+    return Loop::Create(true)->run();
 }
 
 bool run_once()
 {
-    Loop currLoop(true);
-    return currLoop.run_once();
+    return Loop::Create(true)->run_once();
 }
 
 bool run_nowait()
 {
-    Loop currLoop(true);
-	return currLoop.run_nowait();
+    return Loop::Create(true)->run_nowait();
 }
 
 } /* namespace native */

@@ -11,7 +11,7 @@ namespace native {
 
 class AsyncBase {
     std::shared_ptr<AsyncBase> _self;
-    std::shared_ptr<uv_loop_t> _loop;
+    std::shared_ptr<Loop> _loop;
 
     // This method will be called from uv
     static void Async(uv_async_t*);
@@ -26,8 +26,7 @@ protected:
     virtual void closeAsync(std::unique_ptr<AsyncBase>) {}
     void enqueue();
     AsyncBase() = delete;
-    AsyncBase(Loop &iLoop);
-    AsyncBase(std::shared_ptr<uv_loop_t> iLoop);
+    AsyncBase(std::shared_ptr<Loop> iLoop);
 public:
     template<class Child, typename... Args>
     static Child* Create(Loop& iLoop, Args&&... args);

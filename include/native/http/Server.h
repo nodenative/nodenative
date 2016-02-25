@@ -13,7 +13,7 @@ class Server
 {
 protected:
     Server();
-    Server(Loop &iLoop);
+    Server(std::shared_ptr<Loop> iLoop);
 
 public:
     virtual ~Server();
@@ -21,7 +21,7 @@ public:
     bool listen(const std::string& ip, int port, std::function<void(request&, response&)> callback);
 
     static std::shared_ptr<Server> Create();
-    static std::shared_ptr<Server> Create(Loop &iLoop);
+    static std::shared_ptr<Server> Create(std::shared_ptr<Loop> iLoop);
 
 protected:
     std::shared_ptr<native::net::Tcp> _socket;

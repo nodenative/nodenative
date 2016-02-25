@@ -3,14 +3,8 @@
 
 namespace native {
 
-AsyncBase::AsyncBase(Loop &iLoop) {
+AsyncBase::AsyncBase(std::shared_ptr<Loop> iLoop) : _loop(iLoop) {
     NNATIVE_FCALL();
-    _loop = iLoop.getShared();
-}
-
-AsyncBase::AsyncBase(std::shared_ptr<uv_loop_t> iLoop) {
-    NNATIVE_FCALL();
-    _loop = iLoop;
 }
 
 AsyncBase::~AsyncBase() {
@@ -24,7 +18,7 @@ void AsyncBase::enqueue() {
     _uv_async.data = this;
     NNATIVE_ASSERT(_loop);
 
-    if(uv_async_init(_loop.get(), &_uv_async, &AsyncBase::Async) != 0) {
+    if(uv_async_init(_loop->get(), &_uv_async, &AsyncBase::Async) != 0) {
         NNATIVE_DEBUG("Error in uv_async_init");
         throw native::exception("uv_async_init");
     }

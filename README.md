@@ -22,6 +22,12 @@
 
 Please note that node.native project is <em>under heavy development</em>.
 
+## Feature highlights
+ * Promises/Future functionality based on system event pool (`native::Promise<R>`, `native::Future<R>`)
+ * Asynchronous callbacks based on system event pool (`native<Future<R>> native::async(F, Args...)`)
+ * Thread pool based on uv_work* (`native::worker(F, Args...)`)
+ * HTTP protocol
+
 ## Sample code
 
 Simplest web-server example using node.native.
@@ -42,12 +48,6 @@ int main() {
     return native::run();
 }
 ```
-
-## Feature highlights
- * Promises/Future functionality based on system event pool (`native::Promise<R>`, `native::Future<R>`)
- * Asynchronous callbacks on system event pool (`native::async(F, Args...)`)
- * Thread pool based on uv_work* (`native::worker(F, Args...)`)
- * HTTP protocol
 
 
 ## Getting started

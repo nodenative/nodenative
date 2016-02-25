@@ -10,7 +10,7 @@ std::shared_ptr<Tcp> Tcp::Create()
     return instance;
 }
 
-std::shared_ptr<Tcp> Tcp::Create(native::Loop& iLoop)
+std::shared_ptr<Tcp> Tcp::Create(std::shared_ptr<native::Loop> iLoop)
 {
     std::shared_ptr<Tcp> instance(new Tcp(iLoop));
     instance->_instance = instance;
@@ -20,14 +20,15 @@ std::shared_ptr<Tcp> Tcp::Create(native::Loop& iLoop)
 Tcp::Tcp() :
     native::base::Stream(new uv_tcp_t)
 {
-    Loop currLoop(true);
-    uv_tcp_init(currLoop.get(), get<uv_tcp_t>());
+    std::shared_ptr<Loop> currLoop = Loop::GetInstanceOrCreateDefault();
+
+    uv_tcp_init(currLoop->get(), get<uv_tcp_t>());
 }
 
-Tcp::Tcp(native::Loop& l) :
+Tcp::Tcp(std::shared_ptr<native::Loop> iLoop) :
     native::base::Stream(new uv_tcp_t)
 {
-    uv_tcp_init(l.get(), get<uv_tcp_t>());
+    uv_tcp_init(iLoop->get(), get<uv_tcp_t>());
 }
 
 // TODO: bind and listen
