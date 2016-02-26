@@ -8,6 +8,26 @@
 namespace native {
 
 template<typename R, typename... Args>
+std::shared_ptr<WorkerCallback<R, Args...>> WorkerCallback<R, Args...>::Create(std::shared_ptr<Loop> iLoop, std::function<R(Args...)> f, Args&&... args) {
+    return std::shared_ptr<WorkerCallback<R, Args...>>(new WorkerCallback<R, Args...>(iLoop, f, std::forward<Args>(args)...));
+}
+
+template<typename R, typename... Args>
+std::shared_ptr<WorkerCallback<Future<R>, Args...>> WorkerCallback<Future<R>, Args...>::Create(std::shared_ptr<Loop> iLoop, std::function<Future<R>(Args...)> f, Args&&... args) {
+    return std::shared_ptr<WorkerCallback<Future<R>, Args...>>(new WorkerCallback<Future<R>, Args...>(iLoop, f, std::forward<Args>(args)...));
+}
+
+template<typename... Args>
+std::shared_ptr<WorkerCallback<Future<void>, Args...>> WorkerCallback<Future<void>, Args...>::Create(std::shared_ptr<Loop> iLoop, std::function<Future<void>(Args...)> f, Args&&... args) {
+    return std::shared_ptr<WorkerCallback<Future<void>, Args...>>(new WorkerCallback<Future<void>, Args...>(iLoop, f, std::forward<Args>(args)...));
+}
+
+template<typename... Args>
+std::shared_ptr<WorkerCallback<void, Args...>> WorkerCallback<void, Args...>::Create(std::shared_ptr<Loop> iLoop, std::function<void(Args...)> f, Args&&... args) {
+    return std::shared_ptr<WorkerCallback<void, Args...>>(new WorkerCallback<void, Args...>(iLoop, f, std::forward<Args>(args)...));
+}
+
+template<typename R, typename... Args>
 WorkerCallback<R, Args...>::WorkerCallback(std::shared_ptr<Loop> iLoop, std::function<R(Args...)> f, Args&&... args) :
          _f(f),
          _args(std::forward<Args>(args)...),
@@ -86,8 +106,7 @@ std::shared_ptr<Loop> WorkerCallback<void, Args...>::getLoop() {
 template<typename R, typename... Args>
 template<std::size_t... Is>
 void WorkerCallback<R, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
-    NNATIVE_ASSERT(!this->_instance.expired());
-    std::shared_ptr<WorkerCallbackBase> iInstance = this->_instance.lock();
+    std::shared_ptr<WorkerCallbackBase> iInstance = this->shared_from_this();
 
     try {
         async(this->_future->getLoop(), [iInstance](R&& r){
@@ -105,8 +124,7 @@ void WorkerCallback<R, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
 template<typename R, typename... Args>
 template<std::size_t... Is>
 void WorkerCallback<Future<R>, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
-    NNATIVE_ASSERT(!this->_instance.expired());
-    std::shared_ptr<WorkerCallbackBase> iInstance = this->_instance.lock();
+    std::shared_ptr<WorkerCallbackBase> iInstance = this->shared_from_this();
     try {
         this->_f(std::get<Is>(this->_args)...)
             .template then([iInstance](R&& r) {
@@ -128,8 +146,7 @@ void WorkerCallback<Future<R>, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
 template<typename... Args>
 template<std::size_t... Is>
 void WorkerCallback<Future<void>, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
-    NNATIVE_ASSERT(!this->_instance.expired());
-    std::shared_ptr<WorkerCallbackBase> iInstance = this->_instance.lock();
+    std::shared_ptr<WorkerCallbackBase> iInstance = this->shared_from_this();
     try {
         this->_f(std::get<Is>(this->_args)...)
             .template then([iInstance]() {
@@ -151,8 +168,7 @@ void WorkerCallback<Future<void>, Args...>::callFn(helper::TemplateSeqInd<Is...>
 template<typename... Args>
 template<std::size_t... Is>
 void WorkerCallback<void, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
-    NNATIVE_ASSERT(!this->_instance.expired());
-    std::shared_ptr<WorkerCallbackBase> iInstance = this->_instance.lock();
+    std::shared_ptr<WorkerCallbackBase> iInstance = this->shared_from_this();
 
     try {
         this->_f(std::get<Is>(this->_args)...);

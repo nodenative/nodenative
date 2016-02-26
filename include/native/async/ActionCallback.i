@@ -62,7 +62,6 @@ void ActionCallbackBase<P>::setError(const FutureError &iError) {
     ActionCallbackBaseDetachedError<P>::Enqueue(this->shared_from_this(), iError);
 }
 
-    
 template<typename R, typename... Args>
 std::shared_ptr<ActionCallback<R, Args...>> ActionCallback<R, Args...>::Create(std::shared_ptr<Loop> iLoop, std::function<R(Args...)> f, Args&&... args)
 {
@@ -110,7 +109,7 @@ std::shared_ptr<ActionCallbackP1<void, P, Args...>> ActionCallbackP1<void, P, Ar
 {
     return std::shared_ptr<ActionCallbackP1<void, P, Args...>>(new ActionCallbackP1<void, P, Args...>(iLoop, f, std::forward<Args>(args)...));
 }
-    
+
 template<typename R, typename... Args>
 ActionCallback<R, Args...>::ActionCallback(std::shared_ptr<Loop> iLoop, std::function<R(Args...)> f, Args&&... args) :
          _f(f),

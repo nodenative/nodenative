@@ -19,14 +19,14 @@ class Future;
 
 /** Acction callback base class template specialization for void type.
  */
-class WorkerCallbackBase {
+class WorkerCallbackBase : public std::enable_shared_from_this<WorkerCallbackBase> {
 protected:
-    std::weak_ptr<WorkerCallbackBase> _instance;
+    WorkerCallbackBase() {}
 
 public:
     virtual ~WorkerCallbackBase() {}
 
-    static void SetValue(std::shared_ptr<WorkerCallbackBase> iInstance);
+    void setValue();
 
     virtual void setValueCb() = 0;
     virtual void setErrorCb(const FutureError&) = 0;
@@ -36,10 +36,10 @@ public:
 class WorkerCallbackBaseDetached : public WorkerBase {
 private:
     std::shared_ptr<WorkerCallbackBase> _instance;
+    WorkerCallbackBaseDetached(std::shared_ptr<WorkerCallbackBase> iInstance);
 
 public:
     WorkerCallbackBaseDetached() = delete;
-    WorkerCallbackBaseDetached(std::shared_ptr<WorkerCallbackBase> iInstance);
     ~WorkerCallbackBaseDetached() {
         NNATIVE_FCALL();
     }
@@ -61,12 +61,13 @@ class WorkerCallback: public WorkerCallbackBase {
 
     void setValueCb() override;
     void setErrorCb(const FutureError& iError) override;
+    WorkerCallback(std::shared_ptr<Loop> iLoop, std::function<R(Args...)> f, Args&&... args);
 
 public:
     typedef R ResultType;
 
     WorkerCallback() = delete;
-    WorkerCallback(std::shared_ptr<Loop> iLoop, std::function<R(Args...)> f, Args&&... args);
+    static std::shared_ptr<WorkerCallback<R, Args...>> Create(std::shared_ptr<Loop> iLoop, std::function<R(Args...)> f, Args&&... args);
 
     std::shared_ptr<FutureShared<R>> getFuture();
     std::shared_ptr<Loop> getLoop() override;
@@ -84,11 +85,13 @@ class WorkerCallback<Future<R>, Args...>: public WorkerCallbackBase {
     void setValueCb() override;
     void setErrorCb(const FutureError& iError) override;
 
+    WorkerCallback(std::shared_ptr<Loop> iLoop, std::function<Future<R>(Args...)> f, Args&&... args);
+
 public:
     typedef R ResultType;
 
     WorkerCallback() = delete;
-    WorkerCallback(std::shared_ptr<Loop> iLoop, std::function<Future<R>(Args...)> f, Args&&... args);
+    static std::shared_ptr<WorkerCallback<Future<R>, Args...>> Create(std::shared_ptr<Loop> iLoop, std::function<Future<R>(Args...)> f, Args&&... args);
 
     std::shared_ptr<FutureShared<R>> getFuture();
     std::shared_ptr<Loop> getLoop() override;
@@ -106,11 +109,13 @@ class WorkerCallback<Future<void>, Args...>: public WorkerCallbackBase {
     void setValueCb() override;
     void setErrorCb(const FutureError& iError) override;
 
+    WorkerCallback(std::shared_ptr<Loop> iLoop, std::function<Future<void>(Args...)> f, Args&&... args);
+
 public:
     typedef void ResultType;
 
     WorkerCallback() = delete;
-    WorkerCallback(std::shared_ptr<Loop> iLoop, std::function<Future<void>(Args...)> f, Args&&... args);
+    static std::shared_ptr<WorkerCallback<Future<void>, Args...>> Create(std::shared_ptr<Loop> iLoop, std::function<Future<void>(Args...)> f, Args&&... args);
 
     std::shared_ptr<FutureShared<void>> getFuture();
     std::shared_ptr<Loop> getLoop() override;
@@ -128,11 +133,13 @@ class WorkerCallback<void, Args...>: public WorkerCallbackBase {
     void setValueCb() override;
     void setErrorCb(const FutureError& iError) override;
 
+    WorkerCallback(std::shared_ptr<Loop> iLoop, std::function<void(Args...)> f, Args&&... args);
+
 public:
     typedef void ResultType;
 
     WorkerCallback() = delete;
-    WorkerCallback(std::shared_ptr<Loop> iLoop, std::function<void(Args...)> f, Args&&... args);
+    static std::shared_ptr<WorkerCallback<void, Args...>> Create(std::shared_ptr<Loop> iLoop, std::function<void(Args...)> f, Args&&... args);
 
     std::shared_ptr<FutureShared<void>> getFuture();
     std::shared_ptr<Loop> getLoop() override;

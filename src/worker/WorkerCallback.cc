@@ -29,10 +29,8 @@ void WorkerCallbackBaseDetached::Enqueue(std::shared_ptr<WorkerCallbackBase> iIn
     detachedInst.release();
 }
 
-void WorkerCallbackBase::SetValue(std::shared_ptr<WorkerCallbackBase> iInstance) {
-    NNATIVE_ASSERT(iInstance);
-    iInstance->_instance = iInstance;
-    WorkerCallbackBaseDetached::Enqueue(iInstance);
+void WorkerCallbackBase::setValue() {
+    WorkerCallbackBaseDetached::Enqueue(this->shared_from_this());
 }
 
 } /* namespace native */
