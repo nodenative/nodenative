@@ -20,15 +20,15 @@ class Future;
 /** Action callback base class template
  */
 template<typename P>
-class ActionCallbackBase {
+class ActionCallbackBase : public std::enable_shared_from_this<ActionCallbackBase<P>> {
 protected:
-    std::weak_ptr<ActionCallbackBase<P>> _instance;
+    ActionCallbackBase() {}
 
 public:
     virtual ~ActionCallbackBase() {}
 
-    static void SetValue(std::shared_ptr<ActionCallbackBase<P>> iInstance, P p);
-    static void SetError(std::shared_ptr<ActionCallbackBase<P>> iInstance, const FutureError&);
+    void setValue(P p);
+    void setError(const FutureError&);
 
     virtual void setValueCb(P) = 0;
     virtual void setErrorCb(const FutureError&) = 0;
@@ -38,15 +38,15 @@ public:
 /** Acction callback base class template specialization for void type.
  */
 template<>
-class ActionCallbackBase<void> {
+class ActionCallbackBase<void> : public std::enable_shared_from_this<ActionCallbackBase<void>> {
 protected:
-    std::weak_ptr<ActionCallbackBase<void>> _instance;
-
+    ActionCallbackBase() {}
+    
 public:
     virtual ~ActionCallbackBase() {}
 
-    static void SetValue(std::shared_ptr<ActionCallbackBase<void>> iInstance);
-    static void SetError(std::shared_ptr<ActionCallbackBase<void>> iInstance, const FutureError &iError);
+    void setValue();
+    void setError(const FutureError &iError);
 
     virtual void setValueCb() = 0;
     virtual void setErrorCb(const FutureError&) = 0;
@@ -116,12 +116,14 @@ class ActionCallback: public ActionCallbackBase<void> {
 
     void setValueCb() override;
     void setErrorCb(const FutureError& iError) override;
+    ActionCallback(std::shared_ptr<Loop> iLoop, std::function<R(Args...)> f, Args&&... args);
 
 public:
     typedef R ResultType;
+    
+    static std::shared_ptr<ActionCallback<R, Args...>> Create(std::shared_ptr<Loop> iLoop, std::function<R(Args...)> f, Args&&... args);
 
     ActionCallback() = delete;
-    ActionCallback(std::shared_ptr<Loop> iLoop, std::function<R(Args...)> f, Args&&... args);
 
     std::shared_ptr<FutureShared<R>> getFuture();
     std::shared_ptr<Loop> getLoop() override;
@@ -138,12 +140,14 @@ class ActionCallback<Future<R>, Args...>: public ActionCallbackBase<void> {
 
     void setValueCb() override;
     void setErrorCb(const FutureError& iError) override;
+    ActionCallback(std::shared_ptr<Loop> iLoop, std::function<Future<R>(Args...)> f, Args&&... args);
 
 public:
     typedef R ResultType;
+    
+    static std::shared_ptr<ActionCallback<Future<R>, Args...>> Create(std::shared_ptr<Loop> iLoop, std::function<Future<R>(Args...)> f, Args&&... args);
 
     ActionCallback() = delete;
-    ActionCallback(std::shared_ptr<Loop> iLoop, std::function<Future<R>(Args...)> f, Args&&... args);
 
     std::shared_ptr<FutureShared<R>> getFuture();
     std::shared_ptr<Loop> getLoop() override;
@@ -160,12 +164,14 @@ class ActionCallback<Future<void>, Args...>: public ActionCallbackBase<void> {
 
     void setValueCb() override;
     void setErrorCb(const FutureError& iError) override;
+    
+    ActionCallback(std::shared_ptr<Loop> iLoop, std::function<Future<void>(Args...)> f, Args&&... args);
 
 public:
     typedef void ResultType;
 
     ActionCallback() = delete;
-    ActionCallback(std::shared_ptr<Loop> iLoop, std::function<Future<void>(Args...)> f, Args&&... args);
+    static std::shared_ptr<ActionCallback<Future<void>, Args...>> Create(std::shared_ptr<Loop> iLoop, std::function<Future<void>(Args...)> f, Args&&... args);
 
     std::shared_ptr<FutureShared<void>> getFuture();
     std::shared_ptr<Loop> getLoop() override;
@@ -182,12 +188,14 @@ class ActionCallback<void, Args...>: public ActionCallbackBase<void> {
 
     void setValueCb() override;
     void setErrorCb(const FutureError& iError) override;
+    
+    ActionCallback(std::shared_ptr<Loop> iLoop, std::function<void(Args...)> f, Args&&... args);
 
 public:
     typedef void ResultType;
 
     ActionCallback() = delete;
-    ActionCallback(std::shared_ptr<Loop> iLoop, std::function<void(Args...)> f, Args&&... args);
+    static std::shared_ptr<ActionCallback<void, Args...>> Create(std::shared_ptr<Loop> iLoop, std::function<void(Args...)> f, Args&&... args);
 
     std::shared_ptr<FutureShared<void>> getFuture();
     std::shared_ptr<Loop> getLoop() override;
@@ -206,12 +214,14 @@ class ActionCallbackP1: public ActionCallbackBase<P> {
 
     void setValueCb(P p) override;
     void setErrorCb(const FutureError& iError) override;
+    
+    ActionCallbackP1(std::shared_ptr<Loop> iLoop, std::function<R(P, Args...)> f, Args&&... args);
 
 public:
     typedef R ResultType;
 
     ActionCallbackP1() = delete;
-    ActionCallbackP1(std::shared_ptr<Loop> iLoop, std::function<R(P, Args...)> f, Args&&... args);
+    static std::shared_ptr<ActionCallbackP1<R, P, Args...>> Create(std::shared_ptr<Loop> iLoop, std::function<R(P, Args...)> f, Args&&... args);
 
     std::shared_ptr<FutureShared<R>> getFuture();
     std::shared_ptr<Loop> getLoop() override;
@@ -228,12 +238,14 @@ class ActionCallbackP1<Future<R>, P, Args...>: public ActionCallbackBase<P> {
 
     void setValueCb(P p) override;
     void setErrorCb(const FutureError& iError) override;
+    
+    ActionCallbackP1(std::shared_ptr<Loop> iLoop, std::function<Future<R>(P, Args...)> f, Args&&... args);
 
 public:
     typedef R ResultType;
 
     ActionCallbackP1() = delete;
-    ActionCallbackP1(std::shared_ptr<Loop> iLoop, std::function<Future<R>(P, Args...)> f, Args&&... args);
+    static std::shared_ptr<ActionCallbackP1<Future<R>, P, Args...>> Create(std::shared_ptr<Loop> iLoop, std::function<Future<R>(P, Args...)> f, Args&&... args);
 
     std::shared_ptr<FutureShared<R>> getFuture();
     std::shared_ptr<Loop> getLoop() override;
@@ -250,12 +262,14 @@ class ActionCallbackP1<Future<void>, P, Args...>: public ActionCallbackBase<P> {
 
     void setValueCb(P p) override;
     void setErrorCb(const FutureError& iError) override;
+    
+    ActionCallbackP1(std::shared_ptr<Loop> iLoop, std::function<Future<void>(P, Args...)> f, Args&&... args);
 
 public:
     typedef void ResultType;
 
     ActionCallbackP1() = delete;
-    ActionCallbackP1(std::shared_ptr<Loop> iLoop, std::function<Future<void>(P, Args...)> f, Args&&... args);
+    static std::shared_ptr<ActionCallbackP1<Future<void>, P, Args...>> Create(std::shared_ptr<Loop> iLoop, std::function<Future<void>(P, Args...)> f, Args&&... args);
 
     std::shared_ptr<FutureShared<void>> getFuture();
     std::shared_ptr<Loop> getLoop() override;
@@ -272,12 +286,14 @@ class ActionCallbackP1<void, P, Args...>: public ActionCallbackBase<P> {
 
     void setValueCb(P p) override;
     void setErrorCb(const FutureError& iError) override;
+    
+    ActionCallbackP1(std::shared_ptr<Loop> iLoop, std::function<void(P, Args...)> f, Args&&... args);
 
 public:
     typedef void ResultType;
 
     ActionCallbackP1() = delete;
-    ActionCallbackP1(std::shared_ptr<Loop> iLoop, std::function<void(P, Args...)> f, Args&&... args);
+    static std::shared_ptr<ActionCallbackP1<void, P, Args...>> Create(std::shared_ptr<Loop> iLoop, std::function<void(P, Args...)> f, Args&&... args);
 
     std::shared_ptr<FutureShared<void>> getFuture();
     std::shared_ptr<Loop> getLoop() override;
@@ -297,9 +313,11 @@ class ActionCallbackError: public ActionCallbackBase<void> {
     void setValueCb() override;
     void setErrorCb(const FutureError& iError) override;
 
+    ActionCallbackError(std::shared_ptr<Loop> iLoop, std::function<void(const FutureError&, Args...)> f, Args&&... args);
+    
 public:
     ActionCallbackError() = delete;
-    ActionCallbackError(std::shared_ptr<Loop> iLoop, std::function<void(const FutureError&, Args...)> f, Args&&... args);
+    static std::shared_ptr<ActionCallbackError<Args...>> Create(std::shared_ptr<Loop> iLoop, std::function<void(const FutureError&, Args...)> f, Args&&... args);
 
     std::shared_ptr<FutureShared<void>> getFuture();
     std::shared_ptr<Loop> getLoop() override;
@@ -319,9 +337,11 @@ class ActionCallbackErrorP1: public ActionCallbackBase<R> {
     void setValueCb(R r) override;
     void setErrorCb(const FutureError& iError) override;
 
+    ActionCallbackErrorP1(std::shared_ptr<Loop> iLoop, std::function<R(const FutureError&, Args...)> f, Args&&... args);
+
 public:
     ActionCallbackErrorP1() = delete;
-    ActionCallbackErrorP1(std::shared_ptr<Loop> iLoop, std::function<R(const FutureError&, Args...)> f, Args&&... args);
+    static std::shared_ptr<ActionCallbackErrorP1<R, Args...>> Create(std::shared_ptr<Loop> iLoop, std::function<R(const FutureError&, Args...)> f, Args&&... args);
 
     std::shared_ptr<FutureShared<R>> getFuture();
     std::shared_ptr<Loop> getLoop() override;

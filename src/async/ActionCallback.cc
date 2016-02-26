@@ -22,16 +22,12 @@ void ActionCallbackBaseDetached<void>::Enqueue(std::shared_ptr<ActionCallbackBas
     detachedInst.release();
 }
 
-void ActionCallbackBase<void>::SetValue(std::shared_ptr<ActionCallbackBase<void>> iInstance) {
-    NNATIVE_ASSERT(iInstance);
-    iInstance->_instance = iInstance;
-    ActionCallbackBaseDetached<void>::Enqueue(iInstance);
+void ActionCallbackBase<void>::setValue() {
+    ActionCallbackBaseDetached<void>::Enqueue(this->shared_from_this());
 }
 
-void ActionCallbackBase<void>::SetError(std::shared_ptr<ActionCallbackBase<void>> iInstance, const FutureError &iError) {
-    NNATIVE_ASSERT(iInstance);
-    iInstance->_instance = iInstance;
-    ActionCallbackBaseDetachedError<void>::Enqueue(iInstance, iError);
+void ActionCallbackBase<void>::setError(const FutureError &iError) {
+    ActionCallbackBaseDetachedError<void>::Enqueue(this->shared_from_this(), iError);
 }
 
 } /* namespace native */

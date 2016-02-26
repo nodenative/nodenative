@@ -22,7 +22,7 @@ void FutureShared<R>::setValue(R iVal) {
     this->_value = std::forward<R>(iVal);
 
     for(std::shared_ptr<ActionCallbackBase<R>> action : this->_actions) {
-        action->SetValue(action, std::forward<R>(iVal));
+        action->setValue(std::forward<R>(iVal));
     }
 }
 
@@ -38,7 +38,7 @@ void FutureShared<R>::setError(const FutureError& iError) {
     this->_error = iError;
 
     for(std::shared_ptr<ActionCallbackBase<R>> action : this->_actions) {
-        action->SetError(action, iError);
+        action->setError(iError);
     }
 }
 
@@ -55,7 +55,7 @@ FutureShared<R>::then(F&& f, Args&&... args) {
     NNATIVE_ASSERT(!_instance.expired());
 
     using return_type = typename std::result_of<F(R, Args...)>::type;
-    std::shared_ptr<ActionCallbackP1<return_type, R, Args...>> action(new ActionCallbackP1<return_type, R, Args...>(_loop, std::forward<F>(f), std::forward<Args>(args)...));
+    std::shared_ptr<ActionCallbackP1<return_type, R, Args...>> action = ActionCallbackP1<return_type, R, Args...>::Create(_loop, std::forward<F>(f), std::forward<Args>(args)...);
     auto currFuture = action->getFuture();
 
     if(!this->_loop->isNotOnEventLoopThread() && !this->_satisfied) {
@@ -68,10 +68,9 @@ FutureShared<R>::then(F&& f, Args&&... args) {
 
             if(iInstance->_satisfied) {
                 if(!iInstance->_isError) {
-                    // TODO: add post action
-                    action->SetValue(action, iInstance->_value.value());
+                    action->setValue(iInstance->_value.value());
                 } else {
-                    action->SetError(action, iInstance->_error);
+                    action->setError(iInstance->_error);
                 }
             }
         });
@@ -86,7 +85,7 @@ FutureShared<void>::then(F&& f, Args&&... args) {
     NNATIVE_ASSERT(!_instance.expired());
 
     using return_type = typename std::result_of<F(Args...)>::type;
-    std::shared_ptr<ActionCallback<return_type, Args...>> action(new ActionCallback<return_type, Args...>(_loop, std::forward<F>(f), std::forward<Args>(args)...));
+    std::shared_ptr<ActionCallback<return_type, Args...>> action = ActionCallback<return_type, Args...>::Create(_loop, std::forward<F>(f), std::forward<Args>(args)...);
     auto currFuture = action->getFuture();
 
     if(!this->_loop->isNotOnEventLoopThread() && !this->_satisfied) {
@@ -100,9 +99,9 @@ FutureShared<void>::then(F&& f, Args&&... args) {
 
             if(iInstance->_satisfied) {
                 if(!iInstance->_isError) {
-                    action->SetValue(action);
+                    action->setValue();
                 } else {
-                    action->SetError(action, iInstance->_error);
+                    action->setError(iInstance->_error);
                 }
             }
         });
@@ -116,7 +115,7 @@ std::shared_ptr<FutureShared<R>>
 FutureShared<R>::error(F&& f, Args&&... args) {
     NNATIVE_ASSERT(!_instance.expired());
 
-    std::shared_ptr<ActionCallbackErrorP1<R, Args...>> action(new ActionCallbackErrorP1<R, Args...>(_loop, std::forward<F>(f), std::forward<Args>(args)...));
+    std::shared_ptr<ActionCallbackErrorP1<R, Args...>> action = ActionCallbackErrorP1<R, Args...>::Create(_loop, std::forward<F>(f), std::forward<Args>(args)...);
     std::shared_ptr<FutureShared<R>> currFuture = action->getFuture();
 
     if(!this->_loop->isNotOnEventLoopThread() && !this->_satisfied) {
@@ -132,7 +131,7 @@ FutureShared<R>::error(F&& f, Args&&... args) {
                     // TODO: add post action
                     //action->SetValue(action, value);
                 } else {
-                    action->SetError(action, iInstance->_error);
+                    action->setError(iInstance->_error);
                 }
             }
         });
@@ -146,7 +145,7 @@ std::shared_ptr<FutureShared<void>>
 FutureShared<void>::error(F&& f, Args&&... args) {
     NNATIVE_ASSERT(!_instance.expired());
 
-    std::shared_ptr<ActionCallbackError<Args...>> action(new ActionCallbackError<Args...>(_loop, std::forward<F>(f), std::forward<Args>(args)...));
+    std::shared_ptr<ActionCallbackError<Args...>> action = ActionCallbackError<Args...>::Create(_loop, std::forward<F>(f), std::forward<Args>(args)...);
     std::shared_ptr<FutureShared<void>> currFuture = action->getFuture();
 
     if(!this->_loop->isNotOnEventLoopThread() && !this->_satisfied) {
@@ -159,9 +158,9 @@ FutureShared<void>::error(F&& f, Args&&... args) {
 
             if(iInstance->_satisfied) {
                 if(!iInstance->_isError) {
-                    action->SetValue(action);
+                    action->setValue();
                 } else {
-                    action->SetError(action, iInstance->_error);
+                    action->setError(iInstance->_error);
                 }
             }
         });
