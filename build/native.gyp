@@ -20,6 +20,7 @@
                 '../src/async/AsyncBase.cc',
                 '../src/async/ActionCallback.cc',
                 '../src/async/FutureShared.cc',
+                '../src/async/FutureSharedResolver.cpp',
                 '../src/worker/WorkerBase.cc',
                 '../src/worker/WorkerCallback.cc',
                 '../src/Loop.cc',

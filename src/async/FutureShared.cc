@@ -1,45 +1,38 @@
 #include "native/async/FutureShared.h"
+#include <memory>
 
 namespace native {
 
 std::shared_ptr<FutureShared<void>> FutureShared<void>::Create(std::shared_ptr<Loop> iLoop) {
     std::shared_ptr<FutureShared<void>> instance(new FutureShared<void>(iLoop));
-    instance->setInstance(instance);
 
     return instance;
 }
 
 void FutureShared<void>::setValue() {
     NNATIVE_CHECK_LOOP_THREAD(this->_loop);
-    if(this->_satisfied) {
+    if(this->_resolver) {
         throw PromiseAlreadySatisfied();
     }
 
-    this->_satisfied = true;
+    this->_resolver = std::make_unique<FutureSharedResolverValue<void>>();
 
     for(std::shared_ptr<ActionCallbackBase<void>> action : this->_actions) {
-        action->setValue();
+        this->_resolver->resolve(action);
     }
 }
 
 void FutureShared<void>::setError(const FutureError& iError) {
     NNATIVE_CHECK_LOOP_THREAD(this->_loop);
-    if(this->_satisfied) {
+    if(this->_resolver) {
         throw PromiseAlreadySatisfied();
     }
 
-    this->_satisfied = true;
-    this->_isError = true;
-    this->_error = iError;
+    this->_resolver = std::make_unique<FutureSharedResolverError<void>>(iError);
 
     for(std::shared_ptr<ActionCallbackBase<void>> action : this->_actions) {
-        action->setError(iError);
+        this->_resolver->resolve(action);
     }
-}
-
-void FutureShared<void>::setInstance(std::shared_ptr<FutureShared<void>> iInstance) {
-    NNATIVE_ASSERT(iInstance && this == iInstance.get());
-    _instance = iInstance;
 }
 
 } /* namespace native */

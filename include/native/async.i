@@ -11,6 +11,7 @@
 #include "async/ActionCallback.i"
 #include "async/Future.i"
 #include "async/FutureShared.i"
+#include "async/FutureSharedResolver.ipp"
 
 #endif /* __NATIVE_ASYNC_I__ */
 

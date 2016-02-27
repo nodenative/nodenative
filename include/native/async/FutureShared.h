@@ -3,8 +3,7 @@
 
 #include "../Loop.hh"
 #include "ActionCallback.h"
-// TODO: replace by std::optional
-#include "../helper/optional.hh"
+#include "./FutureSharedResolver.hpp"
 
 #include <vector>
 #include <memory>
@@ -13,17 +12,13 @@
 namespace native {
 
 template<class R>
-class FutureShared {
+class FutureShared : public std::enable_shared_from_this<FutureShared<R>> {
 private:
-    std::weak_ptr<FutureShared<R>> _instance;
     std::shared_ptr<Loop> _loop;
-    bool _satisfied;
-    bool _isError;
-    FutureError _error;
+    std::unique_ptr<FutureSharedResolver<R>> _resolver;
     std::vector<std::shared_ptr<ActionCallbackBase<R>>> _actions;
-    helper::optional<R> _value;
 
-    FutureShared(std::shared_ptr<Loop> iLoop) : _loop(iLoop), _satisfied(false), _isError(false), _error("") {}
+    FutureShared(std::shared_ptr<Loop> iLoop) : _loop(iLoop) {}
 
 public:
     typedef R result_type;
@@ -35,7 +30,6 @@ public:
 
     void setValue(R iVal);
     void setError(const FutureError& iError);
-    void setInstance(std::shared_ptr<FutureShared<R>> iInstance);
 
 
     std::shared_ptr<Loop> getLoop() { return _loop; }
@@ -50,16 +44,13 @@ public:
 };
 
 template<>
-class FutureShared<void> {
+class FutureShared<void> : public std::enable_shared_from_this<FutureShared<void>> {
 private:
-    std::weak_ptr<FutureShared<void>> _instance;
     std::shared_ptr<Loop> _loop;
-    bool _satisfied;
-    bool _isError;
-    FutureError _error;
+    std::unique_ptr<FutureSharedResolver<void>> _resolver;
     std::vector<std::shared_ptr<ActionCallbackBase<void>>> _actions;
 
-    FutureShared(std::shared_ptr<Loop> iLoop) : _loop(iLoop), _satisfied(false), _isError(false), _error("") {}
+    FutureShared(std::shared_ptr<Loop> iLoop) : _loop(iLoop) {}
 public:
     typedef void result_type;
 
@@ -70,7 +61,6 @@ public:
 
     void setValue();
     void setError(const FutureError& iError);
-    void setInstance(std::shared_ptr<FutureShared<void>> iInstance);
 
     std::shared_ptr<Loop> getLoop() { return _loop; }
 

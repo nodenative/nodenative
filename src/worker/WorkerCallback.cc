@@ -19,6 +19,7 @@ void WorkerCallbackBaseDetached::executeWorker() {
 void WorkerCallbackBaseDetached::executeWorkerAfter(int iStatus) {
     NNATIVE_FCALL();
     NNATIVE_ASSERT(iStatus==0);
+    _instance->executeWorkerAfter(iStatus);
 }
 
 void WorkerCallbackBaseDetached::Enqueue(std::shared_ptr<WorkerCallbackBase> iInstance) {

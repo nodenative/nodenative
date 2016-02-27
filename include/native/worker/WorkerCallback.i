@@ -109,59 +109,47 @@ void WorkerCallback<R, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
     std::shared_ptr<WorkerCallbackBase> iInstance = this->shared_from_this();
 
     try {
-        async(this->_future->getLoop(), [iInstance](R&& r){
-            WorkerCallback<R, Args...> *currPtr = static_cast<WorkerCallback<R, Args...>*>(iInstance.get());
-            currPtr->getFuture()->setValue(std::forward<R>(r));
-        }, std::forward<R>(this->_f(std::get<Is>(this->_args)...)));
+        this->_resolver = std::make_unique<FutureSharedResolverValue<R>>(std::forward<R>(this->_f(std::get<Is>(this->_args)...)));
     } catch (const FutureError &e) {
-        async(this->_future->getLoop(), [iInstance, e](){
-            WorkerCallback<R, Args...> *currPtr = static_cast<WorkerCallback<R, Args...>*>(iInstance.get());
-            currPtr->getFuture()->setError(e);
-        });
+        this->_resolver = std::make_unique<FutureSharedResolverError<R>>(e);
     }
 }
 
 template<typename R, typename... Args>
 template<std::size_t... Is>
 void WorkerCallback<Future<R>, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
-    std::shared_ptr<WorkerCallbackBase> iInstance = this->shared_from_this();
+    std::shared_ptr<WorkerCallbackBase> instance = this->shared_from_this();
     try {
         this->_f(std::get<Is>(this->_args)...)
-            .template then([iInstance](R&& r) {
-                WorkerCallback<Future<R>, Args...> *currPtr = static_cast<WorkerCallback<Future<R>, Args...>*>(iInstance.get());
+            .template then([instance](R&& r) {
+                WorkerCallback<Future<R>, Args...> *currPtr = static_cast<WorkerCallback<Future<R>, Args...>*>(instance.get());
                 currPtr->getFuture()->setValue(std::forward<R>(r));
             })
-            .template error([iInstance](const FutureError &iError){
-                WorkerCallback<Future<R>, Args...> *currPtr = static_cast<WorkerCallback<Future<R>, Args...>*>(iInstance.get());
+            .template error([instance](const FutureError &iError){
+                WorkerCallback<Future<R>, Args...> *currPtr = static_cast<WorkerCallback<Future<R>, Args...>*>(instance.get());
                 currPtr->getFuture()->setError(iError);
             });
     } catch (const FutureError &e) {
-        async(this->_future->getLoop(), [iInstance](FutureError iError){
-            WorkerCallback<Future<R>, Args...> *currPtr = static_cast<WorkerCallback<Future<R>, Args...>*>(iInstance.get());
-            currPtr->getFuture()->setError(iError);
-        }, e);
+        this->_resolver = std::make_unique<FutureSharedResolverError<R>>(e);
     }
 }
 
 template<typename... Args>
 template<std::size_t... Is>
 void WorkerCallback<Future<void>, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
-    std::shared_ptr<WorkerCallbackBase> iInstance = this->shared_from_this();
+    std::shared_ptr<WorkerCallbackBase> instance = this->shared_from_this();
     try {
         this->_f(std::get<Is>(this->_args)...)
-            .template then([iInstance]() {
-                WorkerCallback<Future<void>, Args...> *currPtr = static_cast<WorkerCallback<Future<void>, Args...>*>(iInstance.get());
+            .template then([instance]() {
+                WorkerCallback<Future<void>, Args...> *currPtr = static_cast<WorkerCallback<Future<void>, Args...>*>(instance.get());
                 currPtr->getFuture()->setValue();
             })
-            .template error([iInstance](const FutureError &iError){
-                WorkerCallback<Future<void>, Args...> *currPtr = static_cast<WorkerCallback<Future<void>, Args...>*>(iInstance.get());
+            .template error([instance](const FutureError &iError){
+                WorkerCallback<Future<void>, Args...> *currPtr = static_cast<WorkerCallback<Future<void>, Args...>*>(instance.get());
                 currPtr->getFuture()->setError(iError);
             });
     } catch (const FutureError &e) {
-        async(this->_future->getLoop(), [iInstance](FutureError iError){
-            WorkerCallback<Future<void>, Args...> *currPtr = static_cast<WorkerCallback<Future<void>, Args...>*>(iInstance.get());
-            currPtr->getFuture()->setError(iError);
-        }, e);
+        this->_resolver = std::make_unique<FutureSharedResolverError<void>>(e);
     }
 }
 
@@ -172,16 +160,9 @@ void WorkerCallback<void, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
 
     try {
         this->_f(std::get<Is>(this->_args)...);
-
-        async(this->_future->getLoop(), [iInstance](){
-            WorkerCallback<void, Args...> *currPtr = static_cast<WorkerCallback<void, Args...>*>(iInstance.get());
-            currPtr->getFuture()->setValue();
-        });
+        this->_resolver = std::make_unique<FutureSharedResolverValue<void>>();
     } catch (const FutureError &e) {
-        async(this->_future->getLoop(), [iInstance, e](){
-            WorkerCallback<void, Args...> *currPtr = static_cast<WorkerCallback<void, Args...>*>(iInstance.get());
-            currPtr->getFuture()->setError(e);
-        });
+        this->_resolver = std::make_unique<FutureSharedResolverError<void>>(e);
     }
 }
 
@@ -206,23 +187,33 @@ void WorkerCallback<void, Args...>::setValueCb() {
 }
 
 template<typename R, typename... Args>
-void WorkerCallback<R, Args...>::setErrorCb(const FutureError &iError) {
-    this->getFuture()->setError(iError);
+void WorkerCallback<R, Args...>::executeWorkerAfter(int iStatus) {
+    /// resolver is populated all the time
+    NNATIVE_ASSERT(this->_resolver);
+    this->_resolver->resolve(this->getFuture());
 }
 
 template<typename R, typename... Args>
-void WorkerCallback<Future<R>, Args...>::setErrorCb(const FutureError &iError) {
-    this->getFuture()->setError(iError);
+void WorkerCallback<Future<R>, Args...>::executeWorkerAfter(int iStatus) {
+    /// resolver is populated only if an error exists from callback
+    if(this->_resolver) {
+        this->_resolver->resolve(this->getFuture());
+    }
 }
 
 template<typename... Args>
-void WorkerCallback<Future<void>, Args...>::setErrorCb(const FutureError &iError) {
-    this->getFuture()->setError(iError);
+void WorkerCallback<Future<void>, Args...>::executeWorkerAfter(int iStatus) {
+    /// resolver is populated only if an error exists from callback
+    if(this->_resolver) {
+        this->_resolver->resolve(this->getFuture());
+    }
 }
 
 template<typename... Args>
-void WorkerCallback<void, Args...>::setErrorCb(const FutureError &iError) {
-    this->getFuture()->setError(iError);
+void WorkerCallback<void, Args...>::executeWorkerAfter(int iStatus) {
+    /// resolver is populated all the time
+    NNATIVE_ASSERT(this->_resolver);
+    this->_resolver->resolve(this->getFuture());
 }
 
 
