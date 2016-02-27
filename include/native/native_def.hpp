@@ -1,16 +1,17 @@
-#ifndef __NATIVE_DEF_H__
-#define __NATIVE_DEF_H__
+#ifndef __NATIVE_NATIVE_DEF_HPP__
+#define __NATIVE_NATIVE_DEF_HPP__
 
-#include "error.h"
-#include "base.hh"
-#include "events.h"
-#include "Loop.hh"
-#include "net.hh"
-#include "http.h"
+#include "error.hpp"
+#include "base.hpp"
+#include "events.hpp"
+#include "Loop.hpp"
+#include "net.hpp"
+#include "http.hpp"
 // TODO: cleanup first to resolve multiple definition conflicts
-//#include "fs.h"
-#include "async.h"
-#include "worker.h"
-#include "helper.h"
+//#include "fs.hpp"
+#include "async.hpp"
+#include "worker.hpp"
+#include "helper.hpp"
+#include "crypto.hpp"
 
-#endif /* __NATIVE_DEF_H__ */
+#endif /* __NATIVE_NATIVE_DEF_HPP__ */
