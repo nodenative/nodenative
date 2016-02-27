@@ -1,7 +1,7 @@
 #ifndef __NATIVE_ASYNC_FUTURESHAREDRESOLVER_HPP__
 #define __NATIVE_ASYNC_FUTURESHAREDRESOLVER_HPP__
 
-#include "./FutureError.h"
+#include "./FutureError.hpp"
 
 #include <memory>
 

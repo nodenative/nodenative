@@ -33,7 +33,7 @@ Please note that node.native project is <em>under heavy development</em>.
 Simplest web-server example using node.native.
 ```cpp
 #include <iostream>
-#include <native/native.h>
+#include <native/native.hpp>
 using namespace native::http;
 
 int main() {

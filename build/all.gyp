@@ -31,14 +31,14 @@
                 './gmock.gyp:gmock_main'
             ],
             'sources' : [
-                '../test/basic_test.cc',
-                '../test/crypto_test.cc',
-                '../test/http_test.cc',
-                '../test/timer_test.cc',
-                '../test/async_test.cc',
-                '../test/future_then_test.cc',
-                '../test/future_error_test.cc',
-                '../test/worker_test.cc',
+                '../test/basic_test.cpp',
+                '../test/crypto_test.cpp',
+                '../test/http_test.cpp',
+                '../test/timer_test.cpp',
+                '../test/async_test.cpp',
+                '../test/future_then_test.cpp',
+                '../test/future_error_test.cpp',
+                '../test/worker_test.cpp',
             ]
         }
     ]
