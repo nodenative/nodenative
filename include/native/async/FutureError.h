@@ -15,11 +15,6 @@ public:
     PromiseAlreadySatisfied() : FutureError("Promise already satisfied") {}
 };
 
-class FutureAlreadyRetrieved : public FutureError {
-public:
-    FutureAlreadyRetrieved() : FutureError("Future already retrieved") {}
-};
-
 } /* namespace native */
 
 #endif /* __ASYNC_FUTUREERROR_H__ */
