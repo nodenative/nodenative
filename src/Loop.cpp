@@ -50,7 +50,7 @@ std::shared_ptr<Loop> Loop::Create(bool iDefault) {
         return savedPtr.lock();
     }
 
-    std::shared_ptr<Loop> instance(new Loop(iDefault));
+    std::shared_ptr<Loop> instance(new Loop());
     instance->_instance = instance;
 
     if(iDefault) {
@@ -92,20 +92,13 @@ bool Loop::isNotOnEventLoopThread() const {
     return (this->started() && (this->getThreadId() != std::this_thread::get_id()));
 }
 
-Loop::Loop(bool use_default) : _started(false) {
+Loop::Loop() : _started(false) {
     NNATIVE_FCALL();
-    if(use_default) {
-        // don't delete the default Loop
-        _uv_loop = std::unique_ptr<uv_loop_t, HandleDeleter>(uv_default_loop(), HandleDeleter(true));
 
-        if(0 != uv_loop_init(_uv_loop.get())) {
-            NNATIVE_DEBUG("error to init Loop " << (_uv_loop.get()));
-        }
-    } else {
-        std::unique_ptr<uv_loop_t> loopInstance(new uv_loop_t);
-        if(0 == uv_loop_init(loopInstance.get())) {
-            _uv_loop = std::unique_ptr<uv_loop_t, HandleDeleter>(loopInstance.release(), HandleDeleter());
-        }
+    // Don't use default loop because it create leaks in linux (not in osx)
+    std::unique_ptr<uv_loop_t> loopInstance(new uv_loop_t);
+    if(0 == uv_loop_init(loopInstance.get())) {
+        _uv_loop = std::unique_ptr<uv_loop_t, HandleDeleter>(loopInstance.release(), HandleDeleter());
     }
 }
 

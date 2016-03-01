@@ -237,10 +237,10 @@
        # pull in V8's postmortem metadata
        'ldflags': [ '-Wl,-z,allextract' ]
      }],
-     ['clang!=0 and (asan==1 or lsan==1 or tsan==1 or msan==1)', {
+     ['(clang!=0 or OS !="win" ) and (asan==1 or lsan==1 or tsan==1 or msan==1)', {
        'cflags': [
          '-fno-omit-frame-pointer',
-         '-gline-tables-only',
+         #'-gline-tables-only',
          '-g',
        ],
        'cflags!': [
@@ -267,7 +267,7 @@
          ],
        }
      }],
-     ['asan==1 and clang!=0', {
+     ['asan==1 and (clang!=0 or OS !="win")', {
        'cflags': [
          '-fsanitize=address',
        ],
@@ -305,7 +305,7 @@
          'SANITIZER_COVERAGE',
        ]
      }],
-     ['lsan==1 and clang!=0', {
+     ['lsan==1 and (clang!=0 or OS !="win")', {
        'cflags': [
          '-fsanitize=leak',
        ],

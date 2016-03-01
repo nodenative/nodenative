@@ -27,10 +27,8 @@ protected:
 
     /**
      *  Default constructor
-     *  @param use_default indicates whether to use default Loop or create a new Loop.
      */
-    Loop(bool use_default);
-    Loop() : Loop(false) { NNATIVE_MCALL(); };
+    Loop();
 
 public:
     Loop(const Loop&) = delete;
