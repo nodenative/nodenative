@@ -10,6 +10,31 @@
     'msvs_multi_core_compile': '0',  # we do enable multicore compiles, but not using the V8 way
     'gcc_version%': 'unknown',
     'clang%': 0,
+    # Enable building with ASAN (Clang's -fsanitize=address option).
+    # -fsanitize=address only works with clang, but asan=1 implies clang=1
+    'asan%': 0,
+    # Enable coverage gathering instrumentation in sanitizer tools. This flag
+    # also controls coverage granularity (1 for function-level coverage, 2
+    # for block-level coverage).
+    'sanitizer_coverage%': 0,
+
+    # Enable building with LSan (Clang's -fsanitize=leak option).
+    # -fsanitize=leak only works with clang, but lsan=1 implies clang=1
+    'lsan%': 0,
+
+    # Enable building with TSan (Clang's -fsanitize=thread option).
+    # -fsanitize=thread only works with clang, but tsan=1 implies clang=1
+    'tsan%': 0,
+    'tsan_blacklist%': './tsan/ignores.txt',
+
+    # Enable building with MSan (Clang's -fsanitize=memory option).
+    # MemorySanitizer only works with clang, but msan=1 implies clang=1
+    'msan%': 0,
+    'msan_blacklist%': './msan/blacklist.txt',
+    # Track where uninitialized memory originates from. From fastest to
+    # slowest: 0 - no tracking, 1 - track only the initial allocation site, 2
+    # - track the chain of stores leading from allocation site to use site.
+    'msan_track_origins%': 2,
   },
 
   'target_defaults': {
@@ -211,6 +236,119 @@
        'cflags': [ '-fno-omit-frame-pointer' ],
        # pull in V8's postmortem metadata
        'ldflags': [ '-Wl,-z,allextract' ]
+     }],
+     ['asan==1 or lsan==1 or tsan==1 or msan==1', {
+       'cflags': [
+         '-fno-omit-frame-pointer',
+         '-gline-tables-only',
+         '-g',
+       ],
+       'cflags!': [
+         '-fomit-frame-pointer',
+       ],
+       'ldflags!': [
+         # Functions interposed by the sanitizers can make ld think
+         # that some libraries aren't needed when they actually are,
+         '-Wl,--as-needed',
+       ],
+       'defines': [
+         'MEMORY_TOOL_REPLACES_ALLOCATOR',
+         'MEMORY_SANITIZER_INITIAL_SIZE',
+       ],
+     }],
+     ['OS == "mac" and (asan==1 or lsan==1 or tsan==1 or msan==1)', {
+       'xcode_settings': {
+         'OTHER_CFLAGS': [
+           '-fno-omit-frame-pointer',
+           '-gline-tables-only',
+         ],
+         'OTHER_CFLAGS!': [
+           '-fomit-frame-pointer',
+         ],
+       }
+     }],
+     ['asan==1', {
+       'cflags': [
+         '-fsanitize=address',
+       ],
+       'ldflags': [
+         '-fsanitize=address',
+       ]
+     }],
+     ['asan==1 and OS=="mac"', {
+       'xcode_settings': {
+         'OTHER_CFLAGS': [
+           '-g -fsanitize=address',
+           #'-mllvm -asan-globals=0',
+           '-gline-tables-only',
+         ],
+       },
+       'target_conditions': [
+         ['_type!="static_library"', {
+           'xcode_settings': {
+             'OTHER_LDFLAGS': [
+               '-g -fsanitize=address',
+             ],
+           }
+         }],
+       ],
+     }],
+     ['sanitizer_coverage!=0', {
+       'target_conditions': [
+         ['_toolset=="target"', {
+           'cflags': [
+             '-fsanitize-coverage=<(sanitizer_coverage)',
+           ],
+         }],
+       ],
+       'defines': [
+         'SANITIZER_COVERAGE',
+       ]
+     }],
+     ['lsan==1', {
+       'cflags': [
+         '-fsanitize=leak',
+       ],
+       'ldflags': [
+         '-fsanitize=leak',
+       ],
+       'defines': [
+         'LEAK_SANITIZER',
+         'WTF_USE_LEAK_SANITIZER=1',
+       ]
+     }],
+     ['tsan==1', {
+       'target_conditions': [
+         ['_toolset=="target"', {
+           'cflags': [
+             '-fsanitize=thread',
+             '-fsanitize-blacklist=<(tsan_blacklist)',
+           ],
+           'ldflags': [
+             '-fsanitize=thread',
+           ],
+           'defines': [
+             'THREAD_SANITIZER',
+             'DYNAMIC_ANNOTATIONS_EXTERNAL_IMPL=1',
+             'WTF_USE_DYNAMIC_ANNOTATIONS_NOIMPL=1',
+           ],
+         }],
+       ],
+     }],
+     ['msan==1', {
+       'cflags': [
+         '-fsanitize=memory',
+         '-fsanitize-memory-track-origins=<(msan_track_origins)',
+         '-fsanitize-blacklist=<(msan_blacklist)',
+       ],
+       'ldflags': [
+         '-fsanitize=memory',
+       ],
+       'defines': [
+         'THREAD_SANITIZER',
+         'DYNAMIC_ANNOTATIONS_EXTERNAL_IMPL=1',
+         'WTF_USE_DYNAMIC_ANNOTATIONS_NOIMPL=1',
+       ],
      }],
     ],
   },
