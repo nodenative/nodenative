@@ -18,6 +18,8 @@ before_install:
   - echo $LANG
   - echo $LC_ALL
   - echo $CXX
+  - which $CXX
+  - which $CC
   - $CXX --version
   - python --version
   - git submodule update --init
@@ -43,6 +45,8 @@ before_install:
       brew install ninja;
     fi
   - $CXX --version
+  - which $CXX
+  - which $CC
 before_script: ls
 script:
   - python build.py -Dasan=1 -Dlsan=1
