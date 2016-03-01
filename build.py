@@ -201,10 +201,11 @@ if __name__ == '__main__':
         print('build in {0}'.format(time.time() - start_build))
         start_build = time.time()
         if(sub1_result == 0):
-            subprocess.call([builderName, '-C', 'out/Release'])
+            sub1_result = subprocess.call([builderName, '-C', 'out/Release'])
             print('build in {0}'.format(time.time() - start_build))
         else:
             print('first resolve errors from Debug mode and after it will try to build in release mode')
+        sys.exit(sub1_result)
     elif builderName == 'make':
         subprocess.call([builderName, '-C', 'out'])
         print('build in {0}'.format(time.time() - start_build))
