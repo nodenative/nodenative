@@ -273,6 +273,7 @@
        ],
        'ldflags': [
          '-fsanitize=address',
+         '-lasan',
        ]
      }],
      ['asan==1 and OS=="mac" and clang!=0', {
