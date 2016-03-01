@@ -255,6 +255,13 @@
          'MEMORY_TOOL_REPLACES_ALLOCATOR',
          'MEMORY_SANITIZER_INITIAL_SIZE',
        ],
+       'conditions': [
+          ['clang!=0', {
+            'cflags': [
+              '-gline-tables-only',
+            ]
+          }],
+       ],
      }],
      ['clang!=0 and OS == "mac" and (asan==1 or lsan==1 or tsan==1 or msan==1)', {
        'xcode_settings': {
