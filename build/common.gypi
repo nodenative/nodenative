@@ -237,7 +237,7 @@
        # pull in V8's postmortem metadata
        'ldflags': [ '-Wl,-z,allextract' ]
      }],
-     ['asan==1 or lsan==1 or tsan==1 or msan==1', {
+     ['clang!=0 and (asan==1 or lsan==1 or tsan==1 or msan==1)', {
        'cflags': [
          '-fno-omit-frame-pointer',
          '-gline-tables-only',
@@ -256,7 +256,7 @@
          'MEMORY_SANITIZER_INITIAL_SIZE',
        ],
      }],
-     ['OS == "mac" and (asan==1 or lsan==1 or tsan==1 or msan==1)', {
+     ['clang!=0 and OS == "mac" and (asan==1 or lsan==1 or tsan==1 or msan==1)', {
        'xcode_settings': {
          'OTHER_CFLAGS': [
            '-fno-omit-frame-pointer',
@@ -267,7 +267,7 @@
          ],
        }
      }],
-     ['asan==1', {
+     ['asan==1 and clang!=0', {
        'cflags': [
          '-fsanitize=address',
        ],
@@ -275,7 +275,7 @@
          '-fsanitize=address',
        ]
      }],
-     ['asan==1 and OS=="mac"', {
+     ['asan==1 and OS=="mac" and clang!=0', {
        'xcode_settings': {
          'OTHER_CFLAGS': [
            '-g -fsanitize=address',
@@ -293,7 +293,7 @@
          }],
        ],
      }],
-     ['sanitizer_coverage!=0', {
+     ['sanitizer_coverage!=0 and clang!=0', {
        'target_conditions': [
          ['_toolset=="target"', {
            'cflags': [
@@ -305,7 +305,7 @@
          'SANITIZER_COVERAGE',
        ]
      }],
-     ['lsan==1', {
+     ['lsan==1 and clang!=0', {
        'cflags': [
          '-fsanitize=leak',
        ],
@@ -317,7 +317,7 @@
          'WTF_USE_LEAK_SANITIZER=1',
        ]
      }],
-     ['tsan==1', {
+     ['tsan==1 and clang!=0', {
        'target_conditions': [
          ['_toolset=="target"', {
            'cflags': [
@@ -335,7 +335,7 @@
          }],
        ],
      }],
-     ['msan==1', {
+     ['msan==1 and clang!=0', {
        'cflags': [
          '-fsanitize=memory',
          '-fsanitize-memory-track-origins=<(msan_track_origins)',
