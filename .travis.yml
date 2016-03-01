@@ -43,11 +43,7 @@ before_install:
   - $CXX --version
 before_script: ls
 script:
-  - if [$CXX == "clang++"]; then
-      python build.py -Dasan=1 -Dlsan=1 -Dmsan=1 -Dtsan=1
-    else
-      python build.py
-    fi
+  - python build.py -Dasan=1 -Dlsan=1 -Dmsan=1 -Dtsan=1
   - ./out/Debug/test
   - ./out/Release/test
 branches:
