@@ -27,6 +27,7 @@ before_install:
       sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test;
       sudo apt-get -qq update;
       sudo apt-get -qq install ninja-build;
+      sudo apt-get -y install gdb;
       if [$CXX == "clang++"]; then
           sudo deb http://llvm.org/apt/precise/ llvm-toolchain-precise-3.7 main
           sudo deb-src http://llvm.org/apt/precise/ llvm-toolchain-precise-3.7 main
@@ -37,8 +38,7 @@ before_install:
           export CC='clang-3.7';
       else
           sudo apt-get -qq install g++-5;
-          export CXX='g++-5';
-          export CC='gcc-5';
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 90
       fi
     fi
   - if [ $TRAVIS_OS_NAME == "osx" ]; then
