@@ -38,7 +38,7 @@ before_install:
           export CC='clang-3.7';
       else
           sudo apt-get -qq install g++-5;
-          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 90
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 90;
       fi
     fi
   - if [ $TRAVIS_OS_NAME == "osx" ]; then
