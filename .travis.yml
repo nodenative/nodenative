@@ -33,7 +33,7 @@ before_install:
           sudo deb-src http://llvm.org/apt/precise/ llvm-toolchain-precise-3.6 main
           sudo deb http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu precise main
           wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key|sudo apt-key add -
-          sudo apt-get -qq install clang-3.7 lldb-3.6;
+          sudo apt-get -qq install clang-3.6 lldb-3.6;
           export CXX='clang++-3.6';
           export CC='clang-3.6';
       else
@@ -50,7 +50,11 @@ before_install:
   - which $CC
 before_script: ls
 script:
-  - python build.py -Dasan=1 -Dlsan=1
+  - if [$CXX == "clang++"]; then
+      python build.py -Dasan=1 -Dlsan=1;
+    else
+      python build.py;
+    fi
   - ./out/Debug/test
   - ./out/Release/test
 branches:
