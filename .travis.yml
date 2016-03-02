@@ -46,7 +46,7 @@ before_install:
           sudo apt-get -qq install g++-5 gdb;
           export CXX='g++-5';
           export CC='gcc-5';
-      fi
+      fi;
       sudo apt-get -qq install ninja-build;
     fi
   - if [ $TRAVIS_OS_NAME == "osx" ]; then
