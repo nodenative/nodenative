@@ -29,7 +29,6 @@ before_install:
       export CXX_COPY=$CXX;
       sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test;
       sudo apt-get -qq update;
-      sudo apt-get -qq install ninja-build;
       if [$CXX_COPY == "clang++"]; then
           sudo deb http://llvm.org/apt/precise/ llvm-toolchain-precise-3.6 main
           sudo deb-src http://llvm.org/apt/precise/ llvm-toolchain-precise-3.6 main
@@ -43,6 +42,7 @@ before_install:
           export CXX='g++-5';
           export CC='gcc-5';
       fi
+      sudo apt-get -qq install ninja-build;
     fi
   - if [ $TRAVIS_OS_NAME == "osx" ]; then
       brew install ninja;
