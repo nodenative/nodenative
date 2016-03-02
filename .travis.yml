@@ -7,6 +7,8 @@ matrix:
   exclude:
     - os: osx
   include:
+    - sudo: required
+      dist: trusty
     - os: osx
       compiler: clang
       osx_image: xcode7
