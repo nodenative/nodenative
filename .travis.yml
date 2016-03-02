@@ -15,7 +15,7 @@ matrix:
     - os: linux
       sudo: required
       dist: trusty
-      compiler: clang
+      compiler: gcc
     - os: osx
       compiler: clang
       osx_image: xcode7
