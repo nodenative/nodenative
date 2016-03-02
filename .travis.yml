@@ -35,10 +35,8 @@ before_install:
   - python --version
   - git submodule update --init
   - if [ $TRAVIS_OS_NAME == "linux" ]; then
-      export CXX_COPY='$CXX';
-      sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test;
       sudo apt-get -qq update;
-      if [$CXX_COPY == "clang++"]; then
+      if [$CXX == "clang++"]; then
           sudo apt-get install clang-3.6 lldb-3.6;
           export CXX='clang++-3.6';
           export CC='clang-3.6';
