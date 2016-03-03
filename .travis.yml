@@ -8,6 +8,11 @@ matrix:
     - os: osx
     - os: linux
   include:
+    # TODO: add it back with libc++
+    #- os: linux
+    #  sudo: required
+    #  dist: trusty
+    #  compiler: clang
     - os: linux
       sudo: required
       dist: trusty
