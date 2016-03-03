@@ -20,15 +20,16 @@ std::shared_ptr<Tcp> Tcp::Create(std::shared_ptr<native::Loop> iLoop)
 Tcp::Tcp() :
     native::base::Stream(new uv_tcp_t)
 {
-    std::shared_ptr<Loop> currLoop = Loop::GetInstanceOrCreateDefault();
+    _loop = Loop::GetInstanceOrCreateDefault();
 
-    uv_tcp_init(currLoop->get(), get<uv_tcp_t>());
+    uv_tcp_init(_loop->get(), get<uv_tcp_t>());
 }
 
 Tcp::Tcp(std::shared_ptr<native::Loop> iLoop) :
-    native::base::Stream(new uv_tcp_t)
+    native::base::Stream(new uv_tcp_t),
+    _loop(iLoop)
 {
-    uv_tcp_init(iLoop->get(), get<uv_tcp_t>());
+    uv_tcp_init(_loop->get(), get<uv_tcp_t>());
 }
 
 // TODO: bind and listen

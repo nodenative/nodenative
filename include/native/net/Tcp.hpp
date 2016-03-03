@@ -54,6 +54,7 @@ protected:
     Tcp(std::shared_ptr<native::Loop> l);
 
     std::weak_ptr<Tcp> _instance;
+    std::shared_ptr<Loop> _loop;
 };
 
 } /* namespace net */
