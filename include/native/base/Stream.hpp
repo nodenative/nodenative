@@ -70,7 +70,7 @@ namespace native
                     {
                         callbacks::invoke<decltype(callback)>(s->data, native::internal::uv_cid_read_start, buf->base, nread);
                     }
-                    delete buf->base;
+                    delete[] buf->base;
                 }) == 0;
         }
     }
