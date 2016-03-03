@@ -40,7 +40,7 @@ before_install:
       sudo deb-src http://llvm.org/apt/trusty/ llvm-toolchain-trusty main;
       sudo deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.6 main;
       sudo deb-src http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.6 main;
-      sudo apt-get -qq install clang-3.6 lldb-3.6;
+      sudo apt-get -qq install -y clang-3.6 lldb-3.6;
       export CXX=clang++-3.6;
       export CC=clang-3.6;
     fi
