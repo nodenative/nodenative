@@ -11,7 +11,7 @@ namespace native {
 
 void ActionCallbackBaseDetached<void>::executeAsync() {
     NNATIVE_FCALL();
-    _instance->setValueCb();
+    _instance->resolveCb();
 }
 
 void ActionCallbackBaseDetached<void>::Enqueue(std::shared_ptr<ActionCallbackBase<void>> iInstance) {
@@ -22,11 +22,11 @@ void ActionCallbackBaseDetached<void>::Enqueue(std::shared_ptr<ActionCallbackBas
     detachedInst.release();
 }
 
-void ActionCallbackBase<void>::setValue() {
+void ActionCallbackBase<void>::resolve() {
     ActionCallbackBaseDetached<void>::Enqueue(this->shared_from_this());
 }
 
-void ActionCallbackBase<void>::setError(const FutureError &iError) {
+void ActionCallbackBase<void>::reject(const FutureError &iError) {
     ActionCallbackBaseDetachedError<void>::Enqueue(this->shared_from_this(), iError);
 }
 

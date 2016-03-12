@@ -2,78 +2,57 @@
 #define __NATIVE_BASE_STREAM_HPP__
 
 #include "base_utils.hpp"
-#include "../error.hpp"
+#include "../Error.hpp"
 #include "Handle.hpp"
-#include "../callback.hpp"
 
 #include <algorithm>
 
-namespace native
+namespace native {
+
+namespace base {
+
+class Stream : public Handle
 {
-    namespace base
-    {
-        class Stream : public Handle
-        {
-        public:
-            template<typename T>
-            Stream(T* x)
-                : Handle(x)
-            { }
+public:
+    Stream() = delete;
+    Stream(std::shared_ptr<Loop> iLoop)
+        : Handle(iLoop),
+        _maxAllocSize(0)
+    { }
 
-            bool listen(std::function<void(native::error)> callback, int backlog=128);
+    bool listen(std::function<void(native::Error)> callback, int backlog=128);
 
-            bool accept(Stream* client);
+    bool accept(std::shared_ptr<Stream> client);
 
-            bool read_start(std::function<void(const char* buf, ssize_t len)> callback);
+    bool readStart(std::function<void(const char* buf, ssize_t len)> callback);
+    bool readStop();
 
-            template<size_t max_alloc_size>
-            bool read_start(std::function<void(const char* buf, ssize_t len)> callback);
-            bool read_stop();
+    // TODO: implement read2_start()
 
-            // TODO: implement read2_start()
+    Future<void> write(const uv_buf_t *bufs, const size_t count, uv_stream_t* iSendHandle);
+    Future<void> write(const char* buf, const int len, uv_stream_t* iSendHandle = nullptr);
+    Future<void> write(const std::string& buf, uv_stream_t* iSendHandle = nullptr);
+    Future<void> write(const std::vector<char>& buf, uv_stream_t* iSendHandle = nullptr);
 
-            bool write(const char* buf, int len, std::function<void(error)> callback);
-            bool write(const std::string& buf, std::function<void(error)> callback);
-            bool write(const std::vector<char>& buf, std::function<void(error)> callback);
+    Future<void> shutdown();
 
-            // TODO: implement write2()
-
-            bool shutdown(std::function<void(error)> callback);
-        };
-
-        // template body
-
-        template<size_t max_alloc_size>
-        bool Stream::read_start(std::function<void(const char* buf, ssize_t len)> callback)
-        {
-            callbacks::store(get()->data, native::internal::uv_cid_read_start, callback);
-
-            return uv_read_start(get<uv_stream_t>(),
-                [](uv_handle_t*, size_t suggested_size, uv_buf_t* buf){
-                    auto size = std::max(suggested_size, max_alloc_size);
-                    buf->base = new char[size];
-                    buf->len = size;
-                    if((buf->base == NULL) && (buf->len > 0))
-                    {
-                        assert(0);
-                        //TODO: error
-                    }
-                },
-                [](uv_stream_t* s, ssize_t nread, const uv_buf_t* buf){
-                    if(nread < 0)
-                    {
-                        //TODO: to find workaround
-                        //assert(uv_last_error(s->Loop).code == UV_EOF);
-                        callbacks::invoke<decltype(callback)>(s->data, native::internal::uv_cid_read_start, nullptr, nread);
-                    }
-                    else if(nread >= 0)
-                    {
-                        callbacks::invoke<decltype(callback)>(s->data, native::internal::uv_cid_read_start, buf->base, nread);
-                    }
-                    delete[] buf->base;
-                }) == 0;
-        }
+    void setMaxAllocSize(size_t iSize) {
+        _maxAllocSize = iSize;
     }
-}
+
+    std::shared_ptr<Stream> getInstanceStream() {
+        return std::static_pointer_cast<Stream>(Handle::getInstanceHandle());
+    }
+
+private:
+    static void AfterWrite(uv_write_t* req, int status);
+
+    size_t _maxAllocSize;
+    std::function<void(const char* buf, ssize_t len)> _readCb;
+    std::function<void(Error)> _listenCallback;
+};
+
+} /* namespace base */
+} /* namespace native */
 
 #endif /* __NATIVE_BASE_STREAM_HPP__ */

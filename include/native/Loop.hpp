@@ -1,8 +1,7 @@
 #ifndef __NATIVE_LOOP_HPP__
 #define __NATIVE_LOOP_HPP__
 
-#include "base.hpp"
-#include "error.hpp"
+#include "./base/base_utils.hpp"
 #include "helper/trace.hpp"
 
 #include <thread>

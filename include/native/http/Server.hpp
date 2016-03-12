@@ -4,24 +4,28 @@
 #include "../net.hpp"
 
 namespace native {
+
 namespace http {
 
-class request;
-class response;
+class Transaction;
 
-class Server
+class Server : public std::enable_shared_from_this<Server>
 {
+friend class Transaction;
+
 protected:
-    Server();
     Server(std::shared_ptr<Loop> iLoop);
 
 public:
+    Server() = delete;
     virtual ~Server();
 
-    bool listen(const std::string& ip, int port, std::function<void(request&, response&)> callback);
+    bool listen(const std::string& ip, int port, std::function<void(std::shared_ptr<Transaction>)> callback);
+    Future<void> shutdown();
 
     static std::shared_ptr<Server> Create();
     static std::shared_ptr<Server> Create(std::shared_ptr<Loop> iLoop);
+    std::shared_ptr<Server> getInstance();
 
 protected:
     std::shared_ptr<native::net::Tcp> _socket;

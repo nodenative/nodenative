@@ -1,5 +1,6 @@
 #include "native/worker/WorkerBase.hpp"
 #include "native/helper/trace.hpp"
+#include "native/Error.hpp"
 
 namespace native {
 
@@ -20,7 +21,7 @@ void WorkerBase::enqueue() {
 
     if(uv_queue_work(_loop->get(), &_uvWork, &WorkerBase::Worker, &WorkerBase::WorkerAfter) != 0) {
         NNATIVE_DEBUG("Error in uv_queue_work");
-        throw native::exception("uv_queue_work");
+        throw Exception("uv_queue_work");
     }
     NNATIVE_DEBUG("Enqueued");
 }

@@ -1,7 +1,7 @@
 #ifndef __NATIVE_NATIVE_DEF_HPP__
 #define __NATIVE_NATIVE_DEF_HPP__
 
-#include "error.hpp"
+#include "Error.hpp"
 #include "base.hpp"
 #include "events.hpp"
 #include "Loop.hpp"

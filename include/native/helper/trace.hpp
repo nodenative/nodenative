@@ -6,6 +6,14 @@
 #include <sstream>
 
 #define NNATIVE_INFO(log) std::cout << __FILE__ << ":" << __LINE__ << " (INFO): " << log << "\n";
+#define PROMISE_REJECT(promise, msg) { \
+    std::stringstream ss;\
+    ss << msg;\
+    native::FutureError err(ss.str(), __FILE__, __LINE__, __PRETTY_FUNCTION__);\
+    (promise).reject(ss.str());\
+}
+
+#define ERROR_COPY(dest, source) dest(source, __FILE__, __LINE__, __PRETTY_FUNCTION__);
 
 #ifndef NNATIVE_NO_ASSERT
 

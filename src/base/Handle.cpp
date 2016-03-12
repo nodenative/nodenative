@@ -1,22 +1,80 @@
 #include "native/base/Handle.hpp"
+#include "native/helper/trace.hpp"
 
-using namespace native;
-using namespace base;
+namespace native {
+namespace base {
 
-void native::base::_delete_handle(uv_handle_t* h)
+Handle::Handle(std::shared_ptr<native::Loop> iLoop) :
+    _uvHandlePtr(nullptr),
+    _loop(iLoop),
+    _instanceHandleCount(0),
+    _closingPromise(iLoop)
 {
-    assert(h);
+    NNATIVE_FCALL();
+    NNATIVE_CHECK_LOOP_THREAD(_loop);
+}
 
-    // clean up SCM
-    if(h->data)
-    {
-        delete reinterpret_cast<callbacks*>(h->data);
-        h->data = nullptr;
+Handle::~Handle() {
+    NNATIVE_FCALL();
+}
+
+std::shared_ptr<Handle> Handle::getInstanceHandle() {
+    return shared_from_this();
+}
+
+bool Handle::isActive() {
+    return uv_is_active(get()) != 0;
+}
+
+bool Handle::isClosing() {
+    return uv_is_closing(get()) != 0;
+}
+
+Future<std::shared_ptr<Handle>> Handle::close()
+{
+    NNATIVE_CHECK_LOOP_THREAD(_loop);
+    if(!isActive()) {
+        return Promise<std::shared_ptr<Handle>>::Reject(_loop, "Handle is not active");
     }
 
-    switch(h->type)
-    {
-        case UV_TCP: delete reinterpret_cast<uv_tcp_t*>(h); break;
-        default: assert(0); break;
+    if(!isClosing()) {
+        _closingPromise = Promise<std::shared_ptr<Handle>>(_loop);
+        uv_close(get(),
+                 [](uv_handle_t* h) {
+                     std::shared_ptr<Handle> instance = static_cast<Handle*>(h->data)->getInstanceHandle();
+                     instance->releaseInstanceHandle();
+                     instance->_closingPromise.resolve(instance);
+                     instance->_closingPromise.reset();
+                 });
+    }
+
+    return _closingPromise.getFuture();
+}
+
+void Handle::init(uv_handle_t* iHandlePtr) {
+    _uvHandlePtr = iHandlePtr;
+    NNATIVE_ASSERT(_uvHandlePtr);
+    _uvHandlePtr->data = this;
+    keepInstanceHandle();
+}
+
+void Handle::keepInstanceHandle() {
+    ++_instanceHandleCount;
+
+    if (!_instanceHandle) {
+        _instanceHandle = getInstanceHandle();
     }
 }
+
+void Handle::releaseInstanceHandle() {
+    NNATIVE_ASSERT(_instanceHandleCount > 0);
+    NNATIVE_ASSERT(_instanceHandle);
+    if(--_instanceHandleCount == 0) {
+        NNATIVE_DEBUG("reset sinatnce handle");
+        _instanceHandle.reset();
+    }
+    NNATIVE_DEBUG("Remain handle instance count: " << _instanceHandleCount );
+}
+
+} /* namespace base */
+} /* namespace native */

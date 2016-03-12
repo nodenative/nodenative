@@ -28,11 +28,11 @@ public:
 
     static std::shared_ptr<FutureShared<R>> Create(std::shared_ptr<Loop> iLoop);
 
-    void setValue(R iVal);
-    void setError(const FutureError& iError);
+    void resolve(R iVal);
+    void reject(const FutureError& iError);
 
 
-    std::shared_ptr<Loop> getLoop() { return _loop; }
+    std::shared_ptr<Loop> getLoop() const { return _loop; }
 
     template<class F, typename... Args>
     std::shared_ptr<FutureShared<typename ActionCallbackP1<typename std::result_of<F(R, Args...)>::type, R, Args...>::ResultType>>
@@ -59,10 +59,10 @@ public:
 
     static std::shared_ptr<FutureShared<void>> Create(std::shared_ptr<Loop> iLoop);
 
-    void setValue();
-    void setError(const FutureError& iError);
+    void resolve();
+    void reject(const FutureError& iError);
 
-    std::shared_ptr<Loop> getLoop() { return _loop; }
+    std::shared_ptr<Loop> getLoop() const { return _loop; }
 
     template<class F, typename... Args>
     std::shared_ptr<FutureShared<typename ActionCallback<typename std::result_of<F(Args...)>::type, Args...>::ResultType>>

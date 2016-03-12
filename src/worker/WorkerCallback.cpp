@@ -13,7 +13,7 @@ WorkerCallbackBaseDetached::WorkerCallbackBaseDetached(std::shared_ptr<WorkerCal
 
 void WorkerCallbackBaseDetached::executeWorker() {
     NNATIVE_FCALL();
-    _instance->setValueCb();
+    _instance->resolveCb();
 }
 
 void WorkerCallbackBaseDetached::executeWorkerAfter(int iStatus) {
@@ -30,7 +30,7 @@ void WorkerCallbackBaseDetached::Enqueue(std::shared_ptr<WorkerCallbackBase> iIn
     detachedInst.release();
 }
 
-void WorkerCallbackBase::setValue() {
+void WorkerCallbackBase::resolve() {
     WorkerCallbackBaseDetached::Enqueue(this->shared_from_this());
 }
 

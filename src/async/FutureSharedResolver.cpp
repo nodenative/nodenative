@@ -4,19 +4,19 @@
 namespace native {
 
 void FutureSharedResolverValue<void>::resolve(std::shared_ptr<FutureShared<void>> iFuture) {
-    iFuture->setValue();
+    iFuture->resolve();
 }
 
 void FutureSharedResolverValue<void>::resolve(std::shared_ptr<ActionCallbackBase<void>> iFuture) {
-    iFuture->setValue();
+    iFuture->resolve();
 }
 
 void FutureSharedResolverError<void>::resolve(std::shared_ptr<FutureShared<void>> iFuture) {
-    iFuture->setError(_error);
+    iFuture->reject(_error);
 }
 
 void FutureSharedResolverError<void>::resolve(std::shared_ptr<ActionCallbackBase<void>> iFuture) {
-    iFuture->setError(_error);
+    iFuture->reject(_error);
 }
 
 } /* namespace native */

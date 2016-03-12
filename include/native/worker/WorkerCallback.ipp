@@ -123,11 +123,11 @@ void WorkerCallback<Future<R>, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
         this->_f(std::get<Is>(this->_args)...)
             .template then([instance](R&& r) {
                 WorkerCallback<Future<R>, Args...> *currPtr = static_cast<WorkerCallback<Future<R>, Args...>*>(instance.get());
-                currPtr->getFuture()->setValue(std::forward<R>(r));
+                currPtr->getFuture()->resolve(std::forward<R>(r));
             })
             .template error([instance](const FutureError &iError){
                 WorkerCallback<Future<R>, Args...> *currPtr = static_cast<WorkerCallback<Future<R>, Args...>*>(instance.get());
-                currPtr->getFuture()->setError(iError);
+                currPtr->getFuture()->reject(iError);
             });
     } catch (const FutureError &e) {
         this->_resolver = std::make_unique<FutureSharedResolverError<R>>(e);
@@ -142,11 +142,11 @@ void WorkerCallback<Future<void>, Args...>::callFn(helper::TemplateSeqInd<Is...>
         this->_f(std::get<Is>(this->_args)...)
             .template then([instance]() {
                 WorkerCallback<Future<void>, Args...> *currPtr = static_cast<WorkerCallback<Future<void>, Args...>*>(instance.get());
-                currPtr->getFuture()->setValue();
+                currPtr->getFuture()->resolve();
             })
             .template error([instance](const FutureError &iError){
                 WorkerCallback<Future<void>, Args...> *currPtr = static_cast<WorkerCallback<Future<void>, Args...>*>(instance.get());
-                currPtr->getFuture()->setError(iError);
+                currPtr->getFuture()->reject(iError);
             });
     } catch (const FutureError &e) {
         this->_resolver = std::make_unique<FutureSharedResolverError<void>>(e);
@@ -167,22 +167,22 @@ void WorkerCallback<void, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
 }
 
 template<typename R, typename... Args>
-void WorkerCallback<R, Args...>::setValueCb() {
+void WorkerCallback<R, Args...>::resolveCb() {
     this->template callFn(helper::TemplateSeqIndGen<sizeof...(Args)>());
 }
 
 template<typename R, typename... Args>
-void WorkerCallback<Future<R>, Args...>::setValueCb() {
+void WorkerCallback<Future<R>, Args...>::resolveCb() {
     this->template callFn(helper::TemplateSeqIndGen<sizeof...(Args)>());
 }
 
 template<typename... Args>
-void WorkerCallback<Future<void>, Args...>::setValueCb() {
+void WorkerCallback<Future<void>, Args...>::resolveCb() {
     this->template callFn(helper::TemplateSeqIndGen<sizeof...(Args)>());
 }
 
 template<typename... Args>
-void WorkerCallback<void, Args...>::setValueCb() {
+void WorkerCallback<void, Args...>::resolveCb() {
     this->template callFn(helper::TemplateSeqIndGen<sizeof...(Args)>());
 }
 

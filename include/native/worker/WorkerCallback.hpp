@@ -27,9 +27,9 @@ protected:
 public:
     virtual ~WorkerCallbackBase() {}
 
-    void setValue();
+    void resolve();
 
-    virtual void setValueCb() = 0;
+    virtual void resolveCb() = 0;
     virtual void executeWorkerAfter(int iStatus) = 0;
     virtual std::shared_ptr<Loop> getLoop() = 0;
 };
@@ -61,7 +61,7 @@ class WorkerCallback: public WorkerCallbackBase {
     template<std::size_t... Is>
     void callFn(helper::TemplateSeqInd<Is...>);
 
-    void setValueCb() override;
+    void resolveCb() override;
     WorkerCallback(std::shared_ptr<Loop> iLoop, std::function<R(Args...)> f, Args&&... args);
 
 public:
@@ -85,7 +85,7 @@ class WorkerCallback<Future<R>, Args...>: public WorkerCallbackBase {
     template<std::size_t... Is>
     void callFn(helper::TemplateSeqInd<Is...>);
 
-    void setValueCb() override;
+    void resolveCb() override;
 
     WorkerCallback(std::shared_ptr<Loop> iLoop, std::function<Future<R>(Args...)> f, Args&&... args);
 
@@ -110,7 +110,7 @@ class WorkerCallback<Future<void>, Args...>: public WorkerCallbackBase {
     template<std::size_t... Is>
     void callFn(helper::TemplateSeqInd<Is...>);
 
-    void setValueCb() override;
+    void resolveCb() override;
 
     WorkerCallback(std::shared_ptr<Loop> iLoop, std::function<Future<void>(Args...)> f, Args&&... args);
 
@@ -135,7 +135,7 @@ class WorkerCallback<void, Args...>: public WorkerCallbackBase {
     template<std::size_t... Is>
     void callFn(helper::TemplateSeqInd<Is...>);
 
-    void setValueCb() override;
+    void resolveCb() override;
 
     WorkerCallback(std::shared_ptr<Loop> iLoop, std::function<void(Args...)> f, Args&&... args);
 

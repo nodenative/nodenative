@@ -11,7 +11,7 @@ std::shared_ptr<FutureShared<R>> FutureShared<R>::Create(std::shared_ptr<Loop> i
 }
 
 template<class R>
-void FutureShared<R>::setValue(R iVal) {
+void FutureShared<R>::resolve(R iVal) {
     NNATIVE_CHECK_LOOP_THREAD(this->_loop);
     if(this->_resolver) {
         throw PromiseAlreadySatisfied();
@@ -25,7 +25,7 @@ void FutureShared<R>::setValue(R iVal) {
 }
 
 template<typename R>
-void FutureShared<R>::setError(const FutureError& iError) {
+void FutureShared<R>::reject(const FutureError& iError) {
     NNATIVE_CHECK_LOOP_THREAD(this->_loop);
     if(this->_resolver) {
         throw PromiseAlreadySatisfied();

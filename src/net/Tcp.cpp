@@ -1,134 +1,134 @@
 #include "native/net/Tcp.hpp"
+#include "native/net/net_utils.hpp"
+#include "native/async/RequestPromise.hpp"
+#include "native/async.hpp"
+#include "native/async.ipp"
 
 namespace native {
 namespace net {
 
 std::shared_ptr<Tcp> Tcp::Create()
 {
-    std::shared_ptr<Tcp> instance(new Tcp);
-    instance->_instance = instance;
+    std::shared_ptr<Tcp> instance(new Tcp(Loop::GetInstanceOrCreateDefault()));
+    instance->init();
     return instance;
 }
 
 std::shared_ptr<Tcp> Tcp::Create(std::shared_ptr<native::Loop> iLoop)
 {
     std::shared_ptr<Tcp> instance(new Tcp(iLoop));
-    instance->_instance = instance;
+    instance->init();
     return instance;
 }
 
-Tcp::Tcp() :
-    native::base::Stream(new uv_tcp_t)
-{
-    _loop = Loop::GetInstanceOrCreateDefault();
-
-    uv_tcp_init(_loop->get(), get<uv_tcp_t>());
-}
-
 Tcp::Tcp(std::shared_ptr<native::Loop> iLoop) :
-    native::base::Stream(new uv_tcp_t),
-    _loop(iLoop)
+    base::Stream(iLoop),
+    _uvTcpInstance(new uv_tcp_t),
+    _connecting(false),
+    _connected(false)
 {
+    NNATIVE_FCALL();
+}
+
+Tcp::~Tcp() {
+    NNATIVE_FCALL();
+}
+
+void Tcp::init() {
+    init(reinterpret_cast<uv_handle_t*>(_uvTcpInstance.get()));
     uv_tcp_init(_loop->get(), get<uv_tcp_t>());
 }
 
-// TODO: bind and listen
-std::shared_ptr<Tcp> Tcp::CreateServer(const std::string& ip, int port)
-{
-    return nullptr;
+void Tcp::init(uv_handle_t* iHandlePtr) {
+    Stream::init(iHandlePtr);
 }
 
-bool Tcp::bind(const sockaddr* iAddr, error& oError)
+bool Tcp::bind(const std::string& ip, const int port, Error& oError, const int version)
 {
-    //TODO: add flags
-    oError = uv_tcp_bind(get<uv_tcp_t>(), iAddr, 0);
-    return !oError;
-}
+    std::unique_ptr<sockaddr> addrInstance;
 
-bool Tcp::bind(const std::string& ip, int port, error& oError)
-{
-    ip4_addr addr;
-    to_ip4_addr(ip.c_str(), port, addr, oError);
+    if(version == 4) {
+        ip4_addr* addrPtr = new ip4_addr;
+        to_ip4_addr(ip, port, *addrPtr, oError);
+        addrInstance.reset(reinterpret_cast<sockaddr*>(addrPtr));
+    } else if (version == 6) {
+        ip6_addr* addrPtr = new ip6_addr;
+        to_ip6_addr(ip, port, *addrPtr, oError);
+        addrInstance.reset(reinterpret_cast<sockaddr*>(addrPtr));
+    } else {
+        NNATIVE_DEBUG("wrong address version " << version << ". Accept only 4 or 6")
+        return false;
+    }
+
     if(oError) {
+        NNATIVE_DEBUG("Error in ipX_to_addr: " << oError.str());
         return false;
     }
-    return bind(reinterpret_cast<const sockaddr*>(&addr), oError);
-}
 
-bool Tcp::bind(const std::string& ip, int port)
-{
-    error err;
-    return bind(ip, port, err);
-}
-
-bool Tcp::bind6(const std::string& ip, int port, error& oError)
-{
-    ip6_addr addr;
-    to_ip6_addr(ip.c_str(), port, addr, oError);
-    if(oError) {
-        return false;
-    }
-    return bind(reinterpret_cast<const sockaddr*>(&addr), oError);
-}
-
-bool Tcp::bind6(const std::string& ip, int port)
-{
-    error err;
-    return bind(ip, port, err);
-}
-
-bool Tcp::connect(const std::string& ip, int port, std::function<void(error)> callback, error& oError)
-{
-    callbacks::store(get()->data, native::internal::uv_cid_connect, callback);
-    ip4_addr addr;
-    to_ip4_addr(ip, port, addr, oError);
-    if (oError)
-    {
-        return false;
-    }
-    uv_connect_t* connection_p = new uv_connect_t;
-    oError = uv_tcp_connect(connection_p, get<uv_tcp_t>(), reinterpret_cast<const sockaddr*>(&addr), [](uv_connect_t* req, int status) {
-        callbacks::invoke<decltype(callback)>(req->handle->data, native::internal::uv_cid_connect, error(status));
-        delete req;
-    });
-    if(oError)
-    {
-        delete connection_p;
-    }
+    oError = uv_tcp_bind(get<uv_tcp_t>(), addrInstance.get(), 0);
+    NNATIVE_DEBUG("uv_tcp_bind result: " << oError.code());
     return !oError;
 }
 
-bool Tcp::connect(const std::string& ip, int port, std::function<void(error)> callback)
+bool Tcp::bind(const std::string& ip, const int port, const int version)
 {
-    error err;
-    return connect(ip, port, callback, err);
+    Error err;
+    return bind(ip, port, err, version);
 }
 
-bool Tcp::connect6(const std::string& ip, int port, std::function<void(error)> callback, error& oError)
-{
-    callbacks::store(get()->data, native::internal::uv_cid_connect6, callback);
-    ip6_addr addr;
-    to_ip6_addr(ip, port, addr, oError);
-    if (oError)
-    {
-        return false;
+void Tcp::Connect(uv_connect_t* req, int status) {
+    std::unique_ptr<RequestPromise<void, uv_connect_t>> reqInstance(static_cast<RequestPromise<void, uv_connect_t>*>(req->data));
+    NNATIVE_ASSERT(req->handle->data);
+    Tcp * currPtr = static_cast<Tcp*>(req->handle->data);
+    NNATIVE_ASSERT(currPtr != nullptr);
+    currPtr->_connected = true;
+    currPtr->_connecting = false;
+    if(status == 0) {
+        reqInstance->_promise.resolve();
+    } else {
+        PROMISE_REJECT(reqInstance->_promise, "Error in uv_tcp_connect, non-zero status " << status);
     }
-    uv_connect_t* connection_p = new uv_connect_t;
-    oError = uv_tcp_connect(connection_p, get<uv_tcp_t>(), reinterpret_cast<const sockaddr*>(&addr), [](uv_connect_t* req, int status) {
-        callbacks::invoke<decltype(callback)>(req->handle->data, native::internal::uv_cid_connect6, error(status));
-        delete req;
-    });
-    if(oError)
-    {
-        delete connection_p;
-    }
-    return !oError;
 }
 
-bool Tcp::connect6(const std::string& ip, int port, std::function<void(error)> callback)
+Future<void> Tcp::connect(const std::string& ip, const int port, const int version)
 {
-    error err;
-    return connect6(ip, port, callback, err);
+    if(_connected || _connecting) {
+        return Promise<void>::Reject(_loop, "Already connected");
+    }
+
+    Error currError;
+    std::unique_ptr<sockaddr> addrInstance;
+
+    if(version == 4) {
+        ip4_addr* addrPtr = new ip4_addr;
+        to_ip4_addr(ip, port, *addrPtr, currError);
+        addrInstance.reset(reinterpret_cast<sockaddr*>(addrPtr));
+    } else if (version == 6) {
+        ip6_addr* addrPtr = new ip6_addr;
+        to_ip6_addr(ip, port, *addrPtr, currError);
+        addrInstance.reset(reinterpret_cast<sockaddr*>(addrPtr));
+    } else {
+        return Promise<void>::Reject(_loop, "wrong socket address");
+    }
+
+    if (currError)
+    {
+        return Promise<void>::Reject(_loop, "Error in to_ip4_addr/to_ip6_addr");
+    }
+
+    std::unique_ptr<RequestPromise<void, uv_connect_t>> reqInstance(new RequestPromise<void, uv_connect_t>(_loop, getInstanceStream()));
+    currError = uv_tcp_connect(&reqInstance->_req, get<uv_tcp_t>(), addrInstance.get(), &Tcp::Connect);
+
+    if(currError)
+    {
+        return Promise<void>::Reject(_loop, "Error in uv_tcp_connect");
+    }
+
+    Future<void> future = reqInstance->_promise.getFuture();
+
+    reqInstance.release();
+    _connecting = true;
+    return future;
 }
 
 bool Tcp::getsockname(bool& ip4, std::string& ip, int& port)

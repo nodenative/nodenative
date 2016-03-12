@@ -1,5 +1,6 @@
 #include "native/async/AsyncBase.hpp"
 #include "native/helper/trace.hpp"
+#include "native/Error.hpp"
 
 namespace native {
 
@@ -20,12 +21,12 @@ void AsyncBase::enqueue() {
 
     if(uv_async_init(_loop->get(), &_uv_async, &AsyncBase::Async) != 0) {
         NNATIVE_DEBUG("Error in uv_async_init");
-        throw native::exception("uv_async_init");
+        throw Exception("uv_async_init");
     }
 
     if(uv_async_send(&_uv_async) != 0) {
         NNATIVE_DEBUG("Error in uv_async_send");
-        throw native::exception("uv_async_send");
+        throw Exception("uv_async_send");
     }
     NNATIVE_DEBUG("Enqueued");
 }

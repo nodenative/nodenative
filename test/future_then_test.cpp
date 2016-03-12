@@ -28,14 +28,14 @@ TEST(FutureThenTest, SetValueOnDifferentThread) {
 
 			std::thread::id currThreadId = std::this_thread::get_id();
 			EXPECT_NE(mainThreadId, currThreadId);
-			EXPECT_ANY_THROW(promise.setValue());
+			EXPECT_ANY_THROW(promise.resolve());
 		});
     }).then([&promise, &promiseResolved, &mainThreadId](){
         promiseResolved = true;
 
         std::thread::id currThreadId = std::this_thread::get_id();
         EXPECT_EQ(mainThreadId, currThreadId);
-        promise.setValue();
+        promise.resolve();
     });
 
     EXPECT_EQ(calledOtherThread, false);
@@ -102,7 +102,7 @@ TEST(FutureThenTest, order)
 
         EXPECT_EQ(expectedOrder, order);
 
-        p.setValue();
+        p.resolve();
 
         EXPECT_EQ(expectedOrder, order);
     //}
@@ -148,7 +148,7 @@ TEST(FutureThenTest, ReturnFuture)
         EXPECT_EQ(called_p2, false);
         EXPECT_EQ(called_p1_after, false);
 
-        promise.setValue();
+        promise.resolve();
 
         EXPECT_EQ(called_p1, false);
         EXPECT_EQ(called_p2, false);
@@ -201,7 +201,7 @@ TEST(FutureThenTest, ReturnFutureWithValue)
         EXPECT_EQ(called_p2, false);
         EXPECT_EQ(called_p1_after, false);
 
-        promise.setValue();
+        promise.resolve();
 
         EXPECT_EQ(called_p1, false);
         EXPECT_EQ(called_p2, false);
@@ -257,7 +257,7 @@ TEST(FutureThenTest, ValueParamReturnFutureWithValue)
         EXPECT_EQ(called_p2, false);
         EXPECT_EQ(called_p1_after, false);
 
-        promise.setValue(expectedValue);
+        promise.resolve(expectedValue);
 
         EXPECT_EQ(called_p1, false);
         EXPECT_EQ(called_p2, false);

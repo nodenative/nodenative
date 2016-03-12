@@ -21,8 +21,8 @@ template<class R>
 class Future {
     friend Promise<R>;
 
-    void setValue(R iVal) { _p->setValue(std::forward<R>(iVal)); }
-    void setError(const FutureError& iException) { _p->setError(iException); }
+    void resolve(R iVal) { _p->resolve(std::forward<R>(iVal)); }
+    void reject(const FutureError& iException) { _p->reject(iException); }
 public:
     /// Result type for the future
     typedef R result_type;
@@ -62,6 +62,10 @@ public:
     error(F&& f, Args&&... args) {
         return Future<R>(_p->template error<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...));
     }
+
+    std::shared_ptr<Loop> getLoop() const {
+        return _p->getLoop();
+    }
 private:
     std::shared_ptr<FutureShared<R>> _p;
 };
@@ -70,8 +74,8 @@ template<>
 class Future<void> {
     friend Promise<void>;
 
-    void setValue() {_p->setValue();}
-    void setError(const FutureError& iException) {_p->setError(iException);}
+    void resolve() {_p->resolve();}
+    void reject(const FutureError& iException) {_p->reject(iException);}
 public:
     typedef void result_type;
 
@@ -89,6 +93,10 @@ public:
     Future<void>
     error(F&& f, Args&&... args) {
         return Future<void>(_p->template error<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...));
+    }
+
+    std::shared_ptr<Loop> getLoop() const {
+        return _p->getLoop();
     }
 private:
     std::shared_ptr<FutureShared<void>> _p;

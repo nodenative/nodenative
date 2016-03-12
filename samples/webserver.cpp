@@ -65,18 +65,23 @@ namespace
             }
         }
 
-        if(!server->listen("0.0.0.0", port, [server](request& req, response& res)
+        if(!server->listen("0.0.0.0", port, [server](std::shared_ptr<Transaction> iTransaction)
             {
                 static int n = 0;
                 ++n;
-                std::string body = req.get_body(); // Now you can write a custom handler for the body content.
-                res.set_status(200);
-                res.set_header("Content-Type", "text/plain");
+                std::string body = iTransaction->getRequest().getBody(); // Now you can write a custom handler for the body content.
+                NNATIVE_DEBUG("request body: >> " << body);
+                Response& res = iTransaction->getResponse();
+                res.setStatus(200);
+                res.setHeader("Content-Type", "text/plain");
                 std::ostringstream res_str;
                 res_str<<"C++ FTW "<<n<<"\n";
                 res.end(res_str.str());
             }
-        )) return 1; // Failed to run server.
+        )) {
+            std::cout << "failed to run server->listen\n";
+            return 1; // Failed to run server.
+        }
 
         std::cout << "Server running at http://0.0.0.0:" << port << "/" << std::endl;
         return 0;

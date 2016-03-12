@@ -1,13 +1,14 @@
 #ifndef __ASYNC_FUTUREERROR_HPP__
 #define __ASYNC_FUTUREERROR_HPP__
 
-#include "../error.hpp"
+#include "../Error.hpp"
 
 namespace native {
 
-class FutureError : public exception {
+class FutureError : public Exception {
 public:
-    FutureError(const std::string& iError): exception(iError) {}
+    FutureError(const std::string& iError): Exception(iError) {}
+    FutureError(const std::string& iError, const std::string& iFile, const int iLine, const std::string& iFunction): Exception(iError, iFile, iLine, iFunction) {}
 };
 
 class PromiseAlreadySatisfied : public FutureError {

@@ -44,7 +44,7 @@ worker(std::shared_ptr<Loop> iLoop, F&& f, Args&&... args) {
     NNATIVE_FCALL();
     using return_type = typename std::result_of<F(Args...)>::type;
     std::shared_ptr<WorkerCallback<return_type, Args...>> action = WorkerCallback<return_type, Args...>::Create(iLoop, std::forward<F>(f), std::forward<Args>(args)...);
-    action->setValue();
+    action->resolve();
     return Future<typename WorkerCallback<typename std::result_of<F(Args...)>::type, Args...>::ResultType>(action->getFuture());
 }
 

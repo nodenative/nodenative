@@ -24,14 +24,14 @@ ActionCallbackBaseDetachedError<P>::ActionCallbackBaseDetachedError(std::shared_
 template<typename P>
 void ActionCallbackBaseDetached<P>::executeAsync() {
     NNATIVE_FCALL();
-    _instance->setValueCb(std::forward<P>(std::get<0>(_args)));
+    _instance->resolveCb(std::forward<P>(std::get<0>(_args)));
 }
 
 
 template<typename P>
 void ActionCallbackBaseDetachedError<P>::executeAsync() {
     NNATIVE_FCALL();
-    _instance->setErrorCb(_error);
+    _instance->rejectCb(_error);
 }
 
 template<typename P>
@@ -53,12 +53,12 @@ void ActionCallbackBaseDetachedError<P>::Enqueue(std::shared_ptr<ActionCallbackB
 }
 
 template<typename P>
-void ActionCallbackBase<P>::setValue(P p) {
+void ActionCallbackBase<P>::resolve(P p) {
     ActionCallbackBaseDetached<P>::Enqueue(this->shared_from_this(), std::forward<P>(p));
 }
 
 template<typename P>
-void ActionCallbackBase<P>::setError(const FutureError &iError) {
+void ActionCallbackBase<P>::reject(const FutureError &iError) {
     ActionCallbackBaseDetachedError<P>::Enqueue(this->shared_from_this(), iError);
 }
 
@@ -266,9 +266,9 @@ template<typename R, typename... Args>
 template<std::size_t... Is>
 void ActionCallback<R, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
     try {
-        this->getFuture()->setValue(this->_f(std::get<Is>(this->_args)...));
+        this->getFuture()->resolve(this->_f(std::get<Is>(this->_args)...));
     } catch (const FutureError &e) {
-        this->getFuture()->setError(e);
+        this->getFuture()->reject(e);
     }
 }
 
@@ -280,14 +280,14 @@ void ActionCallback<Future<R>, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
         this->_f(std::get<Is>(this->_args)...)
             .then([iInstance](R&& r) {
                 ActionCallback<Future<R>, Args...> *currPtr = static_cast<ActionCallback<Future<R>, Args...>*>(iInstance.get());
-                currPtr->getFuture()->setValue(std::forward<R>(r));
+                currPtr->getFuture()->resolve(std::forward<R>(r));
             })
             .error([iInstance](const FutureError& iError){
                 ActionCallback<Future<R>, Args...> *currPtr = static_cast<ActionCallback<Future<R>, Args...>*>(iInstance.get());
-                currPtr->getFuture()->setError(iError);
+                currPtr->getFuture()->reject(iError);
             });
     } catch (const FutureError &e) {
-        this->getFuture()->setError(e);
+        this->getFuture()->reject(e);
     }
 }
 
@@ -299,14 +299,14 @@ void ActionCallback<Future<void>, Args...>::callFn(helper::TemplateSeqInd<Is...>
         this->_f(std::get<Is>(this->_args)...)
             .then([iInstance]() {
                 ActionCallback<Future<void>, Args...> *currPtr = static_cast<ActionCallback<Future<void>, Args...>*>(iInstance.get());
-                currPtr->getFuture()->setValue();
+                currPtr->getFuture()->resolve();
             })
             .error([iInstance](const FutureError& iError){
                 ActionCallback<Future<void>, Args...> *currPtr = static_cast<ActionCallback<Future<void>, Args...>*>(iInstance.get());
-                currPtr->getFuture()->setError(iError);
+                currPtr->getFuture()->reject(iError);
             });
     } catch (const FutureError &e) {
-        this->getFuture()->setError(e);
+        this->getFuture()->reject(e);
     }
 }
 
@@ -315,9 +315,9 @@ template<std::size_t... Is>
 void ActionCallback<void, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
     try {
         this->_f(std::get<Is>(this->_args)...);
-        this->getFuture()->setValue();
+        this->getFuture()->resolve();
     } catch (const FutureError &e) {
-        this->getFuture()->setError(e);
+        this->getFuture()->reject(e);
     }
 }
 
@@ -325,9 +325,9 @@ template<typename R, typename P, typename... Args>
 template<std::size_t... Is>
 void ActionCallbackP1<R, P, Args...>::callFn(P p, helper::TemplateSeqInd<Is...>) {
     try {
-        this->getFuture()->setValue(this->_f(std::forward<P>(p), std::get<Is>(this->_args)...));
+        this->getFuture()->resolve(this->_f(std::forward<P>(p), std::get<Is>(this->_args)...));
     } catch (const FutureError &e) {
-        this->getFuture()->setError(e);
+        this->getFuture()->reject(e);
     }
 }
 
@@ -339,14 +339,14 @@ void ActionCallbackP1<Future<R>, P, Args...>::callFn(P p, helper::TemplateSeqInd
         this->_f(std::forward<P>(p), std::get<Is>(this->_args)...)
             .template then([iInstance](R r) {
                 ActionCallbackP1<Future<R>, P, Args...> *currPtr = static_cast<ActionCallbackP1<Future<R>, P, Args...>*>(iInstance.get());
-                currPtr->getFuture()->setValue(std::forward<R>(r));
+                currPtr->getFuture()->resolve(std::forward<R>(r));
             })
             .template error([iInstance](const FutureError& iError){
                 ActionCallbackP1<Future<R>, P, Args...> *currPtr = static_cast<ActionCallbackP1<Future<R>, P, Args...>*>(iInstance.get());
-                currPtr->getFuture()->setError(iError);
+                currPtr->getFuture()->reject(iError);
             });
     } catch (const FutureError &e) {
-        this->getFuture()->setError(e);
+        this->getFuture()->reject(e);
     }
 }
 
@@ -358,14 +358,14 @@ void ActionCallbackP1<Future<void>, P, Args...>::callFn(P p, helper::TemplateSeq
         this->_f(std::forward<P>(p), std::get<Is>(this->_args)...)
             .template then([iInstance]() {
                 ActionCallbackP1<Future<void>, P, Args...> *currPtr = static_cast<ActionCallbackP1<Future<void>, P, Args...>*>(iInstance.get());
-                currPtr->getFuture()->setValue();
+                currPtr->getFuture()->resolve();
             })
             .template error([iInstance](const FutureError& iError){
                 ActionCallbackP1<Future<void>, P, Args...> *currPtr = static_cast<ActionCallbackP1<Future<void>, P, Args...>*>(iInstance.get());
-                currPtr->getFuture()->setError(iError);
+                currPtr->getFuture()->reject(iError);
             });
     } catch (const FutureError &e) {
-        this->getFuture()->setError(e);
+        this->getFuture()->reject(e);
     }
 }
 
@@ -374,90 +374,90 @@ template<std::size_t... Is>
 void ActionCallbackP1<void, P, Args...>::callFn(P p, helper::TemplateSeqInd<Is...>) {
     try {
         this->_f(std::forward<P>(p), std::get<Is>(this->_args)...);
-        this->getFuture()->setValue();
+        this->getFuture()->resolve();
     } catch (const FutureError &e) {
-        this->getFuture()->setError(e);
+        this->getFuture()->reject(e);
     }
 }
 
 template<typename R, typename... Args>
-void ActionCallback<R, Args...>::setValueCb() {
+void ActionCallback<R, Args...>::resolveCb() {
     this->template callFn(helper::TemplateSeqIndGen<sizeof...(Args)>());
 }
 
 template<typename R, typename... Args>
-void ActionCallback<Future<R>, Args...>::setValueCb() {
+void ActionCallback<Future<R>, Args...>::resolveCb() {
     this->template callFn(helper::TemplateSeqIndGen<sizeof...(Args)>());
 }
 
 template<typename... Args>
-void ActionCallback<Future<void>, Args...>::setValueCb() {
+void ActionCallback<Future<void>, Args...>::resolveCb() {
     this->template callFn(helper::TemplateSeqIndGen<sizeof...(Args)>());
 }
 
 template<typename... Args>
-void ActionCallback<void, Args...>::setValueCb() {
+void ActionCallback<void, Args...>::resolveCb() {
     this->template callFn(helper::TemplateSeqIndGen<sizeof...(Args)>());
 }
 
 template<typename R, typename P, typename... Args>
-void ActionCallbackP1<R, P, Args...>::setValueCb(P p) {
+void ActionCallbackP1<R, P, Args...>::resolveCb(P p) {
     this->template callFn(std::forward<P>(p), helper::TemplateSeqIndGen<sizeof...(Args)>());
 }
 
 template<typename R, typename P, typename... Args>
-void ActionCallbackP1<Future<R>, P, Args...>::setValueCb(P p) {
+void ActionCallbackP1<Future<R>, P, Args...>::resolveCb(P p) {
     this->template callFn(std::forward<P>(p), helper::TemplateSeqIndGen<sizeof...(Args)>());
 }
 
 template<typename P, typename... Args>
-void ActionCallbackP1<Future<void>, P, Args...>::setValueCb(P p) {
+void ActionCallbackP1<Future<void>, P, Args...>::resolveCb(P p) {
     this->template callFn(std::forward<P>(p), helper::TemplateSeqIndGen<sizeof...(Args)>());
 }
 
 template<typename P, typename... Args>
-void ActionCallbackP1<void, P, Args...>::setValueCb(P p) {
+void ActionCallbackP1<void, P, Args...>::resolveCb(P p) {
     this->template callFn(std::forward<P>(p), helper::TemplateSeqIndGen<sizeof...(Args)>());
 }
 
 template<typename R, typename... Args>
-void ActionCallback<R, Args...>::setErrorCb(const FutureError &iError) {
-    this->getFuture()->setError(iError);
+void ActionCallback<R, Args...>::rejectCb(const FutureError &iError) {
+    this->getFuture()->reject(iError);
 }
 
 template<typename R, typename... Args>
-void ActionCallback<Future<R>, Args...>::setErrorCb(const FutureError &iError) {
-    this->getFuture()->setError(iError);
+void ActionCallback<Future<R>, Args...>::rejectCb(const FutureError &iError) {
+    this->getFuture()->reject(iError);
 }
 
 template<typename... Args>
-void ActionCallback<Future<void>, Args...>::setErrorCb(const FutureError &iError) {
-    this->getFuture()->setError(iError);
+void ActionCallback<Future<void>, Args...>::rejectCb(const FutureError &iError) {
+    this->getFuture()->reject(iError);
 }
 
 template<typename... Args>
-void ActionCallback<void, Args...>::setErrorCb(const FutureError &iError) {
-    this->getFuture()->setError(iError);
+void ActionCallback<void, Args...>::rejectCb(const FutureError &iError) {
+    this->getFuture()->reject(iError);
 }
 
 template<typename R, typename P, typename... Args>
-void ActionCallbackP1<R, P, Args...>::setErrorCb(const FutureError &iError) {
-    this->getFuture()->setError(iError);
+void ActionCallbackP1<R, P, Args...>::rejectCb(const FutureError &iError) {
+    this->getFuture()->reject(iError);
 }
 
 template<typename R, typename P, typename... Args>
-void ActionCallbackP1<Future<R>, P, Args...>::setErrorCb(const FutureError &iError) {
-    this->getFuture()->setError(iError);
+void ActionCallbackP1<Future<R>, P, Args...>::rejectCb(const FutureError &iError) {
+    this->getFuture()->reject(iError);
 }
 
 template<typename P, typename... Args>
-void ActionCallbackP1<Future<void>, P, Args...>::setErrorCb(const FutureError &iError) {
-    this->getFuture()->setError(iError);
+void ActionCallbackP1<Future<void>, P, Args...>::rejectCb(const FutureError &iError) {
+    this->getFuture()->reject(iError);
 }
 
 template<typename P, typename... Args>
-void ActionCallbackP1<void, P, Args...>::setErrorCb(const FutureError &iError) {
-    this->getFuture()->setError(iError);
+void ActionCallbackP1<void, P, Args...>::rejectCb(const FutureError &iError) {
+    this->getFuture()->reject(iError);
 }
 
 // Error
@@ -516,9 +516,9 @@ template<typename R, typename... Args>
 template<std::size_t... Is>
 void ActionCallbackErrorP1<R, Args...>::callFn(const FutureError& iError, helper::TemplateSeqInd<Is...>) {
     try {
-        this->getFuture()->setValue(this->_f(iError, std::get<Is>(this->_args)...));
+        this->getFuture()->resolve(std::forward<R>(this->_f(iError, std::get<Is>(this->_args)...)));
     } catch (const FutureError& e) {
-        this->getFuture()->setError(e);
+        this->getFuture()->reject(e);
     }
 }
 
@@ -527,29 +527,29 @@ template<std::size_t... Is>
 void ActionCallbackError<Args...>::callFn(const FutureError& iError, helper::TemplateSeqInd<Is...>) {
     try {
         this->_f(iError, std::get<Is>(this->_args)...);
-        this->getFuture()->setValue();
+        this->getFuture()->resolve();
     } catch (const FutureError &e) {
-        this->getFuture()->setError(e);
+        this->getFuture()->reject(e);
     }
 }
 
 template<typename... Args>
-void ActionCallbackError<Args...>::setValueCb() {
-    this->getFuture()->setValue();
+void ActionCallbackError<Args...>::resolveCb() {
+    this->getFuture()->resolve();
 }
 
 template<typename R, typename... Args>
-void ActionCallbackErrorP1<R, Args...>::setValueCb(R r) {
-    this->getFuture()->setValue(std::forward<R>(r));
+void ActionCallbackErrorP1<R, Args...>::resolveCb(R r) {
+    this->getFuture()->resolve(std::forward<R>(r));
 }
 
 template<typename... Args>
-void ActionCallbackError<Args...>::setErrorCb(const FutureError &iError) {
+void ActionCallbackError<Args...>::rejectCb(const FutureError &iError) {
     this->template callFn(iError, helper::TemplateSeqIndGen<sizeof...(Args)>());
 }
 
 template<typename P, typename... Args>
-void ActionCallbackErrorP1<P, Args...>::setErrorCb(const FutureError &iError) {
+void ActionCallbackErrorP1<P, Args...>::rejectCb(const FutureError &iError) {
     this->template callFn(iError, helper::TemplateSeqIndGen<sizeof...(Args)>());
 }
 

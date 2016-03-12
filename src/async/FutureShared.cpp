@@ -9,7 +9,7 @@ std::shared_ptr<FutureShared<void>> FutureShared<void>::Create(std::shared_ptr<L
     return instance;
 }
 
-void FutureShared<void>::setValue() {
+void FutureShared<void>::resolve() {
     NNATIVE_CHECK_LOOP_THREAD(this->_loop);
     if(this->_resolver) {
         throw PromiseAlreadySatisfied();
@@ -22,7 +22,7 @@ void FutureShared<void>::setValue() {
     }
 }
 
-void FutureShared<void>::setError(const FutureError& iError) {
+void FutureShared<void>::reject(const FutureError& iError) {
     NNATIVE_CHECK_LOOP_THREAD(this->_loop);
     if(this->_resolver) {
         throw PromiseAlreadySatisfied();

@@ -2,69 +2,59 @@
 #define __NATIVE_HANDLE_HANDLE_HPP__
 
 #include "base_utils.hpp"
-#include "../callback.hpp"
+#include "../Loop.hpp"
+#include "../async.hpp"
+#include "../async.ipp"
 
-namespace native
-{
-    namespace base
-    {
-        void _delete_handle(uv_handle_t* h);
+namespace native {
+namespace base {
 
-        class Handle
-        {
-        public:
-            template<typename T>
-            Handle(T* x)
-                : uv_handle_(reinterpret_cast<uv_handle_t*>(x))
-            {
-                //printf("Handle(): %x\n", this);
-                assert(uv_handle_);
+class Handle : public std::enable_shared_from_this<Handle> {
+public:
+    Handle() = delete;
+    Handle& operator =(const Handle& h) = delete;
+    Handle(const Handle& h) = delete;
 
-                uv_handle_->data = new callbacks(native::internal::uv_cid_max);
-                assert(uv_handle_->data);
-            }
+    virtual ~Handle();
 
-            virtual ~Handle()
-            {
-                //printf("~Handle(): %x\n", this);
-                uv_handle_ = nullptr;
-            }
-
-            Handle(const Handle& h)
-                : uv_handle_(h.uv_handle_)
-            {
-                //printf("Handle(const Handle&): %x\n", this);
-            }
-
-        public:
-            template<typename T=uv_handle_t>
-            T* get() { return reinterpret_cast<T*>(uv_handle_); }
-
-            template<typename T=uv_handle_t>
-            const T* get() const { return reinterpret_cast<T*>(uv_handle_); }
-
-            bool is_active() { return uv_is_active(get()) != 0; }
-
-            void close(std::function<void()> callback)
-            {
-                callbacks::store(get()->data, native::internal::uv_cid_close, callback);
-                uv_close(get(),
-                    [](uv_handle_t* h) {
-                        callbacks::invoke<decltype(callback)>(h->data, native::internal::uv_cid_close);
-                        _delete_handle(h);
-                    });
-            }
-
-            Handle& operator =(const Handle& h)
-            {
-                uv_handle_ = h.uv_handle_;
-                return *this;
-            }
-
-        protected:
-            uv_handle_t* uv_handle_;
-        };
+    template<typename T=uv_handle_t>
+    T* get() {
+        NNATIVE_ASSERT(_uvHandlePtr != nullptr);
+        return reinterpret_cast<T*>(_uvHandlePtr);
     }
-}
+
+    template<typename T=uv_handle_t>
+    const T* get() const {
+        NNATIVE_ASSERT(_uvHandlePtr != nullptr);
+        return reinterpret_cast<T*>(_uvHandlePtr);
+    }
+
+    std::shared_ptr<Handle> getInstanceHandle();
+
+    bool isActive();
+    bool isClosing();
+
+    Future<std::shared_ptr<Handle>> close();
+
+
+    virtual void init(uv_handle_t* iHandlePtr);
+
+protected:
+    Handle(std::shared_ptr<native::Loop> iLoop);
+
+    void keepInstanceHandle();
+    void releaseInstanceHandle();
+
+    uv_handle_t* _uvHandlePtr;
+    std::shared_ptr<Loop> _loop;
+    std::shared_ptr<Handle> _instanceHandle;
+    unsigned int _instanceHandleCount;
+
+private:
+    Promise<std::shared_ptr<Handle> > _closingPromise;
+};
+
+} /* namespace base */
+} /* namespace native */
 
 #endif /* __NATIVE_HANDLE_HANDLE_HPP__ */

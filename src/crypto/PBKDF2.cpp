@@ -1,6 +1,6 @@
 #include "native/crypto/PBKDF2.hpp"
 #include "native/crypto/utils.hpp"
-#include "native/error.hpp"
+#include "native/Error.hpp"
 #include "native/crypto/OpensslHeaders.hpp"
 
 namespace native {
@@ -21,7 +21,7 @@ bool PBKDF2(const std::string& iPassword,
     } else {
         digest = EVP_get_digestbyname(iDigestName.c_str());
         if (digest == nullptr) {
-            throw exception("Bad digest name");
+            throw Exception("Bad digest name");
         }
     }
     return PKCS5_PBKDF2_HMAC(iPassword.c_str(),

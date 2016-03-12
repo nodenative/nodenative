@@ -8,20 +8,22 @@ using namespace native;
 
 int main() {
     auto client = net::Tcp::Create();
-    client->connect("127.0.0.1", 8080, [=](error e){
-        client->write("GET / HTTP/1.1\r\n\r\n", [=](error e){
+    client->connect("127.0.0.1", 8080).then([client](){
+        client->write("GET / HTTP/1.1\r\n\r\n").then([client](){
             std::shared_ptr<std::string> response(new std::string);
-            client->read_start([=](const char* buf, ssize_t len){
+            client->readStart([client, response](const char* buf, ssize_t len){
                 if(len < 0) // EOF
                 {
                     std::cout << *response << std::endl;
-                    client->close([](){});
+                    client->close();
                 }
                 else
                 {
                     response->append(std::string(buf, len));
                 }
             });
+        }).error([](const FutureError e) {
+            std::cout << "error on connect: " << e.message();
         });
     });
 

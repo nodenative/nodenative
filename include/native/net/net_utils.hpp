@@ -2,7 +2,6 @@
 #define __NATIVE_NET_NETUTILS_HPP__
 
 #include "../base.hpp"
-#include "../callback.hpp"
 
 namespace native
 {
@@ -13,8 +12,8 @@ namespace native
         typedef sockaddr_in ip4_addr;
         typedef sockaddr_in6 ip6_addr;
 
-        bool to_ip4_addr(const std::string& ip, int port, ip4_addr& oAddr, error& oError);
-        bool to_ip6_addr(const std::string& ip, int port, ip6_addr& oAddr, error& oError);
+        bool to_ip4_addr(const std::string& ip, int port, ip4_addr& oAddr, Error& oError);
+        bool to_ip6_addr(const std::string& ip, int port, ip6_addr& oAddr, Error& oError);
 
         bool to_ip4_addr(const std::string& ip, int port, ip4_addr& oAddr);
         bool to_ip6_addr(const std::string& ip, int port, ip6_addr& oAddr);
