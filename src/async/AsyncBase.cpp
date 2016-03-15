@@ -6,6 +6,7 @@ namespace native {
 
 AsyncBase::AsyncBase(std::shared_ptr<Loop> iLoop) : _loop(iLoop) {
     NNATIVE_FCALL();
+    NNATIVE_ASSERT(_loop);
 }
 
 AsyncBase::~AsyncBase() {

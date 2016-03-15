@@ -8,58 +8,50 @@
 namespace native {
 
 template<typename P>
-ActionCallbackBaseDetached<P>::ActionCallbackBaseDetached(std::shared_ptr<ActionCallbackBase<P>> iInstance, P p) :
-        AsyncBase(iInstance->getLoop()),
-        _instance(iInstance),
-        _args(p) {
+ActionCallbackBase<P>::ActionCallbackBase(std::shared_ptr<Loop> iLoop) :
+        AsyncBase(iLoop) {
 }
 
 template<typename P>
-ActionCallbackBaseDetachedError<P>::ActionCallbackBaseDetachedError(std::shared_ptr<ActionCallbackBase<P>> iInstance, const FutureError &iError) :
-        AsyncBase(iInstance->getLoop()),
-        _instance(iInstance),
-        _error(iError) {
+std::shared_ptr<ActionCallbackBase<P>> ActionCallbackBase<P>::getInstance() {
+    return this->shared_from_this();
 }
 
 template<typename P>
-void ActionCallbackBaseDetached<P>::executeAsync() {
+void ActionCallbackBase<P>::executeAsync() {
     NNATIVE_FCALL();
-    _instance->resolveCb(std::forward<P>(std::get<0>(_args)));
-}
-
-
-template<typename P>
-void ActionCallbackBaseDetachedError<P>::executeAsync() {
-    NNATIVE_FCALL();
-    _instance->rejectCb(_error);
+    NNATIVE_ASSERT(_resolver);
+    NNATIVE_ASSERT(_instance);
+    _resolver->resolveCb(_instance);
 }
 
 template<typename P>
-void ActionCallbackBaseDetached<P>::Enqueue(std::shared_ptr<ActionCallbackBase<P>> iInstance, P p) {
+void ActionCallbackBase<P>::closeAsync(std::unique_ptr<AsyncBase> iInstance) {
     NNATIVE_FCALL();
-    NNATIVE_ASSERT(iInstance);
-    std::unique_ptr<ActionCallbackBaseDetached<P>> detachedInst(new ActionCallbackBaseDetached<P>(iInstance, std::forward<P>(p)));
-    detachedInst->enqueue();
-    detachedInst.release();
-}
-
-template<typename P>
-void ActionCallbackBaseDetachedError<P>::Enqueue(std::shared_ptr<ActionCallbackBase<P>> iInstance, const FutureError &iError) {
-    NNATIVE_FCALL();
-    NNATIVE_ASSERT(iInstance);
-    std::unique_ptr<ActionCallbackBaseDetachedError<P>> detachedInst(new ActionCallbackBaseDetachedError<P>(iInstance, iError));
-    detachedInst->enqueue();
-    detachedInst.release();
+    NNATIVE_ASSERT(_resolver);
+    NNATIVE_ASSERT(_instance);
+    NNATIVE_ASSERT(iInstance.get() == this);
+    iInstance.release();
+    _resolver.reset();
+    _instance.reset();
 }
 
 template<typename P>
 void ActionCallbackBase<P>::resolve(P p) {
-    ActionCallbackBaseDetached<P>::Enqueue(this->shared_from_this(), std::forward<P>(p));
+    NNATIVE_ASSERT(!_instance);
+    NNATIVE_ASSERT(!_resolver);
+    _instance = this->getInstance();
+    _resolver = std::make_unique<FutureSharedResolverValue<P>>(std::forward<P>(p));
+    this->enqueue();
 }
 
 template<typename P>
 void ActionCallbackBase<P>::reject(const FutureError &iError) {
-    ActionCallbackBaseDetachedError<P>::Enqueue(this->shared_from_this(), iError);
+    NNATIVE_ASSERT(!_instance);
+    NNATIVE_ASSERT(!_resolver);
+    _instance = this->getInstance();
+    _resolver = std::make_unique<FutureSharedResolverError<P>>(iError);
+    this->enqueue();
 }
 
 template<typename R, typename... Args>
@@ -112,6 +104,7 @@ std::shared_ptr<ActionCallbackP1<void, P, Args...>> ActionCallbackP1<void, P, Ar
 
 template<typename R, typename... Args>
 ActionCallback<R, Args...>::ActionCallback(std::shared_ptr<Loop> iLoop, std::function<R(Args...)> f, Args&&... args) :
+         ActionCallbackBase<void>(iLoop),
          _f(f),
          _args(std::forward<Args>(args)...),
          _future(FutureShared<R>::Create(iLoop))
@@ -120,6 +113,7 @@ ActionCallback<R, Args...>::ActionCallback(std::shared_ptr<Loop> iLoop, std::fun
 
 template<typename R, typename... Args>
 ActionCallback<Future<R>, Args...>::ActionCallback(std::shared_ptr<Loop> iLoop, std::function<Future<R>(Args...)> f, Args&&... args) :
+         ActionCallbackBase<void>(iLoop),
          _f(f),
          _args(std::forward<Args>(args)...),
          _future(FutureShared<R>::Create(iLoop))
@@ -128,6 +122,7 @@ ActionCallback<Future<R>, Args...>::ActionCallback(std::shared_ptr<Loop> iLoop, 
 
 template<typename... Args>
 ActionCallback<Future<void>, Args...>::ActionCallback(std::shared_ptr<Loop> iLoop, std::function<Future<void>(Args...)> f, Args&&... args) :
+         ActionCallbackBase<void>(iLoop),
          _f(f),
          _args(std::forward<Args>(args)...),
          _future(FutureShared<void>::Create(iLoop))
@@ -136,6 +131,7 @@ ActionCallback<Future<void>, Args...>::ActionCallback(std::shared_ptr<Loop> iLoo
 
 template<typename... Args>
 ActionCallback<void, Args...>::ActionCallback(std::shared_ptr<Loop> iLoop, std::function<void(Args...)> f, Args&&... args) :
+         ActionCallbackBase<void>(iLoop),
          _f(f),
          _args(std::forward<Args>(args)...),
          _future(FutureShared<void>::Create(iLoop))
@@ -144,6 +140,7 @@ ActionCallback<void, Args...>::ActionCallback(std::shared_ptr<Loop> iLoop, std::
 
 template<typename R, typename P, typename... Args>
 ActionCallbackP1<R, P, Args...>::ActionCallbackP1(std::shared_ptr<Loop> iLoop, std::function<R(P, Args...)> f, Args&&... args) :
+         ActionCallbackBase<P>(iLoop),
          _f(f),
          _args(std::forward<Args>(args)...),
          _future(FutureShared<R>::Create(iLoop))
@@ -152,6 +149,7 @@ ActionCallbackP1<R, P, Args...>::ActionCallbackP1(std::shared_ptr<Loop> iLoop, s
 
 template<typename R, typename P, typename... Args>
 ActionCallbackP1<Future<R>, P, Args...>::ActionCallbackP1(std::shared_ptr<Loop> iLoop, std::function<Future<R>(P, Args...)> f, Args&&... args) :
+         ActionCallbackBase<P>(iLoop),
          _f(f),
          _args(std::forward<Args>(args)...),
          _future(FutureShared<R>::Create(iLoop))
@@ -160,6 +158,7 @@ ActionCallbackP1<Future<R>, P, Args...>::ActionCallbackP1(std::shared_ptr<Loop> 
 
 template<typename P, typename... Args>
 ActionCallbackP1<Future<void>, P, Args...>::ActionCallbackP1(std::shared_ptr<Loop> iLoop, std::function<Future<void>(P, Args...)> f, Args&&... args) :
+         ActionCallbackBase<P>(iLoop),
          _f(f),
          _args(std::forward<Args>(args)...),
          _future(FutureShared<void>::Create(iLoop))
@@ -168,6 +167,7 @@ ActionCallbackP1<Future<void>, P, Args...>::ActionCallbackP1(std::shared_ptr<Loo
 
 template<typename P, typename... Args>
 ActionCallbackP1<void, P, Args...>::ActionCallbackP1(std::shared_ptr<Loop> iLoop, std::function<void(P, Args...)> f, Args&&... args) :
+         ActionCallbackBase<P>(iLoop),
          _f(f),
          _args(std::forward<Args>(args)...),
          _future(FutureShared<void>::Create(iLoop))
@@ -223,46 +223,6 @@ std::shared_ptr<FutureShared<void>> ActionCallbackP1<void, P, Args...>::getFutur
 }
 
 template<typename R, typename... Args>
-std::shared_ptr<Loop> ActionCallback<R, Args...>::getLoop() {
-    return this->getFuture()->getLoop();
-}
-
-template<typename R, typename... Args>
-std::shared_ptr<Loop> ActionCallback<Future<R>, Args...>::getLoop() {
-    return this->getFuture()->getLoop();
-}
-
-template<typename... Args>
-std::shared_ptr<Loop> ActionCallback<Future<void>, Args...>::getLoop() {
-    return this->getFuture()->getLoop();
-}
-
-template<typename... Args>
-std::shared_ptr<Loop> ActionCallback<void, Args...>::getLoop() {
-    return this->getFuture()->getLoop();
-}
-
-template<typename R, typename P, typename... Args>
-std::shared_ptr<Loop> ActionCallbackP1<R, P, Args...>::getLoop() {
-    return this->getFuture()->getLoop();
-}
-
-template<typename R, typename P, typename... Args>
-std::shared_ptr<Loop> ActionCallbackP1<Future<R>, P, Args...>::getLoop() {
-    return this->getFuture()->getLoop();
-}
-
-template<typename P, typename... Args>
-std::shared_ptr<Loop> ActionCallbackP1<Future<void>, P, Args...>::getLoop() {
-    return this->getFuture()->getLoop();
-}
-
-template<typename P, typename... Args>
-std::shared_ptr<Loop> ActionCallbackP1<void, P, Args...>::getLoop() {
-    return this->getFuture()->getLoop();
-}
-
-template<typename R, typename... Args>
 template<std::size_t... Is>
 void ActionCallback<R, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
     try {
@@ -275,7 +235,7 @@ void ActionCallback<R, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
 template<typename R, typename... Args>
 template<std::size_t... Is>
 void ActionCallback<Future<R>, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
-    std::shared_ptr<ActionCallbackBase<void>> iInstance = this->shared_from_this();
+    std::shared_ptr<ActionCallbackBase<void>> iInstance = getInstance();
     try {
         this->_f(std::get<Is>(this->_args)...)
             .then([iInstance](R&& r) {
@@ -294,7 +254,7 @@ void ActionCallback<Future<R>, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
 template<typename... Args>
 template<std::size_t... Is>
 void ActionCallback<Future<void>, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
-    std::shared_ptr<ActionCallbackBase<void>> iInstance = this->shared_from_this();
+    std::shared_ptr<ActionCallbackBase<void>> iInstance = getInstance();
     try {
         this->_f(std::get<Is>(this->_args)...)
             .then([iInstance]() {
@@ -334,7 +294,7 @@ void ActionCallbackP1<R, P, Args...>::callFn(P p, helper::TemplateSeqInd<Is...>)
 template<typename R, typename P, typename... Args>
 template<std::size_t... Is>
 void ActionCallbackP1<Future<R>, P, Args...>::callFn(P p, helper::TemplateSeqInd<Is...>) {
-    std::shared_ptr<ActionCallbackBase<P>> iInstance = this->shared_from_this();
+    std::shared_ptr<ActionCallbackBase<P>> iInstance = this->getInstance();
     try {
         this->_f(std::forward<P>(p), std::get<Is>(this->_args)...)
             .template then([iInstance](R r) {
@@ -353,7 +313,7 @@ void ActionCallbackP1<Future<R>, P, Args...>::callFn(P p, helper::TemplateSeqInd
 template<typename P, typename... Args>
 template<std::size_t... Is>
 void ActionCallbackP1<Future<void>, P, Args...>::callFn(P p, helper::TemplateSeqInd<Is...>) {
-    std::shared_ptr<ActionCallbackBase<P>> iInstance = this->shared_from_this();
+    std::shared_ptr<ActionCallbackBase<P>> iInstance = this->getInstance();
     try {
         this->_f(std::forward<P>(p), std::get<Is>(this->_args)...)
             .template then([iInstance]() {
@@ -476,6 +436,7 @@ std::shared_ptr<ActionCallbackErrorP1<R, Args...>> ActionCallbackErrorP1<R, Args
 
 template<typename... Args>
 ActionCallbackError<Args...>::ActionCallbackError(std::shared_ptr<Loop> iLoop, std::function<void(const FutureError&, Args...)> f, Args&&... args) :
+         ActionCallbackBase<void>(iLoop),
          _f(f),
          _args(std::forward<Args>(args)...),
          _future(FutureShared<void>::Create(iLoop))
@@ -484,6 +445,7 @@ ActionCallbackError<Args...>::ActionCallbackError(std::shared_ptr<Loop> iLoop, s
 
 template<typename R, typename... Args>
 ActionCallbackErrorP1<R, Args...>::ActionCallbackErrorP1(std::shared_ptr<Loop> iLoop, std::function<R(const FutureError&, Args...)> f, Args&&... args) :
+         ActionCallbackBase<R>(iLoop),
          _f(f),
          _args(std::forward<Args>(args)...),
          _future(FutureShared<R>::Create(iLoop))
@@ -500,16 +462,6 @@ template<typename R, typename... Args>
 std::shared_ptr<FutureShared<R>> ActionCallbackErrorP1<R, Args...>::getFuture() {
     NNATIVE_ASSERT(this->_future);
     return this->_future;
-}
-
-template<typename... Args>
-std::shared_ptr<Loop> ActionCallbackError<Args...>::getLoop() {
-    return this->getFuture()->getLoop();
-}
-
-template<typename R, typename... Args>
-std::shared_ptr<Loop> ActionCallbackErrorP1<R, Args...>::getLoop() {
-    return this->getFuture()->getLoop();
 }
 
 template<typename R, typename... Args>

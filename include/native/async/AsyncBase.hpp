@@ -31,6 +31,7 @@ public:
     template<class Child, typename... Args>
     static Child* Create(Loop& iLoop, Args&&... args);
     virtual ~AsyncBase();
+    std::shared_ptr<Loop> getLoop() { return _loop; }
 };
 
 } /* namespace native */
