@@ -15,7 +15,12 @@ int main() {
                 if(len < 0) // EOF
                 {
                     std::cout << *response << std::endl;
-                    client->close();
+                    client->close()
+                        .then([](std::shared_ptr<base::Handle> iHandle) {
+                            std::cout << "connection closed \n";
+                        }).error([](const FutureError& e){
+                            std::cout << "connection error: "<< e.message() <<"\n";
+                        });
                 }
                 else
                 {
