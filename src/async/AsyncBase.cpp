@@ -32,6 +32,8 @@ void AsyncBase::enqueue() {
 
     if(uv_async_send(&_uv_async) != 0) {
         NNATIVE_DEBUG("Error in uv_async_send");
+        _uv_async.data = nullptr;
+        this->_instance.reset();
         throw Exception("uv_async_send");
     }
     NNATIVE_DEBUG("Enqueued");
