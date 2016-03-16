@@ -9,9 +9,10 @@
 
 namespace native {
 
-class WorkerBase {
+class WorkerBase: public std::enable_shared_from_this<WorkerBase> {
     std::shared_ptr<WorkerBase> _self;
     std::shared_ptr<Loop> _loop;
+    std::shared_ptr<WorkerBase> _instance;
 
     // This method will be called from uv
     static void Worker(uv_work_t* iHandle);
@@ -24,14 +25,14 @@ protected:
      */
     virtual void executeWorker() = 0;
     virtual void executeWorkerAfter(int iStatus) = 0;
-    virtual void closeWorker(std::unique_ptr<WorkerBase>) {}
+    virtual void closeWorker() {}
     void enqueue();
     WorkerBase() = delete;
     WorkerBase(std::shared_ptr<Loop> iLoop);
 public:
-    template<class Child, typename... Args>
-    static Child* Create(Loop& iLoop, Args&&... args);
     virtual ~WorkerBase();
+    std::shared_ptr<Loop> getLoop() { return _loop; }
+    std::shared_ptr<WorkerBase> getInstance() { return this->shared_from_this(); }
 };
 
 } /* namespace native */

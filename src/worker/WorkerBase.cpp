@@ -6,6 +6,7 @@ namespace native {
 
 WorkerBase::WorkerBase(std::shared_ptr<Loop> iLoop) : _loop(iLoop) {
     NNATIVE_FCALL();
+    NNATIVE_ASSERT(_loop);
 }
 
 WorkerBase::~WorkerBase() {
@@ -16,13 +17,14 @@ WorkerBase::~WorkerBase() {
 
 void WorkerBase::enqueue() {
     NNATIVE_FCALL();
+    NNATIVE_ASSERT(!_instance);
     _uvWork.data = this;
-    NNATIVE_ASSERT(_loop);
 
     if(uv_queue_work(_loop->get(), &_uvWork, &WorkerBase::Worker, &WorkerBase::WorkerAfter) != 0) {
         NNATIVE_DEBUG("Error in uv_queue_work");
         throw Exception("uv_queue_work");
     }
+    _instance = getInstance();
     NNATIVE_DEBUG("Enqueued");
 }
 
@@ -43,11 +45,14 @@ void WorkerBase::WorkerAfter(uv_work_t* iHandle, int iStatus) {
     WorkerBase* currobj = static_cast<WorkerBase*>(iHandle->data);
     iHandle->data = nullptr;
 
-    currobj->executeWorkerAfter(iStatus);
+    NNATIVE_ASSERT(currobj->_instance);
 
-    // Move the pointer to a temporary variable.
-    std::unique_ptr<WorkerBase> currInst(currobj);
-    currobj->closeWorker(std::move(currInst));
+    // Save a instance copy do not call the destructor
+    std::shared_ptr<WorkerBase> currInst = currobj->_instance;
+    currobj->_instance.reset();
+
+    currobj->executeWorkerAfter(iStatus);
+    currobj->closeWorker();
 }
 
 } /* namespace native */

@@ -29,6 +29,7 @@ std::shared_ptr<WorkerCallback<void, Args...>> WorkerCallback<void, Args...>::Cr
 
 template<typename R, typename... Args>
 WorkerCallback<R, Args...>::WorkerCallback(std::shared_ptr<Loop> iLoop, std::function<R(Args...)> f, Args&&... args) :
+         WorkerCallbackBase(iLoop),
          _f(f),
          _args(std::forward<Args>(args)...),
          _future(FutureShared<R>::Create(iLoop))
@@ -37,6 +38,7 @@ WorkerCallback<R, Args...>::WorkerCallback(std::shared_ptr<Loop> iLoop, std::fun
 
 template<typename R, typename... Args>
 WorkerCallback<Future<R>, Args...>::WorkerCallback(std::shared_ptr<Loop> iLoop, std::function<Future<R>(Args...)> f, Args&&... args) :
+         WorkerCallbackBase(iLoop),
          _f(f),
          _args(std::forward<Args>(args)...),
          _future(FutureShared<R>::Create(iLoop))
@@ -45,6 +47,7 @@ WorkerCallback<Future<R>, Args...>::WorkerCallback(std::shared_ptr<Loop> iLoop, 
 
 template<typename... Args>
 WorkerCallback<Future<void>, Args...>::WorkerCallback(std::shared_ptr<Loop> iLoop, std::function<Future<void>(Args...)> f, Args&&... args) :
+         WorkerCallbackBase(iLoop),
          _f(f),
          _args(std::forward<Args>(args)...),
          _future(FutureShared<void>::Create(iLoop))
@@ -53,6 +56,7 @@ WorkerCallback<Future<void>, Args...>::WorkerCallback(std::shared_ptr<Loop> iLoo
 
 template<typename... Args>
 WorkerCallback<void, Args...>::WorkerCallback(std::shared_ptr<Loop> iLoop, std::function<void(Args...)> f, Args&&... args) :
+         WorkerCallbackBase(iLoop),
          _f(f),
          _args(std::forward<Args>(args)...),
          _future(FutureShared<void>::Create(iLoop))
@@ -84,29 +88,9 @@ std::shared_ptr<FutureShared<void>> WorkerCallback<void, Args...>::getFuture() {
 }
 
 template<typename R, typename... Args>
-std::shared_ptr<Loop> WorkerCallback<R, Args...>::getLoop() {
-    return this->getFuture()->getLoop();
-}
-
-template<typename R, typename... Args>
-std::shared_ptr<Loop> WorkerCallback<Future<R>, Args...>::getLoop() {
-    return this->getFuture()->getLoop();
-}
-
-template<typename... Args>
-std::shared_ptr<Loop> WorkerCallback<Future<void>, Args...>::getLoop() {
-    return this->getFuture()->getLoop();
-}
-
-template<typename... Args>
-std::shared_ptr<Loop> WorkerCallback<void, Args...>::getLoop() {
-    return this->getFuture()->getLoop();
-}
-
-template<typename R, typename... Args>
 template<std::size_t... Is>
 void WorkerCallback<R, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
-    std::shared_ptr<WorkerCallbackBase> iInstance = this->shared_from_this();
+    std::shared_ptr<WorkerCallbackBase> iInstance = this->getInstance();
 
     try {
         this->_resolver = std::make_unique<FutureSharedResolverValue<R>>(std::forward<R>(this->_f(std::get<Is>(this->_args)...)));
@@ -118,7 +102,7 @@ void WorkerCallback<R, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
 template<typename R, typename... Args>
 template<std::size_t... Is>
 void WorkerCallback<Future<R>, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
-    std::shared_ptr<WorkerCallbackBase> instance = this->shared_from_this();
+    std::shared_ptr<WorkerCallbackBase> instance = this->getInstance();
     try {
         this->_f(std::get<Is>(this->_args)...)
             .template then([instance](R&& r) {
@@ -137,7 +121,7 @@ void WorkerCallback<Future<R>, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
 template<typename... Args>
 template<std::size_t... Is>
 void WorkerCallback<Future<void>, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
-    std::shared_ptr<WorkerCallbackBase> instance = this->shared_from_this();
+    std::shared_ptr<WorkerCallbackBase> instance = this->getInstance();
     try {
         this->_f(std::get<Is>(this->_args)...)
             .template then([instance]() {
@@ -156,7 +140,7 @@ void WorkerCallback<Future<void>, Args...>::callFn(helper::TemplateSeqInd<Is...>
 template<typename... Args>
 template<std::size_t... Is>
 void WorkerCallback<void, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
-    std::shared_ptr<WorkerCallbackBase> iInstance = this->shared_from_this();
+    std::shared_ptr<WorkerCallbackBase> iInstance = this->getInstance();
 
     try {
         this->_f(std::get<Is>(this->_args)...);

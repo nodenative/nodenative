@@ -6,32 +6,22 @@
 
 namespace native {
 
-WorkerCallbackBaseDetached::WorkerCallbackBaseDetached(std::shared_ptr<WorkerCallbackBase> iInstance) :
-        WorkerBase(iInstance->getLoop()),
-        _instance(iInstance) {
+WorkerCallbackBase::WorkerCallbackBase(std::shared_ptr<Loop> iLoop) :
+        WorkerBase(iLoop) {
 }
 
-void WorkerCallbackBaseDetached::executeWorker() {
-    NNATIVE_FCALL();
-    _instance->resolveCb();
+std::shared_ptr<WorkerCallbackBase> WorkerCallbackBase::getInstance() {
+    return std::static_pointer_cast<WorkerCallbackBase, WorkerBase>(WorkerBase::getInstance());
 }
 
-void WorkerCallbackBaseDetached::executeWorkerAfter(int iStatus) {
+void WorkerCallbackBase::executeWorker() {
     NNATIVE_FCALL();
-    NNATIVE_ASSERT(iStatus==0);
-    _instance->executeWorkerAfter(iStatus);
-}
-
-void WorkerCallbackBaseDetached::Enqueue(std::shared_ptr<WorkerCallbackBase> iInstance) {
-    NNATIVE_FCALL();
-    NNATIVE_ASSERT(iInstance);
-    std::unique_ptr<WorkerCallbackBaseDetached> detachedInst(new WorkerCallbackBaseDetached(iInstance));
-    detachedInst->enqueue();
-    detachedInst.release();
+    this->resolveCb();
 }
 
 void WorkerCallbackBase::resolve() {
-    WorkerCallbackBaseDetached::Enqueue(this->shared_from_this());
+    NNATIVE_FCALL();
+    this->enqueue();
 }
 
 } /* namespace native */
