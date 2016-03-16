@@ -14,42 +14,33 @@ ActionCallbackBase<P>::ActionCallbackBase(std::shared_ptr<Loop> iLoop) :
 
 template<typename P>
 std::shared_ptr<ActionCallbackBase<P>> ActionCallbackBase<P>::getInstance() {
-    return this->shared_from_this();
+    return std::static_pointer_cast<ActionCallbackBase<P>, AsyncBase>(AsyncBase::getInstance());
 }
 
 template<typename P>
 void ActionCallbackBase<P>::executeAsync() {
     NNATIVE_FCALL();
     NNATIVE_ASSERT(_resolver);
-    NNATIVE_ASSERT(_instance);
-    _resolver->resolveCb(_instance);
+    _resolver->resolveCb(this->getInstance());
 }
 
 template<typename P>
-void ActionCallbackBase<P>::closeAsync(std::unique_ptr<AsyncBase> iInstance) {
+void ActionCallbackBase<P>::closeAsync() {
     NNATIVE_FCALL();
     NNATIVE_ASSERT(_resolver);
-    NNATIVE_ASSERT(_instance);
-    NNATIVE_ASSERT(iInstance.get() == this);
-    iInstance.release();
     _resolver.reset();
-    _instance.reset();
 }
 
 template<typename P>
 void ActionCallbackBase<P>::resolve(P p) {
-    NNATIVE_ASSERT(!_instance);
     NNATIVE_ASSERT(!_resolver);
-    _instance = this->getInstance();
     _resolver = std::make_unique<FutureSharedResolverValue<P>>(std::forward<P>(p));
     this->enqueue();
 }
 
 template<typename P>
 void ActionCallbackBase<P>::reject(const FutureError &iError) {
-    NNATIVE_ASSERT(!_instance);
     NNATIVE_ASSERT(!_resolver);
-    _instance = this->getInstance();
     _resolver = std::make_unique<FutureSharedResolverError<P>>(iError);
     this->enqueue();
 }
@@ -235,7 +226,7 @@ void ActionCallback<R, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
 template<typename R, typename... Args>
 template<std::size_t... Is>
 void ActionCallback<Future<R>, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
-    std::shared_ptr<ActionCallbackBase<void>> iInstance = getInstance();
+    std::shared_ptr<ActionCallbackBase<void>> iInstance = this->getInstance();
     try {
         this->_f(std::get<Is>(this->_args)...)
             .then([iInstance](R&& r) {
@@ -254,7 +245,7 @@ void ActionCallback<Future<R>, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
 template<typename... Args>
 template<std::size_t... Is>
 void ActionCallback<Future<void>, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
-    std::shared_ptr<ActionCallbackBase<void>> iInstance = getInstance();
+    std::shared_ptr<ActionCallbackBase<void>> iInstance = this->getInstance();
     try {
         this->_f(std::get<Is>(this->_args)...)
             .then([iInstance]() {

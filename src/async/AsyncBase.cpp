@@ -17,6 +17,7 @@ AsyncBase::~AsyncBase() {
 
 void AsyncBase::enqueue() {
     NNATIVE_FCALL();
+    NNATIVE_ASSERT(!_instance);
     _uv_async.data = this;
     NNATIVE_ASSERT(_loop);
 
@@ -29,6 +30,8 @@ void AsyncBase::enqueue() {
         NNATIVE_DEBUG("Error in uv_async_send");
         throw Exception("uv_async_send");
     }
+    // Save the instance do prevent destructor
+    _instance = getInstance();
     NNATIVE_DEBUG("Enqueued");
 }
 
@@ -51,8 +54,11 @@ void AsyncBase::AsyncClosed(uv_handle_t* iHandle) {
     iHandle->data = nullptr;
 
     // Move the pointer to a temporary variable.
-    std::unique_ptr<AsyncBase> currInst(currobj);
-    currobj->closeAsync(std::move(currInst));
+    NNATIVE_ASSERT(currobj->_instance);
+    // Save a instance copy do not call the destructor
+    std::shared_ptr<AsyncBase> currInst = currobj->_instance;
+    currobj->_instance.reset();
+    currobj->closeAsync();
 }
 
 } /* namespace native */

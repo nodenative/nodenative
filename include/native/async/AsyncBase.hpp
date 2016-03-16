@@ -9,9 +9,10 @@
 
 namespace native {
 
-class AsyncBase {
+class AsyncBase : public std::enable_shared_from_this<AsyncBase> {
     std::shared_ptr<AsyncBase> _self;
     std::shared_ptr<Loop> _loop;
+    std::shared_ptr<AsyncBase> _instance;
 
     // This method will be called from uv
     static void Async(uv_async_t*);
@@ -23,15 +24,14 @@ protected:
      * Extend this class for custom usage
      */
     virtual void executeAsync() = 0;
-    virtual void closeAsync(std::unique_ptr<AsyncBase>) {}
+    virtual void closeAsync() {}
     void enqueue();
     AsyncBase() = delete;
     AsyncBase(std::shared_ptr<Loop> iLoop);
 public:
-    template<class Child, typename... Args>
-    static Child* Create(Loop& iLoop, Args&&... args);
     virtual ~AsyncBase();
     std::shared_ptr<Loop> getLoop() { return _loop; }
+    std::shared_ptr<AsyncBase> getInstance() { return this->shared_from_this(); }
 };
 
 } /* namespace native */

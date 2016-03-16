@@ -21,13 +21,12 @@ class Future;
 /** Action callback base class template
  */
 template<typename P>
-class ActionCallbackBase : public std::enable_shared_from_this<ActionCallbackBase<P>>, public AsyncBase {
+class ActionCallbackBase : public AsyncBase {
 protected:
     ActionCallbackBase(std::shared_ptr<Loop> iLoop);
     void executeAsync() override;
-    void closeAsync(std::unique_ptr<AsyncBase>) override;
+    void closeAsync() override;
 
-    std::shared_ptr<ActionCallbackBase<P>> _instance;
     std::unique_ptr<FutureSharedResolver<P>> _resolver;
 
 public:
@@ -45,13 +44,12 @@ public:
 /** Acction callback base class template specialization for void type.
  */
 template<>
-class ActionCallbackBase<void> : public std::enable_shared_from_this<ActionCallbackBase<void>>, public AsyncBase {
+class ActionCallbackBase<void> : public AsyncBase {
 protected:
     ActionCallbackBase(std::shared_ptr<Loop>);
     void executeAsync() override;
-    void closeAsync(std::unique_ptr<AsyncBase>) override;
+    void closeAsync() override;
 
-    std::shared_ptr<ActionCallbackBase<void>> _instance;
     std::unique_ptr<FutureSharedResolver<void>> _resolver;
 
 public:

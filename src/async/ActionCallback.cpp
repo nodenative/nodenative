@@ -14,38 +14,29 @@ ActionCallbackBase<void>::ActionCallbackBase(std::shared_ptr<Loop> iLoop) :
 }
 
 std::shared_ptr<ActionCallbackBase<void>> ActionCallbackBase<void>::getInstance() {
-    return shared_from_this();
+    return std::static_pointer_cast<ActionCallbackBase<void>, AsyncBase>(AsyncBase::getInstance());
 }
 
 void ActionCallbackBase<void>::executeAsync() {
     NNATIVE_FCALL();
     NNATIVE_ASSERT(_resolver);
-    NNATIVE_ASSERT(_instance);
-    _resolver->resolveCb(_instance);
+    _resolver->resolveCb(this->getInstance());
 }
 
-void ActionCallbackBase<void>::closeAsync(std::unique_ptr<AsyncBase> iInstance) {
+void ActionCallbackBase<void>::closeAsync() {
     NNATIVE_FCALL();
     NNATIVE_ASSERT(_resolver);
-    NNATIVE_ASSERT(_instance);
-    NNATIVE_ASSERT(iInstance.get() == this);
-    iInstance.release();
     _resolver.reset();
-    _instance.reset();
 }
 
 void ActionCallbackBase<void>::resolve() {
-    NNATIVE_ASSERT(!_instance);
     NNATIVE_ASSERT(!_resolver);
-    _instance = getInstance();
     _resolver = std::make_unique<FutureSharedResolverValue<void>>();
     enqueue();
 }
 
 void ActionCallbackBase<void>::reject(const FutureError &iError) {
-    NNATIVE_ASSERT(!_instance);
     NNATIVE_ASSERT(!_resolver);
-    _instance = getInstance();
     _resolver = std::make_unique<FutureSharedResolverError<void>>(iError);
     enqueue();
 }
