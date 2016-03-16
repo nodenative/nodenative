@@ -17,20 +17,22 @@ AsyncBase::~AsyncBase() {
 
 void AsyncBase::enqueue() {
     NNATIVE_FCALL();
-    NNATIVE_ASSERT(!_instance);
-    _uv_async.data = this;
+    NNATIVE_ASSERT(!this->_instance);
+    NNATIVE_ASSERT(this->_uv_async.data == nullptr);
+    this->_uv_async.data = this;
 
     if(uv_async_init(_loop->get(), &_uv_async, &AsyncBase::Async) != 0) {
         NNATIVE_DEBUG("Error in uv_async_init");
         throw Exception("uv_async_init");
     }
 
+    // Save the instance do prevent destructor
+    this->_instance = this->getInstance();
+
     if(uv_async_send(&_uv_async) != 0) {
         NNATIVE_DEBUG("Error in uv_async_send");
         throw Exception("uv_async_send");
     }
-    // Save the instance do prevent destructor
-    _instance = getInstance();
     NNATIVE_DEBUG("Enqueued");
 }
 
