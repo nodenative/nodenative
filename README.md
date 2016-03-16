@@ -1,6 +1,6 @@
 # nodenative 
 
-<b>node.native</b> is a [C++14](http://en.wikipedia.org/wiki/C%2B%2B14) (aka C++1y) port for [node.js](https://github.com/joyent/node). 
+<b>nodenative</b> is a [C++14](http://en.wikipedia.org/wiki/C%2B%2B14) (aka C++1y) port for [node.js](https://github.com/joyent/node). 
 <table>
   <thead>
     <tr>
@@ -20,7 +20,7 @@
   </tbody>
 </table>
 
-Please note that node.native project is <em>under heavy development</em>.
+Please note that nodenative project is <em>under heavy development</em>.
 
 ## Feature highlights
  * Promises/Future functionality based on system event pool (`native::Promise<R>`, `native::Future<R>`)
@@ -30,7 +30,7 @@ Please note that node.native project is <em>under heavy development</em>.
 
 ## Sample code
 
-Simplest web-server example using node.native.
+Simplest web-server example using nodenative.
 ```cpp
 #include <iostream>
 #include <native/native.hpp>
@@ -53,7 +53,7 @@ int main() {
 
 ## Getting started
 
-<em>node.native</em> requires [libuv](https://github.com/libuv/libuv) and [http-parser](https://github.com/joyent/http-parser) lib to use.
+<em>nodenative</em> requires [libuv](https://github.com/libuv/libuv) and [http-parser](https://github.com/joyent/http-parser) lib to use.
 
 ### Build
 
