@@ -11,10 +11,10 @@
   <tbody>
     <tr>
       <td align="center">
-        <a href="https://travis-ci.org/tojocky/node.native"><img src="https://travis-ci.org/tojocky/node.native.svg?branch=master"></a>
+        <a href="https://travis-ci.org/nodenative/nodenative"><img src="https://travis-ci.org/nodenative/nodenative.svg?branch=master"></a>
       </td>
       <td>
-      <a href="https://coveralls.io/github/tojocky/node.native?branch=master)"><img src="https://coveralls.io/repos/github/tojocky/node.native/badge.svg?branch=master"></a>
+      <a href="https://coveralls.io/github/nodenative/nodenative?branch=master)"><img src="https://coveralls.io/repos/github/nodenative/nodenative/badge.svg?branch=master"></a>
       </td>
     </tr>
   </tbody>
