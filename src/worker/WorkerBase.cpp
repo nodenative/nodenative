@@ -18,13 +18,14 @@ WorkerBase::~WorkerBase() {
 void WorkerBase::enqueue() {
     NNATIVE_FCALL();
     NNATIVE_ASSERT(!_instance);
-    _uvWork.data = this;
+    NNATIVE_ASSERT(this->_uvWork.data == nullptr);
+    this->_uvWork.data = this;
+    this->_instance = getInstance();
 
     if(uv_queue_work(_loop->get(), &_uvWork, &WorkerBase::Worker, &WorkerBase::WorkerAfter) != 0) {
         NNATIVE_DEBUG("Error in uv_queue_work");
         throw Exception("uv_queue_work");
     }
-    _instance = getInstance();
     NNATIVE_DEBUG("Enqueued");
 }
 
