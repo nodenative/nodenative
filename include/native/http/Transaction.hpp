@@ -33,6 +33,8 @@ public:
     Request& getRequest();
     Response& getResponse();
 
+    Future<void> close();
+
 private:
     bool parse(std::function<void(std::shared_ptr<Transaction>)> callback);
 
@@ -46,6 +48,7 @@ protected:
     std::string _lastHeaderField;
     std::string _lastHeaderValue;
 
+    std::shared_ptr<Transaction> _instance;
     std::shared_ptr<Server> _server;
     std::shared_ptr<native::net::Tcp> _socket;
     std::unique_ptr<Request> _request;

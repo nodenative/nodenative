@@ -37,17 +37,10 @@ Future<void> Response::end(const std::string& body)
     response_text << body;
 
     auto str = response_text.str();
-    std::shared_ptr<Transaction> transaction = _transaction.lock();
-    return transaction->_socket->write(str.c_str(), static_cast<int>(str.length())).then([transaction] {
+    std::weak_ptr<Transaction> transactionWeak = _transaction;
+    return transactionWeak.lock()->_socket->write(str.c_str(), static_cast<int>(str.length())).then([transactionWeak]() {
         NNATIVE_DEBUG("close transaction socket");
-        // TODO: close? in transactor destructor is already called
-        transaction->_socket->close();
-        //.then([](std::shared_ptr<base::Handle> iHandle) {
-        //    NNATIVE_DEBUG("closed handle. Use count: " << iHandle.use_count());
-        //});
-        //NNATIVE_DEBUG("count of transaction->_socket: " << transaction->_socket.use_count());
-        transaction->_socket.reset();
-        //NNATIVE_DEBUG("count of transaction: " << transaction.use_count());
+        return transactionWeak.lock()->close();
     });
 }
 

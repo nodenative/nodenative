@@ -30,20 +30,20 @@ bool Handle::isClosing() {
     return uv_is_closing(get()) != 0;
 }
 
-Future<std::shared_ptr<Handle>> Handle::close()
+Future<void> Handle::close()
 {
     NNATIVE_CHECK_LOOP_THREAD(_loop);
-    if(!isActive()) {
-        return Promise<std::shared_ptr<Handle>>::Reject(_loop, "Handle is not active");
-    }
+    //if(!isActive()) {
+    //    return Promise<std::shared_ptr<Handle>>::Reject(_loop, "Handle is not active");
+    //}
 
     if(!isClosing()) {
-        _closingPromise = Promise<std::shared_ptr<Handle>>(_loop);
+        _closingPromise = Promise<void>(_loop);
         uv_close(get(),
                  [](uv_handle_t* h) {
                      std::shared_ptr<Handle> instance = static_cast<Handle*>(h->data)->getInstanceHandle();
                      instance->releaseInstanceHandle();
-                     instance->_closingPromise.resolve(instance);
+                     instance->_closingPromise.resolve();
                      instance->_closingPromise.reset();
                  });
     }

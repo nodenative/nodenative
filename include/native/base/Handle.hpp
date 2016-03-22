@@ -34,7 +34,7 @@ public:
     bool isActive();
     bool isClosing();
 
-    Future<std::shared_ptr<Handle>> close();
+    Future<void> close();
 
 
     virtual void init(uv_handle_t* iHandlePtr);
@@ -51,7 +51,7 @@ protected:
     unsigned int _instanceHandleCount;
 
 private:
-    Promise<std::shared_ptr<Handle> > _closingPromise;
+    Promise<void> _closingPromise;
 };
 
 } /* namespace base */

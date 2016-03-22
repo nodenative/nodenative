@@ -16,7 +16,7 @@ int main() {
                 {
                     std::cout << *response << std::endl;
                     client->close()
-                        .then([](std::shared_ptr<base::Handle> iHandle) {
+                        .then([]() {
                             std::cout << "connection closed \n";
                         }).error([](const FutureError& e){
                             std::cout << "connection error: "<< e.message() <<"\n";

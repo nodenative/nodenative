@@ -8,12 +8,14 @@ std::shared_ptr<Server> Server::Create()
 {
     std::shared_ptr<Loop> loop = Loop::GetInstanceOrCreateDefault();
     std::shared_ptr<Server> instance(new Server(loop));
+    instance->_instance = instance;
     return instance;
 }
 
 std::shared_ptr<Server> Server::Create(std::shared_ptr<Loop> iLoop)
 {
     std::shared_ptr<Server> instance(new Server(iLoop));
+    instance->_instance = instance;
     return instance;
 }
 
@@ -43,9 +45,9 @@ bool Server::listen(const std::string& ip, int port, std::function<void(std::sha
         return false;
     }
 
-    std::shared_ptr<Server> instance = getInstance();
+    std::weak_ptr<Server> instanceWeak = getInstance();
 
-    if(!_socket->listen([instance, callback](native::Error e) {
+    if(!_socket->listen([instanceWeak, callback](native::Error e) {
         NNATIVE_FCALL();
         NNATIVE_DEBUG("start listen");
         if(e)
@@ -54,7 +56,7 @@ bool Server::listen(const std::string& ip, int port, std::function<void(std::sha
         }
         else
         {
-            std::shared_ptr<Transaction> transaction = Transaction::Create(instance->getInstance());
+            std::shared_ptr<Transaction> transaction = Transaction::Create(instanceWeak.lock());
             transaction->parse(callback);
         }
         NNATIVE_DEBUG("end listen");
@@ -66,8 +68,14 @@ bool Server::listen(const std::string& ip, int port, std::function<void(std::sha
     return true;
 }
 
-Future<void> Server::shutdown() {
-    return _socket->shutdown();
+Future<std::shared_ptr<Server>> Server::close() {
+    std::weak_ptr<Server> instanceWeak = getInstance();
+
+    return _socket->close().then([instanceWeak]() -> std::shared_ptr<Server>{
+            std::shared_ptr<Server> instance = instanceWeak.lock();
+            instance->_instance.reset();
+            return instance;
+        });
 }
 
 } /* namespace http */

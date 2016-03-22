@@ -21,7 +21,7 @@ public:
     virtual ~Server();
 
     bool listen(const std::string& ip, int port, std::function<void(std::shared_ptr<Transaction>)> callback);
-    Future<void> shutdown();
+    Future<std::shared_ptr<Server>> close();
 
     static std::shared_ptr<Server> Create();
     static std::shared_ptr<Server> Create(std::shared_ptr<Loop> iLoop);
@@ -29,7 +29,7 @@ public:
 
 protected:
     std::shared_ptr<native::net::Tcp> _socket;
-    std::weak_ptr<Server> _instance;
+    std::shared_ptr<Server> _instance;
 };
 
 } // namespace http

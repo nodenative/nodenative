@@ -8,6 +8,7 @@ namespace http {
 
 std::shared_ptr<Transaction> Transaction::Create(std::shared_ptr<Server> iServer) {
     std::shared_ptr<Transaction> instance(new Transaction(iServer));
+    instance->_instance = instance;
     return instance;
 }
 
@@ -54,6 +55,15 @@ Response& Transaction::getResponse() {
     }
 
     return *_response;
+}
+
+Future<void> Transaction::close() {
+    std::weak_ptr<Transaction> transactionWeak = this->getInstance();
+    return this->_socket->close()
+        .then([transactionWeak]() {
+            std::shared_ptr<Transaction> instance = transactionWeak.lock();
+            instance->_instance.reset();
+        });
 }
 
 bool Transaction::parse(std::function<void(std::shared_ptr<Transaction>)> callback)
@@ -146,10 +156,11 @@ bool Transaction::parse(std::function<void(std::shared_ptr<Transaction>)> callba
         return 0; // 0 or 1?
     };
 
-    std::shared_ptr<Transaction> instance = getInstance();
+    std::weak_ptr<Transaction> instanceWeak = getInstance();
 
-    _socket->readStart([instance](const char* buf, int len) {
-        NNATIVE_ASSERT(instance);
+    _socket->readStart([instanceWeak](const char* buf, int len) {
+        NNATIVE_ASSERT(!instanceWeak.expired());
+        std::shared_ptr<Transaction> instance = instanceWeak.lock();
         //NNATIVE_DEBUG("buff [" << buf << "], len: " << len);
         // TODO: resolve multi part
         if ((buf == nullptr) || (len == -1)) {

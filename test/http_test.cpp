@@ -12,53 +12,56 @@ int getPort() {
 
 } /* namespace */
 
-//TEST(HttpTest, Basic)
-void deactivated()
+TEST(HttpTest, Basic)
+//void deactivated()
 {
     std::shared_ptr<http::Server> server = http::Server::Create();
+    std::weak_ptr<http::Server> serverWeak = server;
     int port = getPort();
     std::string bodyText("TestData body");
     bool serverClosed = false;
     bool requestSent = false;
 
-    NNATIVE_DEBUG("start server");
 
     bool retVal = server->listen("0.0.0.0", port, [bodyText, &serverClosed, &requestSent](std::shared_ptr<http::Transaction> iTransaction) {
-        NNATIVE_DEBUG("server request received");
         http::Response& res = iTransaction->getResponse();
         res.setStatus(200);
         res.setHeader("Content-Type", "text/plain");
         res.end(bodyText);
         EXPECT_EQ(requestSent, true);
+        std::cout << "server response sent\n";
     });
 
     EXPECT_EQ(retVal, true);
 
     EXPECT_EQ(serverClosed, false);
 
-    NNATIVE_DEBUG("start client");
     std::shared_ptr<net::Tcp> client = net::Tcp::Create();
-    client->connect("127.0.0.1", port).then([client, server, bodyText, &requestSent, &serverClosed]() {
-        NNATIVE_DEBUG("Client connected")
+    std::weak_ptr<net::Tcp> clientWeak = client;
+    client->connect("127.0.0.1", port).then([clientWeak, serverWeak, bodyText, &requestSent, &serverClosed]() {
         std::shared_ptr<std::string> response(new std::string);
         requestSent = true;
-        client->write("GET / HTTP/1.1\r\n\r\n").then([client, server, response, bodyText, &serverClosed]() {
-            client->readStart([client, server, response, bodyText, &serverClosed](const char* buf, ssize_t len) {
-                NNATIVE_DEBUG("reading buff, len:" << len);
+        clientWeak.lock()->write("GET / HTTP/1.1\r\n\r\n").then([clientWeak, serverWeak, response, bodyText, &serverClosed]() {
+            std::cout << "server request sent\n";
+            clientWeak.lock()->readStart([clientWeak, serverWeak, response, bodyText, &serverClosed](const char* buf, ssize_t len) {
+                std::cout << "server response received " << len << "\n";
                 if(len < 0) {
                     // End buffer
-                    NNATIVE_DEBUG("close connections:");
-                    client->close().then([](std::shared_ptr<base::Handle> iHandle){
-                        NNATIVE_DEBUG("client closed");
+                    std::cout << "close connection\n";
+                    clientWeak.lock()->shutdown().then([clientWeak]() -> Future<void>{
+                        std::cout << "client shotdown\n";
+                        return clientWeak.lock()->close();
+                    }).then([](){
+                        std::cout << "client closed\n";
                     }).error([](const FutureError& e){
-                        NNATIVE_DEBUG("error from close client: " << e.message());
+                        std::cout << "client close error " << e.message() << "\n";
                     });
-                    server->shutdown().then([server, &serverClosed]() {
+                    serverWeak.lock()->close().then([&serverClosed, serverWeak](std::shared_ptr<http::Server>) {
+                        std::cout << "server closed " << serverWeak.use_count() << "\n";
                         serverClosed = true;
-                        NNATIVE_DEBUG("Server shutted down");
                         //server->close();
                     }).error([](const FutureError& e){
-                        NNATIVE_DEBUG("error from server shutdown: " << e.message());
+                        std::cout << "server close error " << e.message() << "\n";
                     });
                     // TODO: finish
                     //EXPECT_EQ(*response, bodyText);
@@ -74,6 +77,7 @@ void deactivated()
 
     NNATIVE_DEBUG("start loop");
     run();
+    std::cout << "loop stoped. server count: " << server.use_count() << "\n";
     EXPECT_EQ(serverClosed, true);
 
     //TODO
