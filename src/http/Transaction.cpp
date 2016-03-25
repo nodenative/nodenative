@@ -163,7 +163,7 @@ bool Transaction::parse(std::function<void(std::shared_ptr<Transaction>)> callba
         std::shared_ptr<Transaction> instance = instanceWeak.lock();
         //NNATIVE_DEBUG("buff [" << buf << "], len: " << len);
         // TODO: resolve multi part
-        if ((buf == nullptr) || (len == -1)) {
+        if ((buf == nullptr) || (len <= 0)) {
             instance->_response->setStatus(500);
             instance->_response->end("Invalid request format.");
         } else {

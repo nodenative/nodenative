@@ -69,6 +69,8 @@ std::string Response::getStatusText(int status)
     case 205: return "Reset Content";
     case 206: return "Partial Content";
     case 207: return "Multi-Status";
+    case 208: return "Already Reported";
+    case 226: return "IM Used";
     case 300: return "Multiple Choices";
     case 301: return "Moved Permanently";
     case 302: return "Found";
@@ -97,6 +99,7 @@ std::string Response::getStatusText(int status)
     case 416: return "Requested Range Not Satisfiable";
     case 417: return "Expectation Faiiled";
     case 418: return "I'm a teapot"; //RFC2324.
+    case 421: return "Misdirected Request";
     case 422: return "Unprocessable Entity";       // RFC 4918
     case 423: return "Locked";                     // RFC 4918
     case 424: return "Failed Dependency";          // RFC 4918
@@ -105,6 +108,7 @@ std::string Response::getStatusText(int status)
     case 428: return "Precondition Required";      // RFC 6585
     case 429: return "Too Many Requests";          // RFC 6585
     case 431: return "Request Header Fields Too Large";// RFC 6585
+    case 451: return "Unavailable For Legal Reasons";
     case 500: return "Internal Server Error";
     case 501: return "Not Implemented";
     case 502: return "Bad Gateway";
@@ -113,6 +117,7 @@ std::string Response::getStatusText(int status)
     case 505: return "HTTP Version Not Supported";
     case 506: return "Variant Also Negotiates";         // RFC2295
     case 507: return "Insufficient Storage";            // RFC4918
+    case 508: return "Loop Detected";
     case 509: return "Bandwidth Limit Exceeded";
     case 510: return "Not Extended";                    // RFC2774
     case 511: return "Network Authentication Required"; // RFC 6585
