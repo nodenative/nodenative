@@ -1,6 +1,6 @@
 #include "native/http/Transaction.hpp"
-#include "native/http/Request.hpp"
-#include "native/http/Response.hpp"
+#include "native/http/ServerRequest.hpp"
+#include "native/http/ServerResponse.hpp"
 #include "native/http/Server.hpp"
 
 namespace native {
@@ -33,15 +33,15 @@ Transaction::~Transaction()
     }
 }
 
-std::unique_ptr<Request> Transaction::createRequest() {
-    return std::unique_ptr<Request>(new Request(getInstance()));
+std::unique_ptr<ServerRequest> Transaction::createRequest() {
+    return std::unique_ptr<ServerRequest>(new ServerRequest(getInstance()));
 }
 
-std::unique_ptr<Response> Transaction::createResponse() {
-    return std::unique_ptr<Response>(new Response(getInstance()));
+std::unique_ptr<ServerResponse> Transaction::createResponse() {
+    return std::unique_ptr<ServerResponse>(new ServerResponse(getInstance()));
 }
 
-Request& Transaction::getRequest() {
+ServerRequest& Transaction::getRequest() {
     if(!_request) {
         _request = createRequest();
     }
@@ -49,7 +49,7 @@ Request& Transaction::getRequest() {
     return *_request;
 }
 
-Response& Transaction::getResponse() {
+ServerResponse& Transaction::getResponse() {
     if(!_response) {
         _response = createResponse();
     }

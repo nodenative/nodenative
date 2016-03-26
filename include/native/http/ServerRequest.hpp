@@ -1,5 +1,5 @@
-#ifndef __NATIVE_HTTP_REQUEST_HPP__
-#define __NATIVE_HTTP_REQUEST_HPP__
+#ifndef __NATIVE_HTTP_SERVERREQUEST_HPP__
+#define __NATIVE_HTTP_SERVERREQUEST_HPP__
 
 #include "UrlObject.hpp"
 #include "../text.hpp"
@@ -12,16 +12,16 @@ namespace http {
 
 class Transaction;
 
-class Request
+class ServerRequest
 {
     friend class Transaction;
 
 private:
-    Request(std::shared_ptr<Transaction> iTransaction);
+    ServerRequest(std::shared_ptr<Transaction> iTransaction);
 
 public:
-    Request() = delete;
-    ~Request();
+    ServerRequest() = delete;
+    ~ServerRequest();
     const UrlObject& url() const { return _url; }
     const std::string& getHeader(const std::string& key) const;
     bool getHeader(const std::string& key, std::string& value) const;
@@ -41,5 +41,5 @@ private:
 } /* namespace http */
 } /* namespace native */
 
-#endif /* __NATIVE_HTTP_REQUEST_HPP__ */
+#endif /* __NATIVE_HTTP_SERVERREQUEST_HPP__ */
 

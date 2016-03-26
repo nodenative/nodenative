@@ -1,22 +1,22 @@
-#include "native/http/Response.hpp"
+#include "native/http/ServerResponse.hpp"
 #include "native/http/Transaction.hpp"
 #include "native/http/HttpUtils.hpp"
 
 namespace native {
 namespace http {
 
-Response::Response(std::shared_ptr<Transaction> iTransaction) :
+ServerResponse::ServerResponse(std::shared_ptr<Transaction> iTransaction) :
     _transaction(iTransaction),
     _status(200)
 {
     _headers["Content-Type"] = "text/html";
 }
 
-Response::~Response()
+ServerResponse::~ServerResponse()
 {
 }
 
-Future<void> Response::end(const std::string& body)
+Future<void> ServerResponse::end(const std::string& body)
 {
     // Content-Length
     if(_headers.find("Content-Length") == _headers.end())
@@ -44,17 +44,17 @@ Future<void> Response::end(const std::string& body)
     });
 }
 
-void Response::setStatus(int status_code)
+void ServerResponse::setStatus(int status_code)
 {
     _status = status_code;
 }
 
-void Response::setHeader(const std::string& key, const std::string& value)
+void ServerResponse::setHeader(const std::string& key, const std::string& value)
 {
     _headers[key] = value;
 }
 
-std::string Response::getStatusText(int status)
+std::string ServerResponse::getStatusText(int status)
 {
     switch(status)
     {

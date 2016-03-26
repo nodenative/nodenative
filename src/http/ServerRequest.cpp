@@ -1,27 +1,27 @@
-#include "native/http/Request.hpp"
+#include "native/http/ServerRequest.hpp"
 #include "native/http/Transaction.hpp"
 
 namespace native {
 namespace http {
 
-Request::Request(std::shared_ptr<Transaction> iTransaction) :
+ServerRequest::ServerRequest(std::shared_ptr<Transaction> iTransaction) :
     _transaction(iTransaction)
 {
 }
 
-Request::~Request()
+ServerRequest::~ServerRequest()
 {
-    //printf("~Request() %x\n", this);
+    //printf("~ServerRequest() %x\n", this);
 }
 
-const std::string& Request::getHeader(const std::string& key) const
+const std::string& ServerRequest::getHeader(const std::string& key) const
 {
     auto it = _headers.find(key);
     if(it != _headers.end()) return it->second;
     return _defaultValue;
 }
 
-bool Request::getHeader(const std::string& key, std::string& value) const
+bool ServerRequest::getHeader(const std::string& key, std::string& value) const
 {
     auto it = _headers.find(key);
     if(it != _headers.end())

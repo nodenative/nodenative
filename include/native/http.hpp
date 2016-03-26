@@ -2,8 +2,8 @@
 #define __NATIVE_HTTP_HPP__
 
 #include "http/Server.hpp"
-#include "http/Request.hpp"
-#include "http/Response.hpp"
+#include "http/ServerRequest.hpp"
+#include "http/ServerResponse.hpp"
 #include "http/Transaction.hpp"
 #include "http/HttpUtils.hpp"
 

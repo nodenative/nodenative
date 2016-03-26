@@ -71,7 +71,7 @@ namespace
                 ++n;
                 std::string body = iTransaction->getRequest().getBody(); // Now you can write a custom handler for the body content.
                 NNATIVE_DEBUG("request body: >> " << body);
-                Response& res = iTransaction->getResponse();
+                ServerResponse& res = iTransaction->getResponse();
                 res.setStatus(200);
                 res.setHeader("Content-Type", "text/plain");
                 std::ostringstream res_str;

@@ -39,7 +39,7 @@ using namespace native::http;
 int main() {
     Server server;
     if(!server.listen("0.0.0.0", 8080, [](http::shared_ptr<Transaction> iTransaction) {
-        Response& res = iTransaction->getResponse();
+        ServerResponse& res = iTransaction->getResponse();
         res.set_status(200);
         res.set_header("Content-Type", "text/plain");
         res.end("C++ FTW\n");
