@@ -6,7 +6,7 @@ namespace native {
 namespace http {
 
 ServerResponse::ServerResponse(std::shared_ptr<Transaction> iTransaction) :
-        OutgoingMessage(),
+        OutgoingMessage(false),
         _transaction(iTransaction) {
     _headers["Content-Type"] = "text/html";
 }

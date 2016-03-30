@@ -4,7 +4,8 @@
 namespace native {
 namespace http {
 
-OutgoingMessage::OutgoingMessage() :
+OutgoingMessage::OutgoingMessage(const bool iIsRequest) :
+        _isRequest(iIsRequest),
         _statusCode(200),
         _headerSent(false),
         _closed(false) {

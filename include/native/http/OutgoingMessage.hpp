@@ -14,11 +14,11 @@ namespace http {
 class OutgoingMessage
 {
 protected:
-    OutgoingMessage();
+    OutgoingMessage() = delete;
+    OutgoingMessage(const bool iIsRequest);
     virtual Future<void> send(const std::string& data) = 0;
 public:
     virtual ~OutgoingMessage();
-    virtual bool isRequest() const = 0;
 
     void setStatus(int status_code);
     void setHeader(const std::string& key, const std::string& value);
@@ -31,6 +31,7 @@ public:
     virtual Future<void> end();
 
 protected:
+    const bool _isRequest;
     std::map<std::string, std::string, native::text::ci_less> _headers;
     int _statusCode;
     bool _headerSent;

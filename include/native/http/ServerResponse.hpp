@@ -25,8 +25,6 @@ public:
     ServerResponse() = delete;
     ~ServerResponse();
 
-    virtual bool isRequest() const override { return false; };
-
     Future<void> end(const std::string &data) override;
 
 protected:
