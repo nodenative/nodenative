@@ -5,31 +5,27 @@ namespace native {
 namespace http {
 
 ServerRequest::ServerRequest(std::shared_ptr<Transaction> iTransaction) :
-    _transaction(iTransaction)
-{
+        IncomingMessage(true),
+        _transaction(iTransaction) {
 }
 
-ServerRequest::~ServerRequest()
-{
+ServerRequest::~ServerRequest() {
     //printf("~ServerRequest() %x\n", this);
 }
 
-const std::string& ServerRequest::getHeader(const std::string& key) const
-{
-    auto it = _headers.find(key);
-    if(it != _headers.end()) return it->second;
-    return _defaultValue;
+void ServerRequest::initParser(std::function<void(std::shared_ptr<Transaction>)> callback) {
+    NNATIVE_FCALL();
+
+    // store callback object
+    _callback = callback;
+
+    IncomingMessage::initParser();
 }
 
-bool ServerRequest::getHeader(const std::string& key, std::string& value) const
-{
-    auto it = _headers.find(key);
-    if(it != _headers.end())
-    {
-        value = it->second;
-        return true;
-    }
-    return false;
+void ServerRequest::onMessageComplete() {
+    NNATIVE_FCALL();
+
+    _callback(_transaction.lock());
 }
 
 } /* namespace http */

@@ -30,6 +30,8 @@
                 '../src/net/Tcp.cpp',
                 #'../src/fs.cpp',
                 '../src/http/HttpUtils.cpp',
+                '../src/http/IncomingMessage.cpp',
+                '../src/http/OutgoingMessage.cpp',
                 '../src/http/Transaction.cpp',
                 '../src/http/Server.cpp',
                 '../src/http/ServerRequest.cpp',

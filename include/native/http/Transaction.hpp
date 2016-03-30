@@ -42,19 +42,12 @@ protected:
     virtual std::unique_ptr<ServerRequest> createRequest();
     virtual std::unique_ptr<ServerResponse> createResponse();
 
-    http_parser _parser;
-    http_parser_settings _parserSettings;
-    bool _wasHeaderValue;
-    std::string _lastHeaderField;
-    std::string _lastHeaderValue;
 
     std::shared_ptr<Transaction> _instance;
     std::shared_ptr<Server> _server;
     std::shared_ptr<native::net::Tcp> _socket;
     std::unique_ptr<ServerRequest> _request;
     std::unique_ptr<ServerResponse> _response;
-
-    std::function<void(std::shared_ptr<Transaction> iServer)> _callback;
 };
 
 } /* namespace http */

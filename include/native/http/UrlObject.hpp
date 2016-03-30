@@ -9,8 +9,6 @@ namespace http {
 
 class UrlObject
 {
-    friend class Transaction;
-
 public:
     UrlObject();
     ~UrlObject();
@@ -18,7 +16,6 @@ public:
     UrlObject(const UrlObject& c);
     UrlObject& operator =(const UrlObject& c);
 
-public:
     std::string schema() const;
     std::string host() const;
     int port() const;
@@ -26,7 +23,6 @@ public:
     std::string query() const;
     std::string fragment() const;
 
-private:
     void fromBuf(const char* buf, std::size_t len, bool is_connect=false);
 
     bool hasSchema() const { return _handle.field_set & (1<<UF_SCHEMA); }
