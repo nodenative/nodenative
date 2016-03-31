@@ -34,6 +34,8 @@ public:
     bool isActive();
     bool isClosing();
 
+    void ref();
+    void unref();
     Future<void> close();
 
 

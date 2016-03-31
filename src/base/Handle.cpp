@@ -30,8 +30,15 @@ bool Handle::isClosing() {
     return uv_is_closing(get()) != 0;
 }
 
-Future<void> Handle::close()
-{
+void Handle::ref() {
+    uv_ref(get());
+}
+
+void Handle::unref() {
+    uv_unref(get());
+}
+
+Future<void> Handle::close() {
     NNATIVE_CHECK_LOOP_THREAD(_loop);
     //if(!isActive()) {
     //    return Promise<std::shared_ptr<Handle>>::Reject(_loop, "Handle is not active");
