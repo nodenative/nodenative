@@ -102,7 +102,7 @@ public:
      *  ...
      *  Internally, this function just calls uv_now() function.
      */
-    int64_t now();
+    uint64_t now();
 
 private:
     std::unique_ptr<uv_loop_t, HandleDeleter> _uv_loop;

@@ -71,7 +71,7 @@ bool Server::listen(const std::string& ip, int port, std::function<void(std::sha
 Future<std::shared_ptr<Server>> Server::close() {
     std::weak_ptr<Server> instanceWeak = getInstance();
 
-    return _socket->close().then([instanceWeak]() -> std::shared_ptr<Server>{
+    return _socket->close().then([instanceWeak](std::shared_ptr<base::Handle>) -> std::shared_ptr<Server>{
             std::shared_ptr<Server> instance = instanceWeak.lock();
             instance->_instance.reset();
             return instance;

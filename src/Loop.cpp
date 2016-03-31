@@ -145,7 +145,7 @@ void Loop::update_time()
     uv_update_time(_uv_loop.get());
 }
 
-int64_t Loop::now()
+uint64_t Loop::now()
 {
     return uv_now(_uv_loop.get());
 }

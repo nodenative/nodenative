@@ -57,7 +57,7 @@ ServerResponse& Transaction::getResponse() {
 Future<void> Transaction::close() {
     std::weak_ptr<Transaction> transactionWeak = this->getInstance();
     return this->_socket->close()
-        .then([transactionWeak]() {
+        .then([transactionWeak](std::shared_ptr<base::Handle>) {
             std::shared_ptr<Transaction> instance = transactionWeak.lock();
             instance->_instance.reset();
         });

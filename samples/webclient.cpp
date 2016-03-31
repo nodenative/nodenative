@@ -18,7 +18,7 @@ int main() {
                 {
                     std::cout << *response << std::endl;
                     clientWeak.lock()->close()
-                        .then([]() {
+                        .then([](std::shared_ptr<base::Handle>) {
                             std::cout << "connection closed \n";
                         }).error([](const FutureError& e){
                             std::cout << "connection error: "<< e.message() <<"\n";

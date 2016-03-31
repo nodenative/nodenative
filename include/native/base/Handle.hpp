@@ -7,6 +7,9 @@
 #include "../async.ipp"
 
 namespace native {
+
+class Error;
+
 namespace base {
 
 class Handle : public std::enable_shared_from_this<Handle> {
@@ -32,12 +35,35 @@ public:
     std::shared_ptr<Handle> getInstanceHandle();
 
     bool isActive();
-    bool isClosing();
 
+    /**
+     * Reference the given handle. References are idempotent, that is, if a handle
+     * is already referenced calling this function again will have no effect.
+     */
     void ref();
-    void unref();
-    Future<void> close();
 
+    /**
+     * Un-reference the given handle. References are idempotent, that is, if a handle
+     * is not referenced calling this function again will have no effect.
+     */
+    void unref();
+
+    /**
+     * Returns `true` if the handle referenced, `false` otherwise.
+     */
+    bool hasRef();
+
+    /**
+     * Request handle to be closed. A future object will be returned.
+     * This MUST be called on each handle before memory is released.
+     *
+     * In-progress requests, like uv_connect_t or uv_write_t, are cancelled and
+     * have their callbacks called asynchronously with status=UV_ECANCELED.
+     */
+    Future<std::shared_ptr<Handle>> close();
+
+    /// Returns `true` if the handle is closing or closed, `false` otherwise.
+    bool isClosing();
 
     virtual void init(uv_handle_t* iHandlePtr);
 
@@ -53,7 +79,7 @@ protected:
     unsigned int _instanceHandleCount;
 
 private:
-    Promise<void> _closingPromise;
+    Promise<std::shared_ptr<Handle>> _closingPromise;
 };
 
 } /* namespace base */

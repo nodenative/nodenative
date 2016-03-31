@@ -13,5 +13,6 @@
 #include "worker.hpp"
 #include "helper.hpp"
 #include "crypto.hpp"
+#include "Timer.hpp"
 
 #endif /* __NATIVE_NATIVE_DEF_HPP__ */

@@ -82,6 +82,7 @@ namespace native
         Error(int iErrCode) : _uv_err(iErrCode) {}
         ~Error() = default;
         bool isError() { return (_uv_err != 0); }
+        bool isOK() { return (_uv_err == 0); }
         operator bool() { return isError(); }
         virtual Error& operator=(int iErrCode)
         {

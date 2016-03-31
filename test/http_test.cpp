@@ -50,7 +50,7 @@ TEST(HttpTest, Basic)
                     std::cout << "close connection\n";
                     clientWeak.lock()->shutdown().then([clientWeak]() -> Future<void>{
                         std::cout << "client shotdown\n";
-                        return clientWeak.lock()->close();
+                        return clientWeak.lock()->close().then([](std::shared_ptr<base::Handle>){});
                     }).then([](){
                         std::cout << "client closed\n";
                     }).error([](const FutureError& e){
