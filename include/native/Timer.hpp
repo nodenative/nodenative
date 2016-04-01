@@ -1,4 +1,4 @@
-#ifndef __NATIVE_LOOP_HPP__
+#ifndef __NATIVE_TIMER_HPP__
 #define __NATIVE_TIMER_HPP__
 
 #include "base/Handle.hpp"
@@ -20,7 +20,7 @@ public:
      *
      * @param iLoop - loop instance
      */
-    static std::shared_ptr<Timer> Create(std::shared_ptr<Loop> iLoop, std::function<void()> iCallback);
+    static std::shared_ptr<Timer> Create(std::shared_ptr<Loop> iLoop, std::function<void()> iCallback = {});
 
     std::shared_ptr<Timer> getInstanceTimer();
 
@@ -30,6 +30,8 @@ public:
      */
     void init();
     void init(uv_handle_t* iHandle);
+
+    void onTimeout(std::function<void()> iCallback) { _callback = iCallback; }
 
     /**
      * Start the timer, iTimeout and iRepeat are in milliseconds.
@@ -75,7 +77,7 @@ protected:
 
 private:
     uv_timer_t _uvTimer;
-    const std::function<void()> _callback;
+    std::function<void()> _callback;
     std::function<void(std::shared_ptr<Timer>)> _onClose;
 };
 

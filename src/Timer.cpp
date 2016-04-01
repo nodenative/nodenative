@@ -18,9 +18,8 @@ Timer::~Timer() {
 
 void Timer::init() {
     init(reinterpret_cast<uv_handle_t*>(&_uvTimer));
-    _uvTimer.data = this;
     int r = uv_timer_init(_loop->get(), &_uvTimer);
-    NNATIVE_ASSERT(r ==0);
+    NNATIVE_ASSERT(r == 0);
 }
 
 void Timer::init(uv_handle_t* iHandle) {
@@ -40,10 +39,13 @@ Error Timer::stop() {
 
 void Timer::OnTimeout(uv_timer_t* iHandle) {
     std::shared_ptr<Timer> instance = static_cast<Timer*>(iHandle->data)->getInstanceTimer();
-    instance->_callback();
 
-    if(instance->getRepeat() == 0U) {
+    if(instance->getRepeat() == 0U || !instance->_callback) {
         instance->close();
+    }
+
+    if(instance->_callback) {
+        instance->_callback();
     }
 }
 

@@ -54,6 +54,7 @@ Future<std::shared_ptr<Handle>> Handle::close() {
         uv_close(get(),
                  [](uv_handle_t* h) {
                      std::shared_ptr<Handle> instance = static_cast<Handle*>(h->data)->getInstanceHandle();
+                     h->data = nullptr;
                      instance->releaseInstanceHandle();
                      instance->_closingPromise.resolve(instance);
                      instance->_closingPromise.reset();
