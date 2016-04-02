@@ -1,7 +1,7 @@
-#include "native/UriTemplate.hh"
+#include "native/UriTemplate.hpp"
 
-#include "native/UriTemplateFormat.hh"
-#include "native/UriTemplateValue.hh"
+#include "native/UriTemplateFormat.hpp"
+#include "native/UriTemplateValue.hpp"
 
 #include <regex>
 
