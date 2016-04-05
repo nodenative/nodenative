@@ -1,4 +1,5 @@
-#include "native/UriTemplateValue.hh"
+#include "native/UriTemplateValue.hpp"
+#include "native/helper/trace.hpp"
 
 using namespace native;
 

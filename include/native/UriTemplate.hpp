@@ -4,6 +4,16 @@
 #include <string>
 #include <vector>
 
+#if !defined(NNATIVE_USE_RE2) && !defined(NNATIVE_USE_STDREGEX)
+
+#define NNATIVE_USE_RE2 1
+
+#endif // if !defined(NNATIVE_USE_RE2) && !defined(NNATIVE_USE_STDREGEX)
+
+#if NNATIVE_USE_RE2 != 1 && NNATIVE_USE_STDREGEX != 1
+#error Use at least one of NNATIVE_USE_RE2 NNATIVE_USE_STDREGEX with value 1
+#endif
+
 namespace native
 {
     class UriTemplateFormat;

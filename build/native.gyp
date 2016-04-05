@@ -7,6 +7,9 @@
             'nnative_use_openssl%': 'true',
             'nnative_shared_openssl%': 'false',
             'nnative_target_type%': 'static_library',
+            'variables': {
+              'nnative_regex_name%': 're2', # possible values: re2, stdregex
+            },
             'dependencies': [
                 '../deps/libuv/uv.gyp:libuv',
                 '../deps/http-parser/http_parser.gyp:http_parser',
@@ -41,6 +44,9 @@
                 '../src/Timer.cpp',
                 '../src/worker/WorkerBase.cpp',
                 '../src/worker/WorkerCallback.cpp',
+                '../src/UriTemplate.cpp',
+                '../src/UriTemplateFormat.cpp',
+                '../src/UriTemplateValue.cpp',
             ],
             'direct_dependent_settings' : {
                 'include_dirs' : [
@@ -58,6 +64,26 @@
                 '-std=c++14'
             ],
             'conditions' : [
+                ['nnative_regex_name=="re2"', {
+                  'dependencies': [
+                    're2.gyp:re2',
+                  ],
+                  'defines': [
+                    'NNATIVE_USE_RE2=1',
+                    'NNATIVE_USE_STDREGEX=0',
+                  ]
+                }, 'nnative_regex_name=="stdregex"', {
+                  'defines': [
+                    'NNATIVE_USE_RE2=0',
+                    'NNATIVE_USE_STDREGEX=0',
+                  ]
+                }, {
+                  'defines': [
+                    'NNATIVE_USE_RE2=0',
+                    'NNATIVE_USE_STDREGEX=0',
+                  ]
+                }
+                ],
                 ['OS=="mac"', {
                     'xcode_settings': {
                         'OTHER_CPLUSPLUSFLAGS' : ['-std=c++14', '-stdlib=libc++'],

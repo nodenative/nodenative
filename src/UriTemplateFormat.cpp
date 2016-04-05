@@ -1,4 +1,5 @@
-#include "native/UriTemplateFormat.hh"
+#include "native/UriTemplateFormat.hpp"
+#include "native/helper/trace.hpp"
 
 #include <map>
 #include <utility>
