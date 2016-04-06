@@ -1,5 +1,5 @@
-#include <native/UriTemplate.hh>
-#include <native/UriTemplateFormat.hh>
+#include <native/UriTemplate.hpp>
+#include <native/UriTemplateFormat.hpp>
 
 #include <string>
 #include <gtest/gtest.h>

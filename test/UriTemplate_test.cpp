@@ -1,6 +1,6 @@
-#include <native/UriTemplate.hh>
-#include <native/UriTemplateFormat.hh>
-#include <mative/UriTemplateValue.hh>
+#include <native/UriTemplate.hpp>
+#include <native/UriTemplateFormat.hpp>
+#include <mative/UriTemplateValue.hpp>
 
 namespace
 {
