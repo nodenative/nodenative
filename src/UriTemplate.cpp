@@ -79,13 +79,14 @@ bool extractAndSaveValues(UriTemplateValue &oValues,
                           const std::string &iUri,
                           const std::string &iExtractPattern,
                           const std::vector<std::string> &iParams,
-                          const std::vector<std::string> &iFormatNames) {
+                          const std::vector<std::string> &iFormatNames,
+                          const bool iAnchorEnd = true) {
     const re2::RE2 rePattern(iExtractPattern);
     const int matchResultsSize = 1+rePattern.NumberOfCapturingGroups();
     re2::StringPiece matchResults[matchResultsSize];
     re2::StringPiece uriPiece(iUri);
 
-    if(!rePattern.Match(uriPiece, 0, uriPiece.size(), re2::RE2::UNANCHORED, matchResults, matchResultsSize)) {
+    if(!rePattern.Match(uriPiece, 0, uriPiece.size(), (iAnchorEnd ? re2::RE2::ANCHOR_BOTH : re2::RE2::ANCHOR_START), matchResults, matchResultsSize)) {
         NNATIVE_DEBUG("No match found");
         return false;
     }
@@ -168,7 +169,8 @@ bool extractAndSaveValues(UriTemplateValue &oValues,
                           const std::string &iUri,
                           const std::string &iExtractPattern,
                           const std::vector<std::string> &iParams,
-                          const std::vector<std::string> &iFormatNames) {
+                          const std::vector<std::string> &iFormatNames,
+                          const bool iAnchorEnd = true) {
     std::smatch matchResults;
     const boost::regex rePattern(iExtractPattern);
     if(!std::regex_match(iUri, matchResults, rePattern, std::match_extra /*consider capturing subgroups also*/)) {
@@ -260,9 +262,9 @@ void UriTemplate::parse() {
     NNATIVE_DEBUG("Pattern for extraction: \"" << _extractPattern << "\"");
 }
 
-bool UriTemplate::extract(UriTemplateValue &oValues, const std::string &iUri) const {
+bool UriTemplate::extract(UriTemplateValue &oValues, const std::string &iUri, const bool iAnchorEnd) const {
     NNATIVE_DEBUG("Extract values from \"" << iUri << "\" by using URI template \"" << _template << "\", pattern: \"" << _extractPattern << "\")");
-    return extractAndSaveValues(oValues, iUri, _extractPattern, getParams(), getFormatNames());
+    return extractAndSaveValues(oValues, iUri, _extractPattern, getParams(), getFormatNames(), iAnchorEnd);
 }
 
 bool UriTemplate::ContainCapturingGroup(const std::string &iPattern) {

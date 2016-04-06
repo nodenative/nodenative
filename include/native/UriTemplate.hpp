@@ -82,7 +82,7 @@ namespace native
          * @param iUri URI string for extracting
          * @return true if URI match, false otherwise
          */
-        bool extract(UriTemplateValue &oValues, const std::string &iUri) const;
+        bool extract(UriTemplateValue &oValues, const std::string &iUri, const bool iAnchorEnd = true) const;
 
         /**
          * @brief Return true if iPattern contains at least 1 capturing group

@@ -1,6 +1,10 @@
 #include <native/UriTemplate.hpp>
 #include <native/UriTemplateFormat.hpp>
-#include <mative/UriTemplateValue.hpp>
+#include <native/UriTemplateValue.hpp>
+
+#include <gtest/gtest.h>
+
+using namespace native;
 
 namespace
 {
@@ -16,9 +20,9 @@ namespace
         UriTemplateFormat::AddGlobalFormat("formatName1", "(?:[A-Z0-9\\-]{2}|[A-Z]{3})");
         UriTemplateFormat::AddGlobalFormat("FormatName2", "[0-9]{1,4}[A-Z]?");
         UriTemplateFormat::AddGlobalFormat("FormatName3", "[0-9]{2}[A-Z]{3}[0-9]{2}");
-        UriTemplateFormat::AddGlobalFormat("FormatName5", "{format1:formatName1}{number:FormatName2}-{departureDate:FormatName3}");
+        UriTemplateFormat::AddGlobalFormat("FormatComplex", "{format1:formatName1}_{number:FormatName2}/{date:FormatName3}");
         UriTemplateFormat::AddGlobalFormat("FormatName6", "[A-Z]{3}");
-        UriTemplateFormat::AddGlobalFormat("FormatName4", "{FormatName5:FormatName5}/someText/{departurePort:FormatName6}");
+        UriTemplateFormat::AddGlobalFormat("FormatName4", "{complex:FormatComplex}/someText/{format5:FormatName6}");
     }
 
     void checkUriTemplate(
@@ -37,7 +41,7 @@ namespace
         EXPECT_STREQ(uriTemplate.getPattern(true).c_str(), extractionPatternWithEndAnchor.c_str());
         EXPECT_STREQ(uriTemplate.getPattern(true, false).c_str(), extractionPattern.c_str());
     }
-}
+} /* namespace */
 
 TEST(UriTemplateTest, SimpleText)
 {
@@ -70,8 +74,8 @@ TEST(UriTemplateTest, UriTemplate2)
     initGlobalFormats();
     checkUriTemplate(
         "someText/{par1:FormatName4}",
-        "someText/(?:[A-Z0-9\\-]{2}|[A-Z]{3})[0-9]{1,4}[A-Z]?-[0-9]{2}[A-Z]{3}[0-9]{2}/someText/[A-Z]{3}",
-        "someText/((((?:[A-Z0-9\\-]{2}|[A-Z]{3}))([0-9]{1,4}[A-Z]?)-([0-9]{2}[A-Z]{3}[0-9]{2}))/someText/([A-Z]{3}))");
+        "someText/(?:[A-Z0-9\\-]{2}|[A-Z]{3})_[0-9]{1,4}[A-Z]?/[0-9]{2}[A-Z]{3}[0-9]{2}/someText/[A-Z]{3}",
+        "someText/((((?:[A-Z0-9\\-]{2}|[A-Z]{3}))_([0-9]{1,4}[A-Z]?)/([0-9]{2}[A-Z]{3}[0-9]{2}))/someText/([A-Z]{3}))");
 }
 
 TEST(UriTemplateTest, NoFormatNames)
@@ -117,28 +121,28 @@ TEST(UriTemplateTest, ExtractNotMatchIfExistsUnmatchedSuffix)
 TEST(UriTemplateTest, ExceptionOnDuplicateParameterName)
 {
     initGlobalFormats();
-    EXPECT_ANY_THROW(const UriTemplate uriTemplate("someText/{par1:formatName1}/{par1:FormatName5}"));
+    EXPECT_ANY_THROW(const UriTemplate uriTemplate("someText/{par1:formatName1}/{par1:FormatComplex}"));
 }
 
 TEST(UriTemplateTest, ExtractedValuesComplex)
 {
     initGlobalFormats();
-    const UriTemplate uriTemplate("someText/{someText:FormatName4}/linkedCarrier/{format1:formatName1}");
+    const UriTemplate uriTemplate("someText/{someText:FormatName4}/longUri/{format1:formatName1}");
     EXPECT_EQ(int(uriTemplate.getFormatNames().size()), 2);
     UriTemplateValue extractedValues;
-    EXPECT_EQ(uriTemplate.extract(extractedValues, "someText/AC5004-01JAN15/someText/ABC/linkedCarrier/AB"), true);
+    EXPECT_EQ(uriTemplate.extract(extractedValues, "someText/AC_1234/01JAN15/someText/ABC/longUri/AB"), true);
     EXPECT_EQ(int(extractedValues.size()), 2);
-    EXPECT_STREQ(extractedValues["someText"].getString().c_str(), "AC5004-01JAN15/someText/ABC");
+    EXPECT_STREQ(extractedValues["someText"].getString().c_str(), "AC_1234/01JAN15/someText/ABC");
     EXPECT_EQ(int(extractedValues["someText"].size()), 2);
 
-    EXPECT_STREQ(extractedValues["someText"]["FormatName5"].getString().c_str(), "AC5004-01JAN15");
-    EXPECT_EQ(int(extractedValues["someText"]["FormatName5"].size()), 3);
-    EXPECT_STREQ(extractedValues["someText"]["FormatName5"]["format1"].getString().c_str(), "AC");
-    EXPECT_STREQ(extractedValues["someText"]["FormatName5"]["number"].getString().c_str(), "5004");
-    EXPECT_STREQ(extractedValues["someText"]["FormatName5"]["departureDate"].getString().c_str(), "01JAN15");
+    EXPECT_STREQ(extractedValues["someText"]["complex"].getString().c_str(), "AC_1234/01JAN15");
+    EXPECT_EQ(int(extractedValues["someText"]["complex"].size()), 3);
+    EXPECT_STREQ(extractedValues["someText"]["complex"]["format1"].getString().c_str(), "AC");
+    EXPECT_STREQ(extractedValues["someText"]["complex"]["number"].getString().c_str(), "1234");
+    EXPECT_STREQ(extractedValues["someText"]["complex"]["date"].getString().c_str(), "01JAN15");
 
-    EXPECT_STREQ(extractedValues["someText"]["departurePort"].getString().c_str(), "ABC");
-    EXPECT_EQ(int(extractedValues["someText"]["departurePort"].size()), 0);
+    EXPECT_STREQ(extractedValues["someText"]["format5"].getString().c_str(), "ABC");
+    EXPECT_EQ(int(extractedValues["someText"]["format5"].size()), 0);
 
     EXPECT_STREQ(extractedValues["format1"].getString().c_str(), "AB");
     EXPECT_EQ(int(extractedValues["format1"].size()), 0);

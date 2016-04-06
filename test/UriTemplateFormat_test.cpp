@@ -4,6 +4,8 @@
 #include <string>
 #include <gtest/gtest.h>
 
+using namespace native;
+
 namespace
 {
     void checkNewGlobalFormat(
@@ -18,7 +20,7 @@ namespace
         EXPECT_STREQ(UriTemplateFormat::GetGlobalFormat(key).getPattern().c_str(), matchPattern.c_str());
         EXPECT_STREQ(UriTemplateFormat::GetGlobalFormat(key).getPattern(true).c_str(), extractionPattern.c_str());
     }
-}
+} /* namespace */
 
 TEST(UriTemplateFormatTest, GlobalFormatSimpleText)
 {

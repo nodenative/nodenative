@@ -39,6 +39,8 @@
                 '../test/future_then_test.cpp',
                 '../test/future_error_test.cpp',
                 '../test/worker_test.cpp',
+                '../test/UriTemplate_test.cpp',
+                '../test/UriTemplateFormat_test.cpp',
             ]
         }
     ]
