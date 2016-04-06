@@ -118,6 +118,15 @@ TEST(UriTemplateTest, ExtractNotMatchIfExistsUnmatchedSuffix)
     EXPECT_EQ(uriTemplate.extract(extractedValues, "someText/AB2"), false);
 }
 
+TEST(UriTemplateTest, ExtractMatchIfExistsUnmatchedSuffixExplicitly)
+{
+    initGlobalFormats();
+    const UriTemplate uriTemplate("someText/{par1:formatName1}");
+    EXPECT_EQ(int(uriTemplate.getFormatNames().size()), 1);
+    UriTemplateValue extractedValues;
+    EXPECT_EQ(uriTemplate.extract(extractedValues, "someText/AB2", false), true);
+}
+
 TEST(UriTemplateTest, ExceptionOnDuplicateParameterName)
 {
     initGlobalFormats();
