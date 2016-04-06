@@ -140,7 +140,7 @@ bool getNextParameter(std::string::const_iterator& iBegin, std::string::const_it
 void saveValues(
         UriTemplateValue &ioParsedValues,
         int &ioPosition,
-        const boost::smatch &iMatchResults,
+        const std::smatch &iMatchResults,
         const std::vector<std::string> &iParams,
         const std::vector<std::string> &iFormatNames) {
     NNATIVE_ASSERT(iParams.size() == iFormatNames.size());
@@ -172,8 +172,9 @@ bool extractAndSaveValues(UriTemplateValue &oValues,
                           const std::vector<std::string> &iFormatNames,
                           const bool iAnchorEnd = true) {
     std::smatch matchResults;
-    const boost::regex rePattern(iExtractPattern);
-    if(!std::regex_match(iUri, matchResults, rePattern, std::match_extra /*consider capturing subgroups also*/)) {
+    // TODO: find a proper way to anchor
+    const std::regex rePattern("^"+iExtractPattern+(iAnchorEnd ? "$" : ""));
+    if(!std::regex_match(iUri, matchResults, rePattern)) {
         NNATIVE_DEBUG("No match found");
         return false;
     }
@@ -190,9 +191,9 @@ bool extractAndSaveValues(UriTemplateValue &oValues,
 
 bool containCapturingGroup(const std::string &iPattern) {
     // regex is compiled only at the first call
-    static const boost::regex reCapturingGroup("\\([^?\\)]+\\)"); // true for "(test|other)", but false for non capturing groups (?:test|other)
-    boost::smatch dummyResults;
-    return boost::regex_search(iPattern, dummyResults, reCapturingGroup, boost::match_any);
+    static const std::regex reCapturingGroup("\\([^?\\)]+\\)"); // true for "(test|other)", but false for non capturing groups (?:test|other)
+    std::smatch dummyResults;
+    return std::regex_search(iPattern, dummyResults, reCapturingGroup);
 }
 
 #endif // elif NNATIVE_USE_STDREGEX == 1

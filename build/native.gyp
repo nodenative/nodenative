@@ -75,7 +75,7 @@
                 }, 'nnative_regex_name=="stdregex"', {
                   'defines': [
                     'NNATIVE_USE_RE2=0',
-                    'NNATIVE_USE_STDREGEX=0',
+                    'NNATIVE_USE_STDREGEX=1',
                   ]
                 }, {
                   'defines': [
