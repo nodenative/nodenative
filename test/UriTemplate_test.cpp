@@ -109,6 +109,15 @@ TEST(UriTemplateTest, ExtractNotMatchIfExistsUnmatchedPreffix)
     EXPECT_EQ(uriTemplate.extract(extractedValues, "1someText/AB"), false);
 }
 
+TEST(UriTemplateTest, ExtractNotMatchIfExistsUnmatchedPreffixWithNoEndAnchor)
+{
+    initGlobalFormats();
+    const UriTemplate uriTemplate("someText/{par1:formatName1}");
+    EXPECT_EQ(int(uriTemplate.getFormatNames().size()), 1);
+    UriTemplateValue extractedValues;
+    EXPECT_EQ(uriTemplate.extract(extractedValues, "1someText/AB", false), false);
+}
+
 TEST(UriTemplateTest, ExtractNotMatchIfExistsUnmatchedSuffix)
 {
     initGlobalFormats();

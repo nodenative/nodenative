@@ -5,7 +5,7 @@
 #include "native/helper/trace.hpp"
 
 #if NNATIVE_USE_RE2 == 1
-#include <re2.h>
+#include <re2/re2.h>
 #elif NNATIVE_USE_STDREGEX == 1
 #include <regex>
 #else
@@ -172,11 +172,17 @@ bool extractAndSaveValues(UriTemplateValue &oValues,
                           const std::vector<std::string> &iFormatNames,
                           const bool iAnchorEnd = true) {
     std::smatch matchResults;
-    // TODO: find a proper way to anchor
-    const std::regex rePattern("^"+iExtractPattern+(iAnchorEnd ? "$" : ""));
-    if(!std::regex_match(iUri, matchResults, rePattern)) {
-        NNATIVE_DEBUG("No match found");
-        return false;
+    const std::regex rePattern(iExtractPattern);
+    if(iAnchorEnd) {
+        if(!std::regex_match(iUri, matchResults, rePattern)) {
+            NNATIVE_DEBUG("No match found");
+            return false;
+        }
+    } else {
+        if(!std::regex_search(iUri, matchResults, rePattern, std::regex_constants::match_continuous)) {
+            NNATIVE_DEBUG("No match found");
+            return false;
+        }
     }
 
     int position = 0;

@@ -8,7 +8,7 @@
       ],
       'direct_dependent_settings': {
         'include_dirs': [
-          '../deps/re2/re2',
+          '../deps/re2',
         ],
       },
       'sources': [
