@@ -32,7 +32,6 @@ public:
     void resolve();
 
     virtual void resolveCb() = 0;
-    virtual void executeWorkerAfter(int iStatus) = 0;
 };
 
 template<typename R, typename... Args>
