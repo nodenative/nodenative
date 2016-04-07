@@ -13,6 +13,7 @@
 #endif // elif NNATIVE_USE_STDREGEX == 1
 
 #include <set>
+#include <memory>
 
 using namespace native;
 
@@ -83,10 +84,10 @@ bool extractAndSaveValues(UriTemplateValue &oValues,
                           const bool iAnchorEnd = true) {
     const re2::RE2 rePattern(iExtractPattern);
     const int matchResultsSize = 1+rePattern.NumberOfCapturingGroups();
-    re2::StringPiece matchResults[matchResultsSize];
+    std::unique_ptr<re2::StringPiece[]> matchResults(new re2::StringPiece[matchResultsSize]);
     re2::StringPiece uriPiece(iUri);
 
-    if(!rePattern.Match(uriPiece, 0, uriPiece.size(), (iAnchorEnd ? re2::RE2::ANCHOR_BOTH : re2::RE2::ANCHOR_START), matchResults, matchResultsSize)) {
+    if(!rePattern.Match(uriPiece, 0, uriPiece.size(), (iAnchorEnd ? re2::RE2::ANCHOR_BOTH : re2::RE2::ANCHOR_START), matchResults.get(), matchResultsSize)) {
         NNATIVE_DEBUG("No match found");
         return false;
     }
@@ -96,7 +97,7 @@ bool extractAndSaveValues(UriTemplateValue &oValues,
     oValues.clear();
     oValues.getString() = matchResults[position++].as_string();
     // save child values
-    saveValues(oValues, position, matchResults, matchResultsSize, iParams, iFormatNames);
+    saveValues(oValues, position, matchResults.get(), matchResultsSize, iParams, iFormatNames);
 
     return true;
 }
