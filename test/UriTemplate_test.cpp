@@ -45,7 +45,7 @@ namespace
 
 TEST(UriTemplateTest, SimpleText)
 {
-    checkUriTemplate("simpleText", "simpleText", "simpleText");
+    checkUriTemplate("simpleText123", "simpleText123", "simpleText123");
 }
 
 TEST(UriTemplateTest, SimpleRegExp)

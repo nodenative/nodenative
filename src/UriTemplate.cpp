@@ -26,6 +26,7 @@ bool getNextParameter(std::string::const_iterator& iBegin, std::string::const_it
     static const re2::RE2 reParam("\\{([a-zA-Z][a-zA-Z0-9]*):([a-zA-Z][a-zA-Z0-9]*)\\}"); //e.g.: {param:formatName}
     re2::StringPiece text(&(*iBegin), std::distance(iBegin, iEnd));
     re2::StringPiece results[3];
+    NNATIVE_DEBUG("piece size:" << std::distance(iBegin, iEnd) << " simple size:" << (iEnd - iBegin));
 
     if(!reParam.Match(text, 0, text.size(), re2::RE2::UNANCHORED, results, 3)) {
         return false;
@@ -103,11 +104,10 @@ bool extractAndSaveValues(UriTemplateValue &oValues,
 }
 
 bool containCapturingGroup(const std::string &iPattern) {
-    // regex is compiled only at the first call
-    static const re2::RE2 reCapturingGroup("\\([^?\\)]+\\)"); // true for "(test|other)", but false for non capturing groups (?:test|other)
-    re2::StringPiece strPiece(iPattern);
-
-    return reCapturingGroup.Match(strPiece, 0, strPiece.size(), re2::RE2::UNANCHORED, nullptr, 0);
+    NNATIVE_DEBUG("size:" << iPattern.size());
+    const re2::RE2 reCapturingGroup(iPattern);
+    NNATIVE_DEBUG("# of capturing groups:" << reCapturingGroup.NumberOfCapturingGroups());
+    return reCapturingGroup.NumberOfCapturingGroups() > 0;
 }
 
 #elif NNATIVE_USE_STDREGEX == 1
@@ -226,9 +226,9 @@ UriTemplate::UriTemplate(const UriTemplate &iOther) :
 }
 
 void UriTemplate::parse() {
-    NNATIVE_DEBUG("New URI Template \"" << _template << "\"");
+    NNATIVE_DEBUG("New URI Template \"" << _template << "\", size:" << _template.size());
     // should not contain capturing groups. e.g. "/path/(caputeText)/{param1:format1}"
-    NNATIVE_ASSERT_MSG(!ContainCapturingGroup(_template), "URI template \"" << _template << "\" contain capturing groups");
+    //NNATIVE_ASSERT_MSG(!ContainCapturingGroup(_template), "URI template \"" << _template << "\" contain capturing groups");
 
     _matchPattern = "";
     _extractPattern = "";
