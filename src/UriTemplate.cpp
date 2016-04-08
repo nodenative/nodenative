@@ -103,8 +103,9 @@ bool extractAndSaveValues(UriTemplateValue &oValues,
 }
 
 bool containCapturingGroup(const std::string &iPattern) {
-    const re2::RE2 reCapturingGroup(iPattern);  // true for "(test|other)", but false for non capturing groups (?:test|other)
-    return reCapturingGroup.NumberOfCapturingGroups() > 0;
+    static const re2::RE2 reCapturingGroup("\\([^\?][^\\)]+\\)");  // true for "(test|other)", but false for non capturing groups (?:test|other)
+    const re2::StringPiece iPatternPiece(iPattern);
+    return reCapturingGroup.Match(iPatternPiece, 0, iPatternPiece.size(), re2::RE2::UNANCHORED, nullptr, 0);
 }
 
 #elif NNATIVE_USE_STDREGEX == 1
@@ -194,9 +195,9 @@ bool extractAndSaveValues(UriTemplateValue &oValues,
 }
 
 bool containCapturingGroup(const std::string &iPattern) {
-    // regex is compiled only at the first call
-    const std::regex reCapturingGroup(iPattern); // true for "(test|other)", but false for non capturing groups (?:test|other)
-    return reCapturingGroup.mark_count() > 0;
+    static const std::regex reCapturingGroup("\\([^\?][^\\)]+\\)");  // true for "(test|other)", but false for non capturing groups (?:test|other)
+    std::smatch matchResults;
+    return std::regex_search(iPattern, matchResults, reCapturingGroup);
 }
 
 #endif // elif NNATIVE_USE_STDREGEX == 1
