@@ -4,6 +4,12 @@
 #include "native/UriTemplateValue.hpp"
 #include "native/helper/trace.hpp"
 
+#if !defined(NNATIVE_USE_RE2) && !defined(NNATIVE_USE_STDREGEX)
+
+#define NNATIVE_USE_RE2 1
+
+#endif // if !defined(NNATIVE_USE_RE2) && !defined(NNATIVE_USE_STDREGEX)
+
 #if NNATIVE_USE_RE2 == 1
 #include <re2/re2.h>
 #elif NNATIVE_USE_STDREGEX == 1
@@ -20,6 +26,8 @@ using namespace native;
 namespace {
 
 #if NNATIVE_USE_RE2 == 1
+
+#define NNATIVE_USE_REGEX_NAME "RE2"
 
 bool getNextParameter(std::string::const_iterator& iBegin, std::string::const_iterator iEnd, std::string& iText, std::string& Name, std::string& iFormat) {
     // regex is compiled only at the first call
@@ -109,6 +117,9 @@ bool containCapturingGroup(const std::string &iPattern) {
 }
 
 #elif NNATIVE_USE_STDREGEX == 1
+
+#define NNATIVE_USE_REGEX_NAME "STD"
+
 #include <regex>
 
 bool getNextParameter(std::string::const_iterator& iBegin, std::string::const_iterator iEnd, std::string& iText, std::string& Name, std::string& iFormat) {
@@ -200,9 +211,17 @@ bool containCapturingGroup(const std::string &iPattern) {
     return std::regex_search(iPattern, matchResults, reCapturingGroup);
 }
 
+#else
+
+#error Use at least one of NNATIVE_USE_RE2 NNATIVE_USE_STDREGEX with value 1
+
 #endif // elif NNATIVE_USE_STDREGEX == 1
 
 } /* namespace */
+
+std::string native::getRegexLibName() {
+  return NNATIVE_USE_REGEX_NAME;
+}
 
 UriTemplate::UriTemplate(const std::string &iTemplate) : _template(iTemplate) {
     parse();

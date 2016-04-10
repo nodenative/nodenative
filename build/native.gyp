@@ -8,7 +8,7 @@
             'nnative_shared_openssl%': 'false',
             'nnative_target_type%': 'static_library',
             'variables': {
-              'nnative_regex_name%': 're2', # possible values: re2, stdregex
+              'nnative_regex_name%': 're2', # possible values: re2, std, boost
             },
             'dependencies': [
                 '../deps/libuv/uv.gyp:libuv',
@@ -72,7 +72,7 @@
                     'NNATIVE_USE_RE2=1',
                     'NNATIVE_USE_STDREGEX=0',
                   ]
-                }, 'nnative_regex_name=="stdregex"', {
+                }, 'nnative_regex_name=="std"', {
                   'defines': [
                     'NNATIVE_USE_RE2=0',
                     'NNATIVE_USE_STDREGEX=1',

@@ -14,5 +14,8 @@
 #include "helper.hpp"
 #include "crypto.hpp"
 #include "Timer.hpp"
+#include "UriTemplate.hpp"
+#include "UriTemplateFormat.hpp"
+#include "UriTemplateValue.hpp"
 
 #endif /* __NATIVE_NATIVE_DEF_HPP__ */

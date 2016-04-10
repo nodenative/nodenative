@@ -65,7 +65,7 @@ before_script: ls
 script:
   - python build.py -Dasan=1 -Dlsan=1
   - ./out/Release/test
-  - python build.py -Dasan=1 -Dlsan=1 -Dnnative_regex_name=stdregex
+  - python build.py -Dasan=1 -Dlsan=1 -Dnnative_regex_name=std
   - ./out/Release/test
 branches:
   only:

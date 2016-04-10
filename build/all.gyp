@@ -42,6 +42,17 @@
                 '../test/UriTemplate_test.cpp',
                 '../test/UriTemplateFormat_test.cpp',
             ]
-        }
+        },
+        #bechUriTemplate
+        {
+            'target_name' : 'benchUriTemplate',
+            'type' : 'executable',
+            'dependencies': [
+                './native.gyp:node_native'
+            ],
+            'sources' : [
+                '../samples/benchmarks/uriTemplate_bench.cpp'
+            ]
+        },
     ]
 }
