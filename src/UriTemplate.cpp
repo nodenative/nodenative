@@ -11,10 +11,23 @@
 #endif // if !defined(NNATIVE_USE_RE2) && !defined(NNATIVE_USE_STDREGEX)
 
 #if NNATIVE_USE_RE2 == 1
+
+#define NNATIVE_USE_REGEX_NAME "re2"
 #include <re2/re2.h>
+
 #elif NNATIVE_USE_STDREGEX == 1
+
+#define NNATIVE_USE_REGEX_NAME "std"
 #include <regex>
+
+#elif NNATIVE_USE_BOOSTREGEX == 1
+
+#define NNATIVE_USE_REGEX_NAME "boost"
+#include <boost/regex.hpp>
+
 #else
+
+#error Use at least one of NNATIVE_USE_RE2, NNATIVE_USE_STDREGEX or NNATIVE_USE_BOOSTREGEX with value 1
 
 #endif // elif NNATIVE_USE_STDREGEX == 1
 
@@ -27,7 +40,6 @@ namespace {
 
 #if NNATIVE_USE_RE2 == 1
 
-#define NNATIVE_USE_REGEX_NAME "RE2"
 
 bool getNextParameter(std::string::const_iterator& iBegin, std::string::const_iterator iEnd, std::string& iText, std::string& Name, std::string& iFormat) {
     // regex is compiled only at the first call
@@ -118,10 +130,6 @@ bool containCapturingGroup(const std::string &iPattern) {
 
 #elif NNATIVE_USE_STDREGEX == 1
 
-#define NNATIVE_USE_REGEX_NAME "STD"
-
-#include <regex>
-
 bool getNextParameter(std::string::const_iterator& iBegin, std::string::const_iterator iEnd, std::string& iText, std::string& Name, std::string& iFormat) {
     // regex is compiled only at the first call
     static const std::regex reParam("\\{([a-zA-Z][a-zA-Z0-9]*):([a-zA-Z][a-zA-Z0-9]*)\\}"); //e.g.: {param:formatName}
@@ -211,9 +219,97 @@ bool containCapturingGroup(const std::string &iPattern) {
     return std::regex_search(iPattern, matchResults, reCapturingGroup);
 }
 
-#else
+#elif NNATIVE_USE_BOOSTREGEX == 1
 
-#error Use at least one of NNATIVE_USE_RE2 NNATIVE_USE_STDREGEX with value 1
+bool getNextParameter(std::string::const_iterator& iBegin, std::string::const_iterator iEnd, std::string& iText, std::string& Name, std::string& iFormat) {
+    // regex is compiled only at the first call
+    static const boost::regex reParam("\\{([a-zA-Z][a-zA-Z0-9]*):([a-zA-Z][a-zA-Z0-9]*)\\}"); //e.g.: {param:formatName}
+    boost::smatch results;
+
+    if(!boost::regex_search(iBegin, iEnd, results, reParam)) {
+        return false;
+    }
+
+    iText.assign(iBegin, iBegin + results.position());
+    Name = results.str(1);
+    iFormat = results.str(2);
+
+    iBegin += results.position() + results.length();
+
+    return true;
+}
+
+/**
+ * Recursive save extracted data by regex into values
+ * @param ioParsedValues parsed values container to be populated
+ * @param ioPosition current smatch position
+ * @iParams parameters name vector to be added as key values
+ * @iFormatNames format name vector to parse child values, if exists
+ */
+void saveValues(
+        UriTemplateValue &ioParsedValues,
+        int &ioPosition,
+        const boost::smatch &iMatchResults,
+        const std::vector<std::string> &iParams,
+        const std::vector<std::string> &iFormatNames) {
+    NNATIVE_ASSERT(iParams.size() == iFormatNames.size());
+    NNATIVE_ASSERT(iMatchResults.size() - ioPosition >= iParams.size());
+    for(std::vector<std::string>::size_type i = 0; i < iParams.size(); ++i)
+    {
+        const std::string value = iMatchResults.str(ioPosition++);
+        const std::string &name = iParams[i];
+        const std::string &formatName = iFormatNames[i];
+        UriTemplateValue &childValue = ioParsedValues.addChild(name, value);
+        const UriTemplateFormat &format = UriTemplateFormat::GetGlobalFormat(formatName);
+
+        if(format.isRegExOnly())
+        {
+            continue;
+        }
+
+        // Parse subvalues of format name
+        const UriTemplate &uriTemplate = format.getTemplate();
+        NNATIVE_DEBUG("Extract child values from \"" << value << "\" with key \"" << name << "\" by using format name \"" << formatName << "\" with pattern \"" << uriTemplate.getPattern(true) << "\"");
+        saveValues(childValue, ioPosition, iMatchResults, uriTemplate.getParams(), uriTemplate.getFormatNames());
+    }
+}
+
+bool extractAndSaveValues(UriTemplateValue &oValues,
+                          const std::string &iUri,
+                          const std::string &iExtractPattern,
+                          const std::vector<std::string> &iParams,
+                          const std::vector<std::string> &iFormatNames,
+                          const bool iAnchorEnd = true) {
+    boost::smatch matchResults;
+    const boost::regex rePattern(iExtractPattern);
+    if(iAnchorEnd) {
+        if(!boost::regex_match(iUri, matchResults, rePattern)) {
+            NNATIVE_DEBUG("No match found");
+            return false;
+        }
+    } else {
+        if(!boost::regex_search(iUri, matchResults, rePattern, boost::regex_constants::match_continuous)) {
+            NNATIVE_DEBUG("No match found");
+            return false;
+        }
+    }
+
+    int position = 0;
+    // No name to the first parsed value
+    oValues.clear();
+    oValues.getString() = matchResults.str(position++);
+    // save child values
+    saveValues(oValues, position, matchResults, iParams, iFormatNames);
+
+    return true;
+}
+
+bool containCapturingGroup(const std::string &iPattern) {
+    // regex is compiled only at the first call
+    static const boost::regex reCapturingGroup("\\([^?\\)]+\\)"); // true for "(test|other)", but false for non capturing groups (?:test|other)
+    boost::smatch dummyResults;
+    return boost::regex_search(iPattern, dummyResults, reCapturingGroup);
+}
 
 #endif // elif NNATIVE_USE_STDREGEX == 1
 

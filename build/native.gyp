@@ -71,16 +71,54 @@
                   'defines': [
                     'NNATIVE_USE_RE2=1',
                     'NNATIVE_USE_STDREGEX=0',
-                  ]
+                    'NNATIVE_USE_BOOSTREGEX=0',
+                  ],
+                  'all_dependent_settings': {
+                    'defines': [
+                      'NNATIVE_USE_RE2=1',
+                      'NNATIVE_USE_STDREGEX=0',
+                      'NNATIVE_USE_BOOSTREGEX=0',
+                    ],
+                  }
                 }, 'nnative_regex_name=="std"', {
                   'defines': [
                     'NNATIVE_USE_RE2=0',
                     'NNATIVE_USE_STDREGEX=1',
-                  ]
+                    'NNATIVE_USE_BOOSTREGEX=0',
+                  ],
+                  'all_dependent_settings': {
+                    'defines': [
+                      'NNATIVE_USE_RE2=0',
+                      'NNATIVE_USE_STDREGEX=1',
+                      'NNATIVE_USE_BOOSTREGEX=0',
+                    ],
+                  }
+                }, 'nnative_regex_name=="boost"', {
+                  'defines': [
+                    'NNATIVE_USE_RE2=0',
+                    'NNATIVE_USE_STDREGEX=0',
+                    'NNATIVE_USE_BOOSTREGEX=1',
+                  ],
+                  'ldflags': [
+                    '-lboost_regex',
+                    '-lboost_iostreams'
+                  ],
+                  'all_dependent_settings': {
+                    'defines': [
+                      'NNATIVE_USE_RE2=0',
+                      'NNATIVE_USE_STDREGEX=0',
+                      'NNATIVE_USE_BOOSTREGEX=1',
+                    ],
+                    'ldflags': [
+                      '-lboost_regex',
+                      '-lboost_iostreams'
+                    ],
+                  },
                 }, {
                   'defines': [
                     'NNATIVE_USE_RE2=0',
                     'NNATIVE_USE_STDREGEX=0',
+                    'NNATIVE_USE_BOOSTREGEX=0',
                   ]
                 }
                 ],
