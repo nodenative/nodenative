@@ -47,7 +47,6 @@ public:
         _size = iRegex.NumberOfCapturingGroups() + 1;
         _pieces = std::unique_ptr<re2::StringPiece[]>(new re2::StringPiece[_size]);
     }
-    virtual ~Smatch_RE2() {}
 
     int size() const override { return _size; }
 
@@ -55,7 +54,6 @@ public:
 
     int position() const override { return _pieces[0].begin() - _text.begin(); }
     int length() const override { return _pieces[0].size(); }
-    void deleter(native::Smatch* iObject) override {delete ((Smatch_RE2*)iObject);}
 
 private:
     int _size;
@@ -66,9 +64,8 @@ private:
 class RegEx_RE2 : public native::Regex {
 public:
     RegEx_RE2(const std::string &iText) : _regex(iText) {}
-    virtual ~RegEx_RE2() {}
 
-    bool match(const re2::StringPiece iText, std::unique_ptr<native::Smatch, native::ThisDeleter<native::Smatch>> &iResult, native::Regex::Anchor iAnchor) const {
+    bool match(const re2::StringPiece iText, std::unique_ptr<native::Smatch> &iResult, native::Regex::Anchor iAnchor) const {
         std::unique_ptr<Smatch_RE2> smatch(new Smatch_RE2(_regex, iText));
 
         re2::RE2::Anchor anchor;
@@ -85,24 +82,20 @@ public:
             return false;
         }
 
-        iResult.reset(smatch.release());
+        iResult = std::move(smatch);
 
         return true;
     }
 
-    bool match(const std::string &iText, std::unique_ptr<native::Smatch, native::ThisDeleter<native::Smatch>> &iResult, native::Regex::Anchor iAnchor) const override {
+    bool match(const std::string &iText, std::unique_ptr<native::Smatch> &iResult, native::Regex::Anchor iAnchor) const override {
         re2::StringPiece text(iText);
         return match(text, iResult, iAnchor);
     }
 
-    bool match(std::string::const_iterator iBegin,
-               std::string::const_iterator iEnd,
-               std::unique_ptr<native::Smatch, native::ThisDeleter<native::Smatch>> &iResult,
-               native::Regex::Anchor iAnchor) const override {
+    bool match(std::string::const_iterator iBegin, std::string::const_iterator iEnd, std::unique_ptr<native::Smatch> &iResult, native::Regex::Anchor iAnchor) const override {
         re2::StringPiece text(&(*iBegin), std::distance(iBegin, iEnd));
         return match(text, iResult, iAnchor);
     }
-    void deleter(native::Regex* iObject)override {delete ((RegEx_RE2*)iObject);}
 private:
     re2::RE2 _regex;
 };
@@ -115,7 +108,6 @@ class Smatch_STD : public native::Smatch {
     friend class RegEx_STD;
 public:
     Smatch_STD(const std::regex iRegex) {}
-    virtual ~Smatch_STD(){}
 
     int size() const override { return _pieces.size(); }
 
@@ -123,7 +115,6 @@ public:
 
     int position() const override { return _pieces.position(); }
     int length() const override { return _pieces.length(); }
-    void deleter(native::Smatch* iObject)override {delete ((Smatch_STD*)iObject);}
 
 private:
     std::smatch _pieces;
@@ -132,12 +123,8 @@ private:
 class RegEx_STD : public native::Regex {
 public:
     RegEx_STD(const std::string &iText) : _regex(iText) {}
-    virtual ~RegEx_STD() {}
 
-    bool match(std::string::const_iterator iBegin,
-               std::string::const_iterator iEnd,
-               std::unique_ptr<native::Smatch, native::ThisDeleter<native::Smatch>> &iResult,
-               native::Regex::Anchor iAnchor) const override {
+    bool match(std::string::const_iterator iBegin, std::string::const_iterator iEnd, std::unique_ptr<native::Smatch> &iResult, native::Regex::Anchor iAnchor) const override {
         std::unique_ptr<Smatch_STD> smatch(new Smatch_STD(_regex));
 
         if(iAnchor == ANCHOR_BOTH) {
@@ -150,15 +137,14 @@ public:
             }
         }
 
-        iResult.reset(smatch.release());
+        iResult = std::move(smatch);
 
         return true;
     }
 
-    bool match(const std::string &iText, std::unique_ptr<native::Smatch, native::ThisDeleter<native::Smatch>> &iResult, native::Regex::Anchor iAnchor) const override {
+    bool match(const std::string &iText, std::unique_ptr<native::Smatch> &iResult, native::Regex::Anchor iAnchor) const override {
         return match(iText.begin(), iText.end(), iResult, iAnchor);
     }
-    void deleter(native::Regex* iObject)override {delete ((RegEx_STD*)iObject);}
 private:
     std::regex _regex;
 };
@@ -171,7 +157,6 @@ class Smatch_BOOST : public native::Smatch {
     friend class RegEx_BOOST;
 public:
     Smatch_BOOST(const boost::regex iRegex) {}
-    virtual ~Smatch_BOOST() {}
 
     int size() const override { return _pieces.size(); }
 
@@ -179,7 +164,6 @@ public:
 
     int position() const override { return _pieces.position(); }
     int length() const override { return _pieces.length(); }
-    void deleter(native::Smatch* iObject)override {delete (static_cast<Smatch_BOOST*>(iObject));}
 
 private:
     boost::smatch _pieces;
@@ -188,12 +172,8 @@ private:
 class RegEx_BOOST : public native::Regex {
 public:
     RegEx_BOOST(const std::string &iText) : _regex(iText) {}
-    virtual ~RegEx_BOOST(){}
 
-    bool match(std::string::const_iterator iBegin,
-               std::string::const_iterator iEnd,
-               std::unique_ptr<native::Smatch, native::ThisDeleter<native::Smatch>> &iResult,
-               native::Regex::Anchor iAnchor) const override {
+    bool match(std::string::const_iterator iBegin, std::string::const_iterator iEnd, std::unique_ptr<native::Smatch> &iResult, native::Regex::Anchor iAnchor) const override {
         std::unique_ptr<Smatch_BOOST> smatch(new Smatch_BOOST(_regex));
 
         if(iAnchor == ANCHOR_BOTH) {
@@ -206,15 +186,14 @@ public:
             }
         }
 
-        iResult.reset(smatch.release());
+        iResult = std::move(smatch);
 
         return true;
     }
 
-    bool match(const std::string &iText, std::unique_ptr<native::Smatch, native::ThisDeleter<native::Smatch>> &iResult, native::Regex::Anchor iAnchor) const override {
+    bool match(const std::string &iText, std::unique_ptr<native::Smatch> &iResult, native::Regex::Anchor iAnchor) const override {
         return match(iText.begin(), iText.end(), iResult, iAnchor);
     }
-    void deleter(native::Regex* iObject)override {delete ((RegEx_BOOST*)iObject);}
 private:
     boost::regex _regex;
 };
@@ -223,8 +202,8 @@ private:
 
 bool getNextParameter(std::string::const_iterator& iBegin, std::string::const_iterator iEnd, std::string& iText, std::string& Name, std::string& iFormat) {
     // regex is compiled only at the first call
-    static const std::unique_ptr<native::Regex, native::ThisDeleter<native::Regex>> re = native::Regex::Create("\\{([a-zA-Z][a-zA-Z0-9]*):([a-zA-Z][a-zA-Z0-9]*)\\}"); //e.g.: {param:formatName}
-    std::unique_ptr<native::Smatch, native::ThisDeleter<native::Smatch>> results;
+    static const std::unique_ptr<native::Regex> re = native::Regex::Create("\\{([a-zA-Z][a-zA-Z0-9]*):([a-zA-Z][a-zA-Z0-9]*)\\}"); //e.g.: {param:formatName}
+    std::unique_ptr<native::Smatch> results;
 
     if(!re->match(iBegin, iEnd, results, native::Regex::UNANCHORED)) {
         return false;
@@ -249,7 +228,7 @@ bool getNextParameter(std::string::const_iterator& iBegin, std::string::const_it
 void saveValues(
         native::UriTemplateValue &ioParsedValues,
         int &ioPosition,
-        const std::unique_ptr<native::Smatch, native::ThisDeleter<native::Smatch>> &iMatchResults,
+        const std::unique_ptr<native::Smatch> &iMatchResults,
         const std::vector<std::string> &iParams,
         const std::vector<std::string> &iFormatNames) {
     NNATIVE_ASSERT(iParams.size() == iFormatNames.size());
@@ -276,12 +255,12 @@ void saveValues(
 
 bool extractAndSaveValues(native::UriTemplateValue &oValues,
                           const std::string &iUri,
-                          std::unique_ptr<native::Regex, native::ThisDeleter<native::Regex>> &iExtractRegex,
+                          std::unique_ptr<native::Regex> &iExtractRegex,
                           const std::string &iExtractPattern,
                           const std::vector<std::string> &iParams,
                           const std::vector<std::string> &iFormatNames,
                           const bool iAnchorEnd = true) {
-    std::unique_ptr<native::Smatch, native::ThisDeleter<native::Smatch>> matchResults;
+    std::unique_ptr<native::Smatch> matchResults;
     if(!iExtractRegex) {
         iExtractRegex = native::Regex::Create(iExtractPattern);
     }
@@ -303,8 +282,8 @@ bool extractAndSaveValues(native::UriTemplateValue &oValues,
 
 bool containCapturingGroup(const std::string &iPattern) {
     // regex is compiled only at the first call
-    static const std::unique_ptr<native::Regex, native::ThisDeleter<native::Regex>> reCapturingGroup = native::Regex::Create("\\([^\\?][^\\)]+\\)"); // true for "(test|other)", but false for non capturing groups (?:test|other)
-    std::unique_ptr<native::Smatch, native::ThisDeleter<native::Smatch>> dummyResults;
+    static const std::unique_ptr<native::Regex> reCapturingGroup = native::Regex::Create("\\([^\\?][^\\)]+\\)"); // true for "(test|other)", but false for non capturing groups (?:test|other)
+    std::unique_ptr<native::Smatch> dummyResults;
     return reCapturingGroup->match(iPattern, dummyResults, native::Regex::UNANCHORED);
 }
 
@@ -312,13 +291,13 @@ bool containCapturingGroup(const std::string &iPattern) {
 
 namespace native {
 
-std::unique_ptr<Regex, ThisDeleter<Regex>> Regex::Create(const std::string &iText) {
+std::unique_ptr<Regex> Regex::Create(const std::string &iText) {
 #if NNATIVE_USE_RE2 == 1
-    return std::unique_ptr<Regex, ThisDeleter<Regex>>(new RegEx_RE2(iText));
+    return std::unique_ptr<Regex>(new RegEx_RE2(iText));
 #elif NNATIVE_USE_STDREGEX == 1
-    return std::unique_ptr<Regex, ThisDeleter<Regex>>(new RegEx_STD(iText));
+    return std::unique_ptr<Regex>(new RegEx_STD(iText));
 #elif NNATIVE_USE_BOOSTREGEX == 1
-    return std::unique_ptr<Regex, ThisDeleter<Regex>>(new RegEx_BOOST(iText));
+    return std::unique_ptr<Regex>(new RegEx_BOOST(iText));
 #endif
 }
 
@@ -391,7 +370,7 @@ void UriTemplate::parse() {
 
 bool UriTemplate::extract(UriTemplateValue &oValues, const std::string &iUri, const bool iAnchorEnd) const {
     NNATIVE_DEBUG("Extract values from \"" << iUri << "\" by using URI template \"" << _template << "\", pattern: \"" << _extractPattern << "\")");
-    return extractAndSaveValues(oValues, iUri, (iAnchorEnd ? _extractRegexFull : _extractRegexStart), _extractPattern, getParams(), getFormatNames(), iAnchorEnd);
+    return extractAndSaveValues(oValues, iUri, _extractRegex, _extractPattern, getParams(), getFormatNames(), iAnchorEnd);
 }
 
 bool UriTemplate::ContainCapturingGroup(const std::string &iPattern) {
