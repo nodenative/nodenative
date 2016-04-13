@@ -3,11 +3,35 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 namespace native {
 
 class UriTemplateFormat;
 class UriTemplateValue;
+
+class Smatch {
+public:
+    virtual std::string str(const int i = 0) const = 0;
+    virtual int size() const = 0;
+    virtual int position() const = 0;
+    virtual int length() const = 0;
+};
+
+class Regex {
+public:
+    enum Anchor {
+        ANCHOR_BOTH,
+        ANCHOR_START,
+        UNANCHORED
+    };
+
+    static std::unique_ptr<Regex> Create(const std::string &iRegexText);
+    virtual ~Regex() {}
+
+    virtual bool match(const std::string &iText, std::unique_ptr<Smatch>& iResult, Anchor iAnchor = ANCHOR_BOTH) const = 0;
+    virtual bool match(std::string::const_iterator iBegin, std::string::const_iterator iEnd, std::unique_ptr<Smatch>& iMatch, Anchor iAnchor = ANCHOR_BOTH) const = 0;
+};
 
 std::string getRegexLibName();
 
@@ -100,6 +124,7 @@ private:
     std::vector<std::string> _params;
     // parsed format name vector container
     std::vector<std::string> _formatNames;
+    mutable std::unique_ptr<Regex> _extractRegex;
 };
 
 } /* mespace native */
