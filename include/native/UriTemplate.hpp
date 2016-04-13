@@ -12,6 +12,7 @@ class UriTemplateValue;
 
 class Smatch {
 public:
+    virtual ~Smatch() {}
     virtual std::string str(const int i = 0) const = 0;
     virtual int size() const = 0;
     virtual int position() const = 0;
