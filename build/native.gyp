@@ -41,6 +41,7 @@
                 '../src/Loop.cpp',
                 '../src/net/net_utils.cpp',
                 '../src/net/Tcp.cpp',
+                '../src/Regex.cpp',
                 '../src/Timer.cpp',
                 '../src/worker/WorkerBase.cpp',
                 '../src/worker/WorkerCallback.cpp',
