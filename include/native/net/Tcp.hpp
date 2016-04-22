@@ -32,6 +32,10 @@ public:
     bool getpeername(bool& ip4, std::string& ip, int& port);
     virtual void init();
 
+    std::shared_ptr<Tcp> getInstanceTcp() {
+        return std::static_pointer_cast<Tcp>(native::base::Stream::getInstanceStream());
+    }
+
 protected:
     Tcp(std::shared_ptr<native::Loop> l);
     virtual void init(uv_handle_t* iHandlePtr) override;

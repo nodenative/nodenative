@@ -77,12 +77,10 @@ bool Tcp::bind(const std::string& ip, const int port, const int version)
 }
 
 void Tcp::Connect(uv_connect_t* req, int status) {
-    std::unique_ptr<RequestPromise<void, uv_connect_t>> reqInstance(static_cast<RequestPromise<void, uv_connect_t>*>(req->data));
+    std::unique_ptr<RequestPromiseInstance<void, uv_connect_t, Tcp>> reqInstance(static_cast<RequestPromiseInstance<void, uv_connect_t, Tcp>*>(req->data));
     NNATIVE_ASSERT(req->handle->data);
-    Tcp * currPtr = static_cast<Tcp*>(req->handle->data);
-    NNATIVE_ASSERT(currPtr != nullptr);
-    currPtr->_connected = true;
-    currPtr->_connecting = false;
+    reqInstance->_instance->_connected = true;
+    reqInstance->_instance->_connecting = false;
     if(status == 0) {
         reqInstance->_promise.resolve();
     } else {
@@ -116,7 +114,7 @@ Future<void> Tcp::connect(const std::string& ip, const int port, const int versi
         return Promise<void>::Reject(_loop, "Error in to_ip4_addr/to_ip6_addr");
     }
 
-    std::unique_ptr<RequestPromise<void, uv_connect_t>> reqInstance(new RequestPromise<void, uv_connect_t>(_loop, getInstanceStream()));
+    std::unique_ptr<RequestPromiseInstance<void, uv_connect_t, Tcp>> reqInstance(new RequestPromiseInstance<void, uv_connect_t, Tcp>(_loop, getInstanceTcp()));
     currError = uv_tcp_connect(&reqInstance->_req, get<uv_tcp_t>(), addrInstance.get(), &Tcp::Connect);
 
     if(currError)

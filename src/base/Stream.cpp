@@ -67,7 +67,7 @@ bool Stream::readStop()
 
 Future<void> Stream::write(const uv_buf_t* bufs, const size_t count, uv_stream_t* iSendHandle)
 {
-    std::unique_ptr<RequestPromise<void, uv_write_t>> reqInstance(new RequestPromise<void, uv_write_t>(_loop, getInstanceStream()));
+    auto reqInstance = RequestPromiseInstance<void, uv_write_t, Stream>::Create(_loop, getInstanceStream());
 
     int res;
     if(iSendHandle == nullptr) {
@@ -89,7 +89,7 @@ Future<void> Stream::write(const uv_buf_t* bufs, const size_t count, uv_stream_t
 
 void Stream::AfterWrite(uv_write_t* req, int status)
 {
-    std::unique_ptr<RequestPromise<void, uv_write_t>> reqInstance(static_cast<RequestPromise<void, uv_write_t>*>(req->data));
+    std::unique_ptr<RequestPromiseInstance<void, uv_write_t, Stream>> reqInstance(static_cast<RequestPromiseInstance<void, uv_write_t, Stream>*>(req->data));
     Error curError(status);
     if(!curError) {
         reqInstance->_promise.resolve();
@@ -118,7 +118,7 @@ Future<void> Stream::write(const std::vector<char>& buf, uv_stream_t* iSendHandl
 
 Future<void> Stream::shutdown()
 {
-    std::unique_ptr<RequestPromise<void, uv_shutdown_t>> reqInstance(new RequestPromise<void, uv_shutdown_t>(_loop, getInstanceStream()));
+    std::unique_ptr<RequestPromiseInstance<void, uv_shutdown_t, Stream>> reqInstance(new RequestPromiseInstance<void, uv_shutdown_t, Stream>(_loop, getInstanceStream()));
 
     const int res = uv_shutdown(&reqInstance->_req, get<uv_stream_t>(), [](uv_shutdown_t* req, int status) {
             std::unique_ptr<RequestPromise<void, uv_shutdown_t>> reqInstance(static_cast<RequestPromise<void, uv_shutdown_t>*>(req->data));
