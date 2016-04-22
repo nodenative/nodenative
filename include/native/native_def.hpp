@@ -14,6 +14,7 @@
 #include "helper.hpp"
 #include "crypto.hpp"
 #include "Timer.hpp"
+#include "Regex.hpp"
 #include "UriTemplate.hpp"
 #include "UriTemplateFormat.hpp"
 #include "UriTemplateValue.hpp"

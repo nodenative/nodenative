@@ -2,6 +2,7 @@
 #define __NATIVE_REGEX_HPP__
 
 #include <memory>
+#include <string>
 
 namespace native {
 
