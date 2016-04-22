@@ -121,7 +121,7 @@ Future<void> Stream::shutdown()
     std::unique_ptr<RequestPromiseInstance<void, uv_shutdown_t, Stream>> reqInstance(new RequestPromiseInstance<void, uv_shutdown_t, Stream>(_loop, getInstanceStream()));
 
     const int res = uv_shutdown(&reqInstance->_req, get<uv_stream_t>(), [](uv_shutdown_t* req, int status) {
-            std::unique_ptr<RequestPromise<void, uv_shutdown_t>> reqInstance(static_cast<RequestPromise<void, uv_shutdown_t>*>(req->data));
+            std::unique_ptr<RequestPromiseInstance<void, uv_shutdown_t, Stream>> reqInstance(static_cast<RequestPromiseInstance<void, uv_shutdown_t, Stream>*>(req->data));
             if(0 == status) {
                 reqInstance->_promise.resolve();
             } else {
