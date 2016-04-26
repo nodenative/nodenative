@@ -33,6 +33,7 @@
             'sources' : [
                 '../test/basic_test.cpp',
                 '../test/crypto_test.cpp',
+                '../test/fs_test.cpp',
                 '../test/http_test.cpp',
                 '../test/timer_test.cpp',
                 '../test/async_test.cpp',

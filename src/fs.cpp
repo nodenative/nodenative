@@ -97,9 +97,9 @@ int stringToFlags(const std::string &flagStr) {
 
 Future<file_handle> open(const std::string& path, int flags, int mode)
 {
-    auto reqInstance = RequestPromise<native::fs::file_handle, uv_fs_t>::Create(Loop::);
+    auto reqInstance = RequestPromise<native::fs::file_handle, uv_fs_t>::Create(Loop::GetInstanceOrCreateDefault());
     Error err;
-    if((err = uv_fs_open(uv_default_loop(), req, path.c_str(), flags, mode, [](uv_fs_t* req) {
+    if((err = uv_fs_open(uv_default_loop(), &reqInstance->_req, path.c_str(), flags, mode, [](uv_fs_t* req) {
         NNATIVE_ASSERT(req->fs_type == UV_FS_OPEN);
         std::unique_ptr<RequestPromise<native::fs::file_handle, uv_fs_t>> reInstance(static_cast<RequestPromise<native::fs::file_handle, uv_fs_t>*>(req->data));
 
@@ -111,10 +111,10 @@ Future<file_handle> open(const std::string& path, int flags, int mode)
 
         reInstance->_promise.resolve(req->result);
     }))) {
-        RequestPromise->_promise.reject(err.str());
+        reqInstance->_promise.reject(err.str());
     }
 
-    return RequestPromise->_promise.getFuture();
+    return reqInstance.release()->_promise.getFuture();
 }
 
 /*

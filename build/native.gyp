@@ -29,7 +29,7 @@
                 '../src/crypto/utils.cpp',
                 '../src/crypto/PBKDF2.cpp',
                 '../src/crypto.cpp',
-                #'../src/fs.cpp',
+                '../src/fs.cpp',
                 '../src/http/HttpUtils.cpp',
                 '../src/http/IncomingMessage.cpp',
                 '../src/http/OutgoingMessage.cpp',

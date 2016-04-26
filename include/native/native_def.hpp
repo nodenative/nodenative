@@ -7,8 +7,7 @@
 #include "Loop.hpp"
 #include "net.hpp"
 #include "http.hpp"
-// TODO: cleanup first to resolve multiple definition conflicts
-//#include "fs.hpp"
+#include "fs.hpp"
 #include "async.hpp"
 #include "worker.hpp"
 #include "helper.hpp"
