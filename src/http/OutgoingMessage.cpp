@@ -8,7 +8,14 @@ OutgoingMessage::OutgoingMessage(const bool iIsRequest) :
         _isRequest(iIsRequest),
         _statusCode(200),
         _headerSent(false),
-        _closed(false) {
+        _closed(false),
+        _last(false),
+        _chunkedEncoding(false),
+        _useChunkedEncodingByDefault(false),
+        _sendDate(false),
+        _shouldKeepAlive(true),
+        _contentLength(-1),
+        _hasBody(false) {
     _headers["Content-Type"] = "text/html";
 }
 
@@ -154,4 +161,3 @@ std::string OutgoingMessage::GetStatusText(int status) {
 
 } /* namespace http */
 } /* namespace native */
-
