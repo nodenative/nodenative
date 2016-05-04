@@ -1,5 +1,8 @@
 .cproject
 .project
+*.pch
+*.sublime-project
+*.sublime-workspace
 .settings/*
 out/**
 **/*.swp

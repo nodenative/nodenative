@@ -1,6 +1,10 @@
 #ifndef __NATIVE_ASYNC_FEATURESHARED_IPP__
 #define __NATIVE_ASYNC_FEATURESHARED_IPP__
 
+#include "FutureShared.hpp"
+
+#include <memory>
+
 namespace native {
 
 template<class R>

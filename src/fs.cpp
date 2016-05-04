@@ -97,9 +97,10 @@ int stringToFlags(const std::string &flagStr) {
 
 Future<file_handle> open(const std::string& path, int flags, int mode)
 {
-    auto reqInstance = RequestPromise<native::fs::file_handle, uv_fs_t>::Create(Loop::GetInstanceOrCreateDefault());
+    std::shared_ptr<Loop> loopInst = Loop::GetInstanceOrCreateDefault();
+    auto reqInstance = RequestPromise<native::fs::file_handle, uv_fs_t>::Create(loopInst);
     Error err;
-    if((err = uv_fs_open(uv_default_loop(), &reqInstance->_req, path.c_str(), flags, mode, [](uv_fs_t* req) {
+    if((err = uv_fs_open(loopInst->get(), &reqInstance->_req, path.c_str(), flags, mode, [](uv_fs_t* req) {
         NNATIVE_ASSERT(req->fs_type == UV_FS_OPEN);
         std::unique_ptr<RequestPromise<native::fs::file_handle, uv_fs_t>> reInstance(static_cast<RequestPromise<native::fs::file_handle, uv_fs_t>*>(req->data));
 
@@ -117,67 +118,74 @@ Future<file_handle> open(const std::string& path, int flags, int mode)
     return reqInstance.release()->_promise.getFuture();
 }
 
-/*
-bool read(file_handle fd, size_t len, off_t offset, std::function<void(const std::string& str, Error e)> callback)
+file_handle openSync(const std::string& path, int flags, int mode)
 {
-    auto buf = new char[len];
-    auto req = internal::create_req(callback, buf);
-    const uv_buf_t iov = uv_buf_init(buf, len);
-    if(uv_fs_read(uv_default_loop(), req, fd, &iov, 1, offset, [](uv_fs_t* req){
+    std::shared_ptr<Loop> loopInst = Loop::GetInstanceOrCreateDefault();
+    uv_fs_t req;
+    file_handle fd;
+    if((fd = uv_fs_open(loopInst->get(), &req, path.c_str(), flags, mode, nullptr)) < 0) {
+        Error err(fd);
+        throw err;
+    }
+
+    return fd;
+}
+
+Future<std::shared_ptr<std::string>> read(file_handle fd, size_t len, off_t offset)
+{
+    std::shared_ptr<Loop> loopInst = Loop::GetInstanceOrCreateDefault();
+    std::shared_ptr<std::string> bufInst(new std::string());
+    bufInst->resize(len);
+    auto reqInstance = RequestPromiseInstance<std::shared_ptr<std::string>, uv_fs_t, std::string>::Create(loopInst, bufInst);
+    const uv_buf_t iov = uv_buf_init(const_cast<char*>(bufInst->c_str()), len);
+    Error err;
+    if((err = uv_fs_read(loopInst->get(), &reqInstance->_req, fd, &iov, 1, offset, [](uv_fs_t* req){
         assert(req->fs_type == UV_FS_READ);
+        std::unique_ptr<RequestPromiseInstance<std::shared_ptr<std::string>, uv_fs_t, std::string>> reInstance(static_cast<RequestPromiseInstance<std::shared_ptr<std::string>, uv_fs_t, std::string>*>(req->data));
 
         if(req->result < 0)
         {
-            // system Error
-            internal::invoke_from_req<decltype(callback)>(req, std::string(), Error(req->result));
-        }
-        else if(req->result == 0)
-        {
-            // EOF
-            internal::invoke_from_req<decltype(callback)>(req, std::string(), Error(UV_EOF));
-        }
-        else
-        {
-            auto buf = internal::get_data_from_req<decltype(callback), char>(req);
-            internal::invoke_from_req<decltype(callback)>(req, std::string(buf, req->result), Error());
+            Error err(req->result);
+            reInstance->_promise.reject(err.str());
+            return;
         }
 
-        internal::delete_req_arr_data<decltype(callback), char>(req);
-    })) {
-        // failed to initiate uv_fs_read()
-        internal::delete_req_arr_data<decltype(callback), char>(req);
-        return false;
+        reInstance->_instance->resize(req->result);
+        reInstance->_promise.resolve(reInstance->_instance);
+    }))) {
+        reqInstance->_promise.reject(err.str());
     }
-    return true;
+
+    return reqInstance.release()->_promise.getFuture();
 }
 
-bool write(file_handle fd, const char* buf, size_t len, off_t offset, std::function<void(int nwritten, Error e)> callback)
+Future<int> write(file_handle fd, const char* buf, size_t len, off_t offset)
 {
-    auto req = internal::create_req(callback);
-    const uv_buf_t iov = uv_buf_init(const_cast<char*>(buf), len);
-
+    std::shared_ptr<Loop> loopInst = Loop::GetInstanceOrCreateDefault();
     // TODO: const_cast<> !!
-    if(uv_fs_write(uv_default_loop(), req, fd, &iov, 1, offset, [](uv_fs_t* req){
+    const uv_buf_t iov = uv_buf_init(const_cast<char*>(buf), len);
+    auto reqInstance = RequestPromise<int, uv_fs_t>::Create(loopInst);
+
+    Error err;
+    if((err = uv_fs_write(loopInst->get(), &reqInstance->_req, fd, &iov, 1, offset, [](uv_fs_t* req) {
         assert(req->fs_type == UV_FS_WRITE);
+        std::unique_ptr<RequestPromise<int, uv_fs_t>> reInstance(static_cast<RequestPromise<int, uv_fs_t>*>(req->data));
 
-        if(req->result)
+        if(req->result < 0)
         {
-            internal::invoke_from_req<decltype(callback)>(req, 0, Error(req->result));
+            Error err(req->result);
+            reInstance->_promise.reject(err.str());
+            return;
         }
-        else
-        {
-            internal::invoke_from_req<decltype(callback)>(req, req->result, Error());
-        }
-
-        internal::delete_req(req);
-    })) {
-        // failed to initiate uv_fs_write()
-        internal::delete_req(req);
-        return false;
+        reInstance->_promise.resolve(req->result);
+    }))) {
+        reqInstance->_promise.reject(err.str());
     }
-    return true;
+
+    return reqInstance.release()->_promise.getFuture();
 }
 
+/*
 bool read_to_end(file_handle fd, std::function<void(const std::string& str, Error e)> callback)
 {
     auto ctx = new internal::rte_context;

@@ -2,6 +2,7 @@
 #define __NATIVE_ASYNC_REQUESTPROMISE_HPP__
 
 #include "Promise.hpp"
+#include <memory>
 
 namespace native {
 

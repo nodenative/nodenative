@@ -33,12 +33,13 @@ extern const int large_large;
 int stringToFlags(const std::string &str);
 
 Future<file_handle> open(const std::string& path, int flags, int mode);
+file_handle openSync(const std::string& path, int flags, int mode);
+
+Future<std::shared_ptr<std::string>> read(file_handle fd, size_t len, off_t offset);
+
+Future<int> write(file_handle fd, const char* buf, size_t len, off_t offset);
 
 /*
-bool read(file_handle fd, size_t len, off_t offset, std::function<void(const std::string& str, Error e)> callback);
-
-bool write(file_handle fd, const char* buf, size_t len, off_t offset, std::function<void(int nwritten, Error e)> callback);
-
 bool read_to_end(file_handle fd, std::function<void(const std::string& str, Error e)> callback);
 
 bool close(file_handle fd, std::function<void(Error e)> callback);
