@@ -36,25 +36,41 @@ Future<file_handle> open(const std::string& path, const int flags, const int mod
 file_handle openSync(const std::string& path, const int flags, const int mode);
 
 Future<std::shared_ptr<std::string>> read(const file_handle fd, const size_t len, const off_t offset = 0);
+std::shared_ptr<std::string> readSync(const file_handle fd, const size_t len, const off_t offset = 0);
 
 Future<int> write(const file_handle fd, const char* buf, const size_t len, const off_t offset = 0);
+int writeSync(const file_handle fd, const char* buf, const size_t len, const off_t offset = 0);
 
 /*
 bool read_to_end(file_handle fd, std::function<void(const std::string& str, Error e)> callback);
 */
 
-Future<void> access(file_handle fd, int mode);
-Future<void> close(file_handle fd);
-Future<void>  unlink(const std::string& path);
-Future<void> mkdir(const std::string& path, int mode);
+Future<void> access(const file_handle fd, const int mode);
+void accessSync(const file_handle fd, const int mode);
+
+Future<void> close(const file_handle fd);
+void closeSync(const file_handle fd);
+
+Future<void> unlink(const std::string& path);
+void unlinkSync(const std::string& path);
+
+Future<void> mkdir(const std::string& path, const int mode);
+void mkdirSync(const std::string& path, const int mode);
 
 Future<void> rmdir(const std::string& path);
+void rmdirSync(const std::string& path);
 
 Future<void> rename(const std::string& path, const std::string& new_path);
+void renameSync(const std::string& path, const std::string& new_path);
 
-Future<void> chmod(const std::string& path, int mode);
+Future<void> chmod(const std::string& path, const int mode);
+void chmodSync(const std::string& path, const int mode);
 
-Future<void> chown(const std::string& path, int uid, int gid);
+Future<void> fchmod(const file_handle fd, const int mode);
+void fchmodSync(const file_handle fd, const int mode);
+
+Future<void> chown(const std::string& path, const int uid, const int gid);
+void chownSync(const std::string& path, const int uid, const int gid);
 
 #if 0
 bool readdir(const std::string& path, int flags, std::function<void(Error e)> callback);
@@ -65,7 +81,7 @@ bool fstat(const std::string& path, std::function<void(Error e)> callback);
 #endif
 } /* namespace fs */
 
-class file
+class File
 {
 public:
 static bool read(const std::string& path, std::function<void(const std::string& str, Error e)> callback);
