@@ -32,29 +32,29 @@ extern const int large_large;
 
 int stringToFlags(const std::string &str);
 
-Future<file_handle> open(const std::string& path, int flags, int mode);
-file_handle openSync(const std::string& path, int flags, int mode);
+Future<file_handle> open(const std::string& path, const int flags, const int mode);
+file_handle openSync(const std::string& path, const int flags, const int mode);
 
-Future<std::shared_ptr<std::string>> read(file_handle fd, size_t len, off_t offset);
+Future<std::shared_ptr<std::string>> read(const file_handle fd, const size_t len, const off_t offset = 0);
 
-Future<int> write(file_handle fd, const char* buf, size_t len, off_t offset);
+Future<int> write(const file_handle fd, const char* buf, const size_t len, const off_t offset = 0);
 
 /*
 bool read_to_end(file_handle fd, std::function<void(const std::string& str, Error e)> callback);
+*/
 
-bool close(file_handle fd, std::function<void(Error e)> callback);
+Future<void> access(file_handle fd, int mode);
+Future<void> close(file_handle fd);
+Future<void>  unlink(const std::string& path);
+Future<void> mkdir(const std::string& path, int mode);
 
-bool unlink(const std::string& path, std::function<void(Error e)> callback);
+Future<void> rmdir(const std::string& path);
 
-bool mkdir(const std::string& path, int mode, std::function<void(Error e)> callback);
+Future<void> rename(const std::string& path, const std::string& new_path);
 
-bool rmdir(const std::string& path, std::function<void(Error e)> callback);
+Future<void> chmod(const std::string& path, int mode);
 
-bool rename(const std::string& path, const std::string& new_path, std::function<void(Error e)> callback);
-
-bool chmod(const std::string& path, int mode, std::function<void(Error e)> callback);
-
-bool chown(const std::string& path, int uid, int gid, std::function<void(Error e)> callback);
+Future<void> chown(const std::string& path, int uid, int gid);
 
 #if 0
 bool readdir(const std::string& path, int flags, std::function<void(Error e)> callback);
@@ -63,7 +63,6 @@ bool stat(const std::string& path, std::function<void(Error e)> callback);
 
 bool fstat(const std::string& path, std::function<void(Error e)> callback);
 #endif
-*/
 } /* namespace fs */
 
 class file
