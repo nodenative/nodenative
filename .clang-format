@@ -1,0 +1,11 @@
+---
+# For more detail on parameters check http://clang.llvm.org/docs/ClangFormatStyleOptions.html
+# To explore LLVM style use `clang-format -style=llvm -dump-config > .clang-format_LLVM`
+# By default use LLVM style with minor changes
+BasedOnStyle:  LLVM
+BinPackParameters: false
+IndentWidth: 4
+ColumnLimit: 120
+---
+Language: Cpp
+Standard: Cpp11
