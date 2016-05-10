@@ -9,25 +9,28 @@ namespace http {
 
 class Transaction;
 
-class Server : public std::enable_shared_from_this<Server>
-{
-friend class Transaction;
+/**
+ * HTTP Server class. See example:
+ * @example webserver.cpp
+ */
+class Server : public std::enable_shared_from_this<Server> {
+    friend class Transaction;
 
-protected:
+  protected:
     Server(std::shared_ptr<Loop> iLoop);
 
-public:
+  public:
     Server() = delete;
     virtual ~Server();
 
-    bool listen(const std::string& ip, int port, std::function<void(std::shared_ptr<Transaction>)> callback);
+    bool listen(const std::string &ip, int port, std::function<void(std::shared_ptr<Transaction>)> callback);
     Future<std::shared_ptr<Server>> close();
 
     static std::shared_ptr<Server> Create();
     static std::shared_ptr<Server> Create(std::shared_ptr<Loop> iLoop);
     std::shared_ptr<Server> getInstance();
 
-protected:
+  protected:
     std::shared_ptr<native::net::Tcp> _socket;
     std::shared_ptr<Server> _instance;
 };

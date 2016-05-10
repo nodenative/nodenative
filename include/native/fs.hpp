@@ -12,6 +12,8 @@ namespace native {
 namespace fs {
 
 typedef uv_file file_handle;
+typedef uv_dirent_t DirEnt;
+typedef uv_stat_t Stat;
 
 extern const int read_only;
 extern const int write_only;
@@ -76,27 +78,31 @@ void fchmodSync(const file_handle fd, const int mode);
 Future<void> chown(const std::string &path, const int uid, const int gid);
 void chownSync(const std::string &path, const int uid, const int gid);
 
-Future<void> scandir(const std::string &path, const int flags);
-void scandirSync(const std::string &path, const int flags);
+/**
+ * Asynchronous `readdir(3)`. Reads the contents of a directory.
+ */
+Future<std::shared_ptr<std::vector<DirEnt>>> readdir(const std::string &path, const int flags = 0);
+/**
+ * Synchronous `readdir(3)`. Returns an vector instance of filenames and types excluding '.' and '..'.
+ */
+std::shared_ptr<std::vector<DirEnt>> readdirSync(const std::string &path, const int flags = 0);
 
-Future<void> scandirNext(const std::string &path, const int flags);
-void scandirNextSync(const std::string &path, const int flags);
+Future<std::shared_ptr<Stat>> stat(const std::string &path);
+Future<std::shared_ptr<Stat>> fstat(const file_handle fd);
+Future<std::shared_ptr<Stat>> lstat(const std::string &path);
 
-#if 0
-bool readdir(const std::string& path, int flags, std::function<void(Error e)> callback);
+std::shared_ptr<Stat> statSync(const std::string &path);
+std::shared_ptr<Stat> fstatSync(const file_handle fd);
+std::shared_ptr<Stat> lstatSync(const std::string &path);
 
-bool stat(const std::string& path, std::function<void(Error e)> callback);
-
-bool fstat(const std::string& path, std::function<void(Error e)> callback);
-#endif
 } /* namespace fs */
 
 class File {
-  public:
-    static bool read(const std::string &path, std::function<void(const std::string &str, Error e)> callback);
+public:
+  static bool read(const std::string &path, std::function<void(const std::string &str, Error e)> callback);
 
-    static bool
-    write(const std::string &path, const std::string &str, std::function<void(int nwritten, Error e)> callback);
+  static bool
+  write(const std::string &path, const std::string &str, std::function<void(int nwritten, Error e)> callback);
 };
 
 } /* namespace native */

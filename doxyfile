@@ -33,3 +33,15 @@ EXAMPLE_RECURSIVE      = YES
 IMAGE_PATH             = doc
 
 USE_MATHJAX            = YES
+
+#for RTF
+#GENERATE_RTF = YES
+#RTF_OUTPUT = rtf
+#RTF_HYPERLINKS = YES
+
+GENERATE_XML           = YES
+
+# CLASS_DIAGRAMS by default is YES
+#HAVE_DOT              = YES
+CLASS_GRAPH           = YES
+COLLABORATION_GRAPH   = YES
