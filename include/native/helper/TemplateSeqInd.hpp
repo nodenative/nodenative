@@ -6,14 +6,11 @@
 namespace native {
 namespace helper {
 
-template <std::size_t... Ts>
-struct TemplateSeqInd {};
+template <std::size_t... Ts> struct TemplateSeqInd {};
 
-template <std::size_t N, std::size_t... Ts>
-struct TemplateSeqIndGen : TemplateSeqIndGen<N-1, N-1, Ts...> {};
+template <std::size_t N, std::size_t... Ts> struct TemplateSeqIndGen : TemplateSeqIndGen<N - 1, N - 1, Ts...> {};
 
-template<std::size_t... Ts>
-struct TemplateSeqIndGen<0, Ts...> : TemplateSeqInd<Ts...> {};
+template <std::size_t... Ts> struct TemplateSeqIndGen<0, Ts...> : TemplateSeqInd<Ts...> {};
 
 } /* namespace helper */
 } /* namespace native */

@@ -12,4 +12,3 @@ void initCrypto();
 } // namespace native
 
 #endif /* __NATIVE_CRYPTO_UTILS_HPP__ */
-

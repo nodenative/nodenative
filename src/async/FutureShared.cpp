@@ -4,35 +4,35 @@
 namespace native {
 
 std::shared_ptr<FutureShared<void>> FutureShared<void>::Create(std::shared_ptr<Loop> iLoop) {
-    std::shared_ptr<FutureShared<void>> instance(new FutureShared<void>(iLoop));
+  std::shared_ptr<FutureShared<void>> instance(new FutureShared<void>(iLoop));
 
-    return instance;
+  return instance;
 }
 
 void FutureShared<void>::resolve() {
-    NNATIVE_CHECK_LOOP_THREAD(this->_loop);
-    if(this->_resolver) {
-        throw PromiseAlreadySatisfied();
-    }
+  NNATIVE_CHECK_LOOP_THREAD(this->_loop);
+  if (this->_resolver) {
+    throw PromiseAlreadySatisfied();
+  }
 
-    this->_resolver = std::make_unique<FutureSharedResolverValue<void>>();
+  this->_resolver = std::make_unique<FutureSharedResolverValue<void>>();
 
-    for(std::shared_ptr<ActionCallbackBase<void>> action : this->_actions) {
-        this->_resolver->resolve(action);
-    }
+  for (std::shared_ptr<ActionCallbackBase<void>> action : this->_actions) {
+    this->_resolver->resolve(action);
+  }
 }
 
-void FutureShared<void>::reject(const FutureError& iError) {
-    NNATIVE_CHECK_LOOP_THREAD(this->_loop);
-    if(this->_resolver) {
-        throw PromiseAlreadySatisfied();
-    }
+void FutureShared<void>::reject(const FutureError &iError) {
+  NNATIVE_CHECK_LOOP_THREAD(this->_loop);
+  if (this->_resolver) {
+    throw PromiseAlreadySatisfied();
+  }
 
-    this->_resolver = std::make_unique<FutureSharedResolverError<void>>(iError);
+  this->_resolver = std::make_unique<FutureSharedResolverError<void>>(iError);
 
-    for(std::shared_ptr<ActionCallbackBase<void>> action : this->_actions) {
-        this->_resolver->resolve(action);
-    }
+  for (std::shared_ptr<ActionCallbackBase<void>> action : this->_actions) {
+    this->_resolver->resolve(action);
+  }
 }
 
 } /* namespace native */

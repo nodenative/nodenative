@@ -7,13 +7,14 @@ namespace native {
 
 class FutureError : public Exception {
 public:
-    FutureError(const std::string& iError): Exception(iError) {}
-    FutureError(const std::string& iError, const std::string& iFile, const int iLine, const std::string& iFunction): Exception(iError, iFile, iLine, iFunction) {}
+  FutureError(const std::string &iError) : Exception(iError) {}
+  FutureError(const std::string &iError, const std::string &iFile, const int iLine, const std::string &iFunction)
+      : Exception(iError, iFile, iLine, iFunction) {}
 };
 
 class PromiseAlreadySatisfied : public FutureError {
 public:
-    PromiseAlreadySatisfied() : FutureError("Promise already satisfied") {}
+  PromiseAlreadySatisfied() : FutureError("Promise already satisfied") {}
 };
 
 } /* namespace native */

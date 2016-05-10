@@ -5,4 +5,3 @@
 #include "helper/trace.hpp"
 
 #endif /* __NATIVE_HELPER_HPP__ */
-

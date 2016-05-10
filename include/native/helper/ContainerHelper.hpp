@@ -5,14 +5,13 @@ namespace native {
 namespace helper {
 
 /// The helper is for doing safe downcasts from base types to derived types.
-template <typename Inner, typename Outer>
-class ContainerOfHelper {
+template <typename Inner, typename Outer> class ContainerOfHelper {
 public:
-    inline ContainerOfHelper(Inner Outer::*field, Inner* pointer);
-    template <typename TypeName>
-    inline operator TypeName*() const;
+  inline ContainerOfHelper(Inner Outer::*field, Inner *pointer);
+  template <typename TypeName> inline operator TypeName *() const;
+
 private:
-    Outer* const pointer_;
+  Outer *const pointer_;
 };
 
 /**
@@ -20,9 +19,7 @@ private:
  * the interior pointer to a data member.
  */
 template <typename Inner, typename Outer>
-inline ContainerOfHelper<Inner, Outer>
-ContainerOf(Inner Outer::*field,
-            Inner* pointer);
+inline ContainerOfHelper<Inner, Outer> ContainerOf(Inner Outer::*field, Inner *pointer);
 
 } /* namespace helper */
 } /* namespace native */

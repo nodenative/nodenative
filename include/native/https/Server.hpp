@@ -9,14 +9,15 @@ namespace https {
 
 class Server : public http::Server {
 protected:
-    Server();
-public:
-    virtual ~Server();
+  Server();
 
-    bool listen(const std::string& ip, int port, std::function<void(request&, response&)> callback);
+public:
+  virtual ~Server();
+
+  bool listen(const std::string &ip, int port, std::function<void(request &, response &)> callback);
 }
 
 } // namespace https
-} //namespace native
+} // namespace native
 
 #endif /* __NATIVE_HTTPS_SERVER_HPP__ */

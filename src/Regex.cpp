@@ -30,63 +30,71 @@ namespace {
 class RegEx_RE2;
 
 class Smatch_RE2 : public native::Smatch {
-    friend class RegEx_RE2;
+  friend class RegEx_RE2;
+
 public:
-    Smatch_RE2(const re2::RE2& iRegex, const re2::StringPiece &iText) : _text(iText) {
-        _size = iRegex.NumberOfCapturingGroups() + 1;
-        _pieces = std::unique_ptr<re2::StringPiece[]>(new re2::StringPiece[_size]);
-    }
+  Smatch_RE2(const re2::RE2 &iRegex, const re2::StringPiece &iText) : _text(iText) {
+    _size = iRegex.NumberOfCapturingGroups() + 1;
+    _pieces = std::unique_ptr<re2::StringPiece[]>(new re2::StringPiece[_size]);
+  }
 
-    int size() const override { return _size; }
+  int size() const override { return _size; }
 
-    std::string str(int i) const override { return _pieces[i].as_string(); }
+  std::string str(int i) const override { return _pieces[i].as_string(); }
 
-    int position() const override { return _pieces[0].begin() - _text.begin(); }
-    int length() const override { return _pieces[0].size(); }
+  int position() const override { return _pieces[0].begin() - _text.begin(); }
+  int length() const override { return _pieces[0].size(); }
 
 private:
-    int _size;
-    std::unique_ptr<re2::StringPiece[]> _pieces;
-    re2::StringPiece _text;
+  int _size;
+  std::unique_ptr<re2::StringPiece[]> _pieces;
+  re2::StringPiece _text;
 };
 
 class RegEx_RE2 : public native::Regex {
 public:
-    RegEx_RE2(const std::string &iText) : _regex(iText) {}
+  RegEx_RE2(const std::string &iText) : _regex(iText) {}
 
-    bool match(const re2::StringPiece iText, std::unique_ptr<native::Smatch> &iResult, native::Regex::Anchor iAnchor) const {
-        std::unique_ptr<Smatch_RE2> smatch(new Smatch_RE2(_regex, iText));
+  bool
+  match(const re2::StringPiece iText, std::unique_ptr<native::Smatch> &iResult, native::Regex::Anchor iAnchor) const {
+    std::unique_ptr<Smatch_RE2> smatch(new Smatch_RE2(_regex, iText));
 
-        re2::RE2::Anchor anchor;
+    re2::RE2::Anchor anchor;
 
-        if(iAnchor == ANCHOR_BOTH) {
-            anchor = re2::RE2::ANCHOR_BOTH;
-        } else if (iAnchor == ANCHOR_START) {
-            anchor = re2::RE2::ANCHOR_START;
-        } else {
-            anchor = re2::RE2::UNANCHORED;
-        }
-
-        if(!_regex.Match(iText, 0, iText.size(), anchor, smatch->_pieces.get(), smatch->size())) {
-            return false;
-        }
-
-        iResult = std::move(smatch);
-
-        return true;
+    if (iAnchor == ANCHOR_BOTH) {
+      anchor = re2::RE2::ANCHOR_BOTH;
+    } else if (iAnchor == ANCHOR_START) {
+      anchor = re2::RE2::ANCHOR_START;
+    } else {
+      anchor = re2::RE2::UNANCHORED;
     }
 
-    bool match(const std::string &iText, std::unique_ptr<native::Smatch> &iResult, native::Regex::Anchor iAnchor) const override {
-        re2::StringPiece text(iText);
-        return match(text, iResult, iAnchor);
+    if (!_regex.Match(iText, 0, iText.size(), anchor, smatch->_pieces.get(), smatch->size())) {
+      return false;
     }
 
-    bool match(std::string::const_iterator iBegin, std::string::const_iterator iEnd, std::unique_ptr<native::Smatch> &iResult, native::Regex::Anchor iAnchor) const override {
-        re2::StringPiece text(&(*iBegin), std::distance(iBegin, iEnd));
-        return match(text, iResult, iAnchor);
-    }
+    iResult = std::move(smatch);
+
+    return true;
+  }
+
+  bool match(const std::string &iText,
+             std::unique_ptr<native::Smatch> &iResult,
+             native::Regex::Anchor iAnchor) const override {
+    re2::StringPiece text(iText);
+    return match(text, iResult, iAnchor);
+  }
+
+  bool match(std::string::const_iterator iBegin,
+             std::string::const_iterator iEnd,
+             std::unique_ptr<native::Smatch> &iResult,
+             native::Regex::Anchor iAnchor) const override {
+    re2::StringPiece text(&(*iBegin), std::distance(iBegin, iEnd));
+    return match(text, iResult, iAnchor);
+  }
+
 private:
-    re2::RE2 _regex;
+  re2::RE2 _regex;
 };
 
 #elif NNATIVE_USE_STDREGEX == 1
@@ -94,48 +102,57 @@ private:
 class RegEx_STD;
 
 class Smatch_STD : public native::Smatch {
-    friend class RegEx_STD;
+  friend class RegEx_STD;
+
 public:
-    Smatch_STD(const std::regex iRegex) {}
+  Smatch_STD(const std::regex iRegex) {}
 
-    int size() const override { return _pieces.size(); }
+  int size() const override { return _pieces.size(); }
 
-    std::string str(int i) const override { return _pieces.str(i); }
+  std::string str(int i) const override { return _pieces.str(i); }
 
-    int position() const override { return _pieces.position(); }
-    int length() const override { return _pieces.length(); }
+  int position() const override { return _pieces.position(); }
+  int length() const override { return _pieces.length(); }
 
 private:
-    std::smatch _pieces;
+  std::smatch _pieces;
 };
 
 class RegEx_STD : public native::Regex {
 public:
-    RegEx_STD(const std::string &iText) : _regex(iText) {}
+  RegEx_STD(const std::string &iText) : _regex(iText) {}
 
-    bool match(std::string::const_iterator iBegin, std::string::const_iterator iEnd, std::unique_ptr<native::Smatch> &iResult, native::Regex::Anchor iAnchor) const override {
-        std::unique_ptr<Smatch_STD> smatch(new Smatch_STD(_regex));
+  bool match(std::string::const_iterator iBegin,
+             std::string::const_iterator iEnd,
+             std::unique_ptr<native::Smatch> &iResult,
+             native::Regex::Anchor iAnchor) const override {
+    std::unique_ptr<Smatch_STD> smatch(new Smatch_STD(_regex));
 
-        if(iAnchor == ANCHOR_BOTH) {
-            if(!std::regex_match(iBegin, iEnd, smatch->_pieces, _regex)) {
-                return false;
-            }
-        } else {
-            if(!std::regex_search(iBegin, iEnd, smatch->_pieces, _regex, (iAnchor == ANCHOR_START ? std::regex_constants::match_continuous : std::regex_constants::match_default))) {
-                return false;
-            }
-        }
-
-        iResult = std::move(smatch);
-
-        return true;
+    if (iAnchor == ANCHOR_BOTH) {
+      if (!std::regex_match(iBegin, iEnd, smatch->_pieces, _regex)) {
+        return false;
+      }
+    } else {
+      if (!std::regex_search(iBegin, iEnd, smatch->_pieces, _regex,
+                             (iAnchor == ANCHOR_START ? std::regex_constants::match_continuous
+                                                      : std::regex_constants::match_default))) {
+        return false;
+      }
     }
 
-    bool match(const std::string &iText, std::unique_ptr<native::Smatch> &iResult, native::Regex::Anchor iAnchor) const override {
-        return match(iText.begin(), iText.end(), iResult, iAnchor);
-    }
+    iResult = std::move(smatch);
+
+    return true;
+  }
+
+  bool match(const std::string &iText,
+             std::unique_ptr<native::Smatch> &iResult,
+             native::Regex::Anchor iAnchor) const override {
+    return match(iText.begin(), iText.end(), iResult, iAnchor);
+  }
+
 private:
-    std::regex _regex;
+  std::regex _regex;
 };
 
 #elif NNATIVE_USE_BOOSTREGEX == 1
@@ -143,48 +160,57 @@ private:
 class RegEx_BOOST;
 
 class Smatch_BOOST : public native::Smatch {
-    friend class RegEx_BOOST;
+  friend class RegEx_BOOST;
+
 public:
-    Smatch_BOOST(const boost::regex iRegex) {}
+  Smatch_BOOST(const boost::regex iRegex) {}
 
-    int size() const override { return _pieces.size(); }
+  int size() const override { return _pieces.size(); }
 
-    std::string str(int i) const override { return _pieces.str(i); }
+  std::string str(int i) const override { return _pieces.str(i); }
 
-    int position() const override { return _pieces.position(); }
-    int length() const override { return _pieces.length(); }
+  int position() const override { return _pieces.position(); }
+  int length() const override { return _pieces.length(); }
 
 private:
-    boost::smatch _pieces;
+  boost::smatch _pieces;
 };
 
 class RegEx_BOOST : public native::Regex {
 public:
-    RegEx_BOOST(const std::string &iText) : _regex(iText) {}
+  RegEx_BOOST(const std::string &iText) : _regex(iText) {}
 
-    bool match(std::string::const_iterator iBegin, std::string::const_iterator iEnd, std::unique_ptr<native::Smatch> &iResult, native::Regex::Anchor iAnchor) const override {
-        std::unique_ptr<Smatch_BOOST> smatch(new Smatch_BOOST(_regex));
+  bool match(std::string::const_iterator iBegin,
+             std::string::const_iterator iEnd,
+             std::unique_ptr<native::Smatch> &iResult,
+             native::Regex::Anchor iAnchor) const override {
+    std::unique_ptr<Smatch_BOOST> smatch(new Smatch_BOOST(_regex));
 
-        if(iAnchor == ANCHOR_BOTH) {
-            if(!boost::regex_match(iBegin, iEnd, smatch->_pieces, _regex)) {
-                return false;
-            }
-        } else {
-            if(!boost::regex_search(iBegin, iEnd, smatch->_pieces, _regex, (iAnchor == ANCHOR_START ? boost::regex_constants::match_continuous : boost::regex_constants::match_default))) {
-                return false;
-            }
-        }
-
-        iResult = std::move(smatch);
-
-        return true;
+    if (iAnchor == ANCHOR_BOTH) {
+      if (!boost::regex_match(iBegin, iEnd, smatch->_pieces, _regex)) {
+        return false;
+      }
+    } else {
+      if (!boost::regex_search(iBegin, iEnd, smatch->_pieces, _regex,
+                               (iAnchor == ANCHOR_START ? boost::regex_constants::match_continuous
+                                                        : boost::regex_constants::match_default))) {
+        return false;
+      }
     }
 
-    bool match(const std::string &iText, std::unique_ptr<native::Smatch> &iResult, native::Regex::Anchor iAnchor) const override {
-        return match(iText.begin(), iText.end(), iResult, iAnchor);
-    }
+    iResult = std::move(smatch);
+
+    return true;
+  }
+
+  bool match(const std::string &iText,
+             std::unique_ptr<native::Smatch> &iResult,
+             native::Regex::Anchor iAnchor) const override {
+    return match(iText.begin(), iText.end(), iResult, iAnchor);
+  }
+
 private:
-    boost::regex _regex;
+  boost::regex _regex;
 };
 
 #endif // elif NNATIVE_USE_STDREGEX == 1
@@ -193,19 +219,16 @@ private:
 
 namespace native {
 
-std::string getRegexLibName() {
-  return NNATIVE_USE_REGEX_NAME;
-}
+std::string getRegexLibName() { return NNATIVE_USE_REGEX_NAME; }
 
 std::unique_ptr<Regex> Regex::Create(const std::string &iText) {
 #if NNATIVE_USE_RE2 == 1
-    return std::unique_ptr<Regex>(new RegEx_RE2(iText));
+  return std::unique_ptr<Regex>(new RegEx_RE2(iText));
 #elif NNATIVE_USE_STDREGEX == 1
-    return std::unique_ptr<Regex>(new RegEx_STD(iText));
+  return std::unique_ptr<Regex>(new RegEx_STD(iText));
 #elif NNATIVE_USE_BOOSTREGEX == 1
-    return std::unique_ptr<Regex>(new RegEx_BOOST(iText));
+  return std::unique_ptr<Regex>(new RegEx_BOOST(iText));
 #endif
 }
 
 } /* *mespace native */
-

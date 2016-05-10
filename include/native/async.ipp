@@ -14,4 +14,3 @@
 #include "async/FutureSharedResolver.ipp"
 
 #endif /* __NATIVE_ASYNC_IPP__ */
-
