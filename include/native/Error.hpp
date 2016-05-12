@@ -60,7 +60,7 @@ public:
   Error(const std::string &str) : _uv_err(-1), _str(str) {}
   ~Error() = default;
   bool isError() { return (_uv_err < 0); }
-  bool isOK() { return (_uv_err > 0); }
+  bool isOK() { return !isError(); }
   operator bool() { return isError(); }
   virtual Error &operator=(int iErrCode) {
     setError(iErrCode);
