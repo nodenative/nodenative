@@ -5,7 +5,7 @@ OUTPUT_DIRECTORY       = out/doc
 EXTRACT_ALL            = YES
 EXTRACT_PRIVATE        = YES
 EXTRACT_STATIC         = YES
-INPUT                  = include src doc
+INPUT                  = include src doc README.md
 
 # The RECURSIVE tag can be used to specify whether or not subdirectories should
 # be searched for input files as well.
@@ -45,3 +45,10 @@ GENERATE_XML           = YES
 #HAVE_DOT              = YES
 CLASS_GRAPH           = YES
 COLLABORATION_GRAPH   = YES
+
+# If the USE_MDFILE_AS_MAINPAGE tag refers to the name of a markdown file that
+# is part of the input, its contents will be placed on the main page
+# (index.html). This can be useful if you have a project on for instance GitHub
+# and want to reuse the introduction page also for the doxygen output.
+
+USE_MDFILE_AS_MAINPAGE =  README.md

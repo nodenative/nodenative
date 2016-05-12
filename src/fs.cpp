@@ -100,6 +100,41 @@ int stringToFlags(const std::string &flagStr) {
   return it->second;
 }
 
+bool Stats::checkModeproperty(const int iFlag) { return ((mode & S_IFMT) == iFlag); }
+
+bool Stats::isDirectory() { return checkModeproperty(S_IFDIR); }
+bool Stats::isFile() { return checkModeproperty(S_IFREG); }
+bool Stats::isBlockDevice() { return checkModeproperty(S_IFBLK); }
+bool Stats::isCharacterDevice() { return checkModeproperty(S_IFCHR); }
+bool Stats::isSymbolicLink() { return checkModeproperty(S_IFLNK); }
+bool Stats::isFIFO() { return checkModeproperty(S_IFIFO); }
+bool Stats::isSocket() { return checkModeproperty(S_IFSOCK); }
+
+Stats &Stats::operator=(const uv_stat_t stats) { return operator=(&stats); }
+
+Stats &Stats::operator=(const uv_stat_t *stats) {
+#define XX(name) name = stats->st_##name
+  XX(dev);
+  XX(mode);
+  XX(nlink);
+  XX(uid);
+  XX(gid);
+  XX(rdev);
+  XX(ino);
+  XX(size);
+  XX(blksize);
+  XX(blocks);
+  XX(flags);
+  XX(gen);
+
+  XX(atim);
+  XX(mtim);
+  XX(ctim);
+  XX(birthtim);
+#undef XX
+  return *this;
+}
+
 Future<file_handle> open(const std::string &path, const int flags, const int mode) {
   std::shared_ptr<Loop> loopInst = Loop::GetInstanceOrCreateDefault();
   auto reqInstance = RequestPromise<native::fs::file_handle, uv_fs_t>::Create(loopInst);
@@ -290,14 +325,23 @@ internal::rte_context>(req);
   }                                                                                                                    \
   return reqInstance.release()->_promise.getFuture();
 
-#define UV_FS_METHOD_SYNCCALL_VOID(method, expectedFsType, ...)                                                        \
+#define UV_FS_DECL()                                                                                                   \
   std::shared_ptr<Loop> loopInst = Loop::GetInstanceOrCreateDefault();                                                 \
   uv_fs_t req;                                                                                                         \
-  Error err;                                                                                                           \
+  Error err;
+
+#define UV_FS_METHOD_SYNCCALL(method, expectedFsType, ...)                                                             \
   if ((err = uv_fs_##method(loopInst->get(), &req, __VA_ARGS__, nullptr))) {                                           \
     uv_fs_req_cleanup(&req);                                                                                           \
     throw err;                                                                                                         \
-  }                                                                                                                    \
+  }
+
+#define UV_FS_METHOD_SYNCCALL_DECL(method, expectedFsType, ...)                                                        \
+  UV_FS_DECL()                                                                                                         \
+  UV_FS_METHOD_SYNCCALL(method, expectedFsType, __VA_ARGS__)
+
+#define UV_FS_METHOD_SYNCCALL_VOID(method, expectedFsType, ...)                                                        \
+  UV_FS_METHOD_SYNCCALL_DECL(method, expectedFsType, __VA_ARGS__)                                                      \
   uv_fs_req_cleanup(&req);
 
 Future<void> access(const std::string &path, int mode) {
@@ -324,13 +368,27 @@ void mkdirSync(const std::string &path, int mode) {
   UV_FS_METHOD_SYNCCALL_VOID(mkdir, UV_FS_MKDIR, path.c_str(), mode);
 }
 
-Future<void> rmdir(const std::string &path, std::function<void(Error e)> callback) {
-  UV_FS_METHOD_CALL_PROMISE_VOID(rmdir, UV_FS_RMDIR, path.c_str());
+Future<std::string> mkdtemp(const std::string &prefix) {
+  return async([prefix]() -> std::string {
+    try {
+      return mkdtempSync(prefix);
+    } catch (Error &err) {
+      FutureError ferr(err.str());
+      throw ferr;
+    }
+  });
 }
 
-void rmdirSync(const std::string &path, std::function<void(Error e)> callback) {
-  UV_FS_METHOD_SYNCCALL_VOID(rmdir, UV_FS_RMDIR, path.c_str());
+std::string mkdtempSync(const std::string &prefix) {
+  UV_FS_METHOD_SYNCCALL_DECL(mkdtemp, UV_FS_MKDTEMP, prefix.c_str());
+  std::string res(static_cast<const char *>(req.path));
+  uv_fs_req_cleanup(&req);
+  return res;
 }
+
+Future<void> rmdir(const std::string &path) { UV_FS_METHOD_CALL_PROMISE_VOID(rmdir, UV_FS_RMDIR, path.c_str()); }
+
+void rmdirSync(const std::string &path) { UV_FS_METHOD_SYNCCALL_VOID(rmdir, UV_FS_RMDIR, path.c_str()); }
 
 Future<void> rename(const std::string &path, const std::string &new_path) {
   UV_FS_METHOD_CALL_PROMISE_VOID(rename, UV_FS_RENAME, path.c_str(), new_path.c_str());
@@ -360,7 +418,163 @@ void chownSync(const std::string &path, int uid, int gid) {
   UV_FS_METHOD_SYNCCALL_VOID(chown, UV_FS_CHOWN, path.c_str(), uid, gid);
 }
 
+Future<void> fchown(const file_handle fd, int uid, int gid) {
+  UV_FS_METHOD_CALL_PROMISE_VOID(fchown, UV_FS_CHOWN, fd, uid, gid);
+}
+
+void fchownSync(const file_handle fd, int uid, int gid) {
+  UV_FS_METHOD_SYNCCALL_VOID(fchown, UV_FS_CHOWN, fd, uid, gid);
+}
+
+Future<void> fdatasync(const file_handle fd) { UV_FS_METHOD_CALL_PROMISE_VOID(fdatasync, UV_FS_FDATASYNC, fd); }
+
+void fdatasyncSync(const file_handle fd) { UV_FS_METHOD_SYNCCALL_VOID(fdatasync, UV_FS_FDATASYNC, fd); }
+
+Future<void> fsync(const file_handle fd) { UV_FS_METHOD_CALL_PROMISE_VOID(fsync, UV_FS_FSYNC, fd); }
+
+void fsyncSync(const file_handle fd) { UV_FS_METHOD_SYNCCALL_VOID(fsync, UV_FS_FSYNC, fd); }
+
+Future<void> ftruncate(const file_handle fd, const size_t len) {
+  UV_FS_METHOD_CALL_PROMISE_VOID(ftruncate, UV_FS_CHOWN, fd, len);
+}
+
+void ftruncateSync(const file_handle fd, const size_t len) {
+  UV_FS_METHOD_SYNCCALL_VOID(ftruncate, UV_FS_CHOWN, fd, len);
+}
+
+Future<void> futime(const file_handle fd, const double atime, const double mtime) {
+  UV_FS_METHOD_CALL_PROMISE_VOID(futime, UV_FS_FUTIME, fd, atime, mtime);
+}
+
+void futimeSync(const file_handle fd, const double atime, const double mtime) {
+  UV_FS_METHOD_SYNCCALL_VOID(futime, UV_FS_FUTIME, fd, atime, mtime);
+}
+
+Future<void> utime(const std::string &path, const double atime, const double mtime) {
+  UV_FS_METHOD_CALL_PROMISE_VOID(utime, UV_FS_UTIME, path.c_str(), atime, mtime);
+}
+
+void utimeSync(const std::string &path, const double atime, const double mtime) {
+  UV_FS_METHOD_SYNCCALL_VOID(utime, UV_FS_UTIME, path.c_str(), atime, mtime);
+}
+
+Future<void> link(const std::string &srcpath, const std::string &dstpath) {
+  UV_FS_METHOD_CALL_PROMISE_VOID(link, UV_FS_LINK, srcpath.c_str(), dstpath.c_str());
+}
+
+void linkSync(const std::string &srcpath, const std::string &dstpath) {
+  UV_FS_METHOD_SYNCCALL_VOID(link, UV_FS_LINK, srcpath.c_str(), dstpath.c_str());
+}
+
+Future<std::shared_ptr<std::string>> readFile(const std::string &path, const int flags) {
+  return async([path, flags]() -> std::shared_ptr<std::string> {
+    try {
+      return readFileSync(path, flags);
+    } catch (Error &err) {
+      FutureError ferr(err.str());
+      throw ferr;
+    }
+  });
+}
+
+std::shared_ptr<std::string> readFileSync(const std::string &path, const int flags) {
+  file_handle fd = openSync(path);
+  std::shared_ptr<std::string> data = readFileSync(fd, flags);
+  closeSync(fd);
+  return data;
+}
+
+Future<std::shared_ptr<std::string>> readFile(const file_handle fd, const int flags) {
+  return async([fd, flags]() -> std::shared_ptr<std::string> {
+    try {
+      return readFileSync(fd, flags);
+    } catch (Error &err) {
+      FutureError ferr(err.str());
+      throw ferr;
+    }
+  });
+}
+
+std::shared_ptr<std::string> readFileSync(const file_handle fd, const int flags) {
+  std::shared_ptr<Loop> loopInst = Loop::GetInstanceOrCreateDefault();
+
+  std::shared_ptr<Stats> stats = fstatSync(fd);
+
+  size_t len = 0;
+
+  if (stats->isFile()) {
+    len = stats->size;
+  }
+
+  std::shared_ptr<std::string> bufInst(new std::string());
+  bufInst->resize(len);
+  uv_fs_t req;
+  size_t pos = 0;
+  if (len != 0) {
+    do {
+      const uv_buf_t iov = uv_buf_init(const_cast<char *>(bufInst->c_str() + pos), len - pos);
+      const int bytesread = uv_fs_read(loopInst->get(), &req, fd, &iov, 1, pos, nullptr);
+      if (bytesread < 0) {
+        uv_fs_req_cleanup(&req);
+        Error err(bytesread);
+        throw err;
+      }
+      pos += bytesread;
+    } while (pos < len);
+  } else {
+    // don't trust to kernel stats, try to read some bytes
+    const size_t kBlockSize = 32 << 10;
+    for (;;) {
+      len += kBlockSize;
+      bufInst->resize(len);
+      const uv_buf_t iov = uv_buf_init(const_cast<char *>(bufInst->c_str() + pos), len - pos);
+      const int bytesread = uv_fs_read(loopInst->get(), &req, fd, &iov, 1, pos, nullptr);
+
+      if (bytesread < 0) {
+        uv_fs_req_cleanup(&req);
+        Error err(bytesread);
+        throw err;
+      }
+
+      if (static_cast<size_t>(bytesread) < kBlockSize) {
+        len -= kBlockSize - static_cast<size_t>(bytesread);
+        bufInst->resize(len);
+
+        if (bytesread == 0) {
+          break;
+        }
+      }
+      pos += bytesread;
+    }
+  }
+
+  uv_fs_req_cleanup(&req);
+
+  return bufInst;
+}
+
+Future<std::string> readlink(const std::string &prefix) {
+  return async([prefix]() -> std::string {
+    try {
+      return readlinkSync(prefix);
+    } catch (Error &err) {
+      FutureError ferr(err.str());
+      throw ferr;
+    }
+  });
+}
+
+std::string readlinkSync(const std::string &prefix) {
+  UV_FS_METHOD_SYNCCALL_DECL(readlink, UV_FS_MKDTEMP, prefix.c_str());
+  std::string res(static_cast<const char *>(req.ptr));
+  uv_fs_req_cleanup(&req);
+  return res;
+}
+
 #undef UV_FS_METHOD_CALL_PROMISE_VOID
+#undef UV_FS_DECL
+#undef UV_FS_METHOD_SYNCCALL
+#undef UV_FS_METHOD_SYNCCALL_DECL
 #undef UV_FS_METHOD_SYNCCALL_VOID
 
 Future<std::shared_ptr<std::vector<DirEnt>>> readdir(const std::string &path, int flags) {
@@ -413,36 +627,52 @@ std::shared_ptr<std::vector<DirEnt>> readdirSync(const std::string &path, int fl
   return res;
 }
 
-Future<std::shared_ptr<Stat>> stat(const std::string &path) {
-  return async([path]() -> std::shared_ptr<Stat> { return statSync(path); });
+Future<std::shared_ptr<Stats>> stat(const std::string &path) {
+  return async([path]() -> std::shared_ptr<Stats> { return statSync(path); });
 }
 
-Future<std::shared_ptr<Stat>> fstat(const file_handle fd) {
-  return async([fd]() -> std::shared_ptr<Stat> { return fstatSync(fd); });
+Future<std::shared_ptr<Stats>> fstat(const file_handle fd) {
+  return async([fd]() -> std::shared_ptr<Stats> { return fstatSync(fd); });
 }
 
-Future<std::shared_ptr<Stat>> lstat(const std::string &path) {
-  return async([path]() -> std::shared_ptr<Stat> { return lstatSync(path); });
+Future<std::shared_ptr<Stats>> lstat(const std::string &path) {
+  return async([path]() -> std::shared_ptr<Stats> { return lstatSync(path); });
 }
 
 #define CALL_UV_STAT(method, ...)                                                                                      \
   std::shared_ptr<Loop> loopInst = Loop::GetInstanceOrCreateDefault();                                                 \
-  std::shared_ptr<Stat> statInst(new Stat);                                                                            \
+  std::shared_ptr<Stats> statInst(new Stats);                                                                          \
   uv_fs_t req;                                                                                                         \
   Error err;                                                                                                           \
   if ((err = uv_fs_##method(loopInst->get(), &req, __VA_ARGS__, nullptr))) {                                           \
     uv_fs_req_cleanup(&req);                                                                                           \
     throw err;                                                                                                         \
   }                                                                                                                    \
-  *statInst = *static_cast<const uv_stat_t *>(req.ptr);                                                                \
+  *statInst = static_cast<const uv_stat_t *>(req.ptr);                                                                 \
   uv_fs_req_cleanup(&req);                                                                                             \
   return statInst;
 
-std::shared_ptr<Stat> statSync(const std::string &path) { CALL_UV_STAT(stat, path.c_str()); }
-std::shared_ptr<Stat> fstatSync(const int fd) { CALL_UV_STAT(fstat, fd); }
-std::shared_ptr<Stat> lstatSync(const std::string &path) { CALL_UV_STAT(lstat, path.c_str()); }
+std::shared_ptr<Stats> statSync(const std::string &path) { CALL_UV_STAT(stat, path.c_str()); }
+std::shared_ptr<Stats> fstatSync(const int fd) { CALL_UV_STAT(fstat, fd); }
+std::shared_ptr<Stats> lstatSync(const std::string &path) { CALL_UV_STAT(lstat, path.c_str()); }
 
 #undef CALL_UV_STAT
+
+Future<bool> exists(const std::string &path) {
+  return stat(path).then([](std::shared_ptr<Stats>) -> bool { return true; }).error([](FutureError err) -> bool {
+    return false;
+  });
+}
+
+bool existsSync(const std::string &path) {
+  try {
+    statSync(path);
+  } catch (...) {
+    return false;
+  }
+
+  return true;
+}
 
 /*
 bool file::read(const std::string& path, std::function<void(const std::string&

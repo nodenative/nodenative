@@ -13,7 +13,39 @@ namespace fs {
 
 typedef uv_file file_handle;
 typedef uv_dirent_t DirEnt;
-typedef uv_stat_t Stat;
+
+struct Stats {
+  bool isDirectory();
+  bool isFile();
+  bool isBlockDevice();
+  bool isCharacterDevice();
+  bool isSymbolicLink();
+  bool isFIFO();
+  bool isSocket();
+
+  Stats &operator=(const uv_stat_t stats);
+  Stats &operator=(const uv_stat_t *stats);
+
+  uint64_t dev;
+  uint64_t mode;
+  uint64_t nlink;
+  uint64_t uid;
+  uint64_t gid;
+  uint64_t rdev;
+  uint64_t ino;
+  uint64_t size;
+  uint64_t blksize;
+  uint64_t blocks;
+  uint64_t flags;
+  uint64_t gen;
+  uv_timespec_t atim;
+  uv_timespec_t mtim;
+  uv_timespec_t ctim;
+  uv_timespec_t birthtim;
+
+private:
+  bool checkModeproperty(const int iFlag);
+};
 
 extern const int read_only;
 extern const int write_only;
@@ -63,6 +95,9 @@ void unlinkSync(const std::string &path);
 Future<void> mkdir(const std::string &path, const int mode);
 void mkdirSync(const std::string &path, const int mode);
 
+Future<std::string> mkdtemp(const std::string &prefix);
+std::string mkdtempSync(const std::string &prefix);
+
 Future<void> rmdir(const std::string &path);
 void rmdirSync(const std::string &path);
 
@@ -79,6 +114,76 @@ Future<void> chown(const std::string &path, const int uid, const int gid);
 void chownSync(const std::string &path, const int uid, const int gid);
 
 /**
+ * Asynchronous <a href="http://man7.org/linux/man-pages/man2/fchown.2.html">fchown(2)</a>. Return a Future void object
+ * @param fd  file description
+ * @param uid user ID
+ * @param gid Group ID
+ * @return Future<void>
+ */
+Future<void> fchown(const file_handle fd, const int uid, const int gid);
+
+/**
+ * Synchronous fchown(2).
+ * @param fd  file description
+ * @param uid user ID
+ * @param gid Group ID
+ */
+void fchownSync(const file_handle fd, const int uid, const int gid);
+
+/**
+ * Asynchronous <a href="http://man7.org/linux/man-pages/man2/fdatasync.2.html">fdatasync(2)</a>. Return a Future void
+ * object
+ * @param fd  file description
+ * @return Future<void>
+ */
+Future<void> fdatasync(const file_handle fd);
+
+/**
+ * Synchronous fdatasync(2).
+ * @param fd  file description
+ */
+void fdatasyncSync(const file_handle fd);
+
+/**
+ * Asynchronous <a href="http://man7.org/linux/man-pages/man2/fsync.2.html">fsync(2)</a>. Return a Future void
+ * object
+ * @param fd  file description
+ * @return Future<void>
+ */
+Future<void> fsync(const file_handle fd);
+
+/**
+ * Synchronous fsync(2).
+ * @param fd  file description
+ */
+void fsyncSync(const file_handle fd);
+
+/**
+ * Asynchronous <a href="http://man7.org/linux/man-pages/man2/ftruncate.2.html">ftruncate(2)</a>. Return a Future void
+ * object
+ * @param fd  file description
+ * @param len length
+ * @return Future<void>
+ */
+Future<void> ftruncate(const file_handle fd, const size_t len);
+
+/**
+ * Synchronous ftruncate(2).
+ * @param fd  file description
+ * @param len length
+ */
+void ftruncateSync(const file_handle fd, const size_t len);
+
+Future<void> futime(const file_handle fd, const double atime, const double mtime);
+void futimeSync(const file_handle fd, const double atime, const double mtime);
+
+Future<void> utime(const std::string &path, const double atime, const double mtime);
+void utimeSync(const std::string &path, const double atime, const double mtime);
+
+Future<void> link(const std::string &srcpath, const std::string &dstpath);
+void linkSync(const std::string &srcpath, const std::string &dstpath);
+
+/**
  * Asynchronous `readdir(3)`. Reads the contents of a directory.
  */
 Future<std::shared_ptr<std::vector<DirEnt>>> readdir(const std::string &path, const int flags = 0);
@@ -87,13 +192,30 @@ Future<std::shared_ptr<std::vector<DirEnt>>> readdir(const std::string &path, co
  */
 std::shared_ptr<std::vector<DirEnt>> readdirSync(const std::string &path, const int flags = 0);
 
-Future<std::shared_ptr<Stat>> stat(const std::string &path);
-Future<std::shared_ptr<Stat>> fstat(const file_handle fd);
-Future<std::shared_ptr<Stat>> lstat(const std::string &path);
+/**
+ * Asynchronous `readdir(3)`. Reads the contents of a directory.
+ */
+Future<std::shared_ptr<std::string>> readFile(const std::string &path, const int flags = 0);
+Future<std::shared_ptr<std::string>> readFile(const file_handle fd, const int flags = 0);
+/**
+ * Synchronous `readdir(3)`. Returns an vector instance of filenames and types excluding '.' and '..'.
+ */
+std::shared_ptr<std::string> readFileSync(const std::string &path, const int flags = 0);
+std::shared_ptr<std::string> readFileSync(const file_handle fd, const int flags = 0);
 
-std::shared_ptr<Stat> statSync(const std::string &path);
-std::shared_ptr<Stat> fstatSync(const file_handle fd);
-std::shared_ptr<Stat> lstatSync(const std::string &path);
+Future<std::string> readlink(const std::string &path);
+std::string readlinkSync(const std::string &path);
+
+Future<std::shared_ptr<Stats>> stat(const std::string &path);
+Future<std::shared_ptr<Stats>> fstat(const file_handle fd);
+Future<std::shared_ptr<Stats>> lstat(const std::string &path);
+
+std::shared_ptr<Stats> statSync(const std::string &path);
+std::shared_ptr<Stats> fstatSync(const file_handle fd);
+std::shared_ptr<Stats> lstatSync(const std::string &path);
+
+Future<bool> exists(const std::string &path);
+bool existsSync(const std::string &path);
 
 } /* namespace fs */
 

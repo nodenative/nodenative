@@ -1,6 +1,6 @@
-# nodenative 
+# nodenative
 
-<b>nodenative</b> is a [C++14](http://en.wikipedia.org/wiki/C%2B%2B14) (aka C++1y) port for [node.js](https://github.com/joyent/node). 
+<b>nodenative</b> is a [C++14](http://en.wikipedia.org/wiki/C%2B%2B14) (aka C++1y) port for [node.js](https://github.com/joyent/node).
 <table>
   <thead>
     <tr>
@@ -70,10 +70,13 @@ build.py will try to download build dependencies (gyp) if missing.
 If you prefer to download manually you can do:
 ```bash
 $ git clone https://chromium.googlesource.com/external/gyp.git build/gyp
+```
 OR
+```bash
 $ svn co http://gyp.googlecode.com/svn/trunk build/gyp
 ```
-by default will generate for make file. if you want to generate for a specific build tool use `-f <buildtool>`. e.x:
+By default will try to generate ninja file if possible, alternatively make file. After it will build in `Debug` and `Release` mode.
+If you want to generate for a specific build tool use `-f <buildtool>`. e.x:
 ```bash
 ./build.py -f ninja
 ninja -C out/Debug/
@@ -98,10 +101,5 @@ out/Debug/test
 ```
 
 Tested on
- - Ubuntu 11.10 and GCC 4.6.1. and OSX 10.10.2
- - ArchLinux with GCC 4.9.1 and clang 3.6.0
-
-## Other Resources
-
-- [Mailing list](http://groups.google.com/group/nodenative)
-- [Public to-to lists](https://trello.com/b/1qk3tRGS)
+ - Linux with GCC 5.3.0.
+ - OSX 10.10.2 with xcode7

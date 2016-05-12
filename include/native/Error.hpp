@@ -57,9 +57,10 @@ class Error {
 public:
   Error() : _uv_err(0) {}
   Error(int iErrCode) : _uv_err(iErrCode) {}
+  Error(const std::string &str) : _uv_err(-1), _str(str) {}
   ~Error() = default;
-  bool isError() { return (_uv_err != 0); }
-  bool isOK() { return (_uv_err == 0); }
+  bool isError() { return (_uv_err < 0); }
+  bool isOK() { return (_uv_err > 0); }
   operator bool() { return isError(); }
   virtual Error &operator=(int iErrCode) {
     setError(iErrCode);
@@ -69,11 +70,24 @@ public:
   void setError(int iErrCode) { _uv_err = iErrCode; }
   int code() const { return _uv_err; }
 
-  virtual const char *name() const { return _uv_err < 0 ? uv_err_name(_uv_err) : 0; }
-  virtual const char *str() const { return _uv_err < 0 ? uv_strerror(_uv_err) : 0; }
+  virtual const char *name() const {
+    if (_str.empty() && _uv_err < 0) {
+      return uv_err_name(_uv_err);
+    }
+    return 0;
+  }
+  virtual const char *str() const {
+    if (!_str.empty()) {
+      return _str.c_str();
+    } else if (_uv_err < 0) {
+      return uv_strerror(_uv_err);
+    }
+    return 0;
+  }
 
 private:
   int _uv_err;
+  std::string _str;
 };
 }
 
