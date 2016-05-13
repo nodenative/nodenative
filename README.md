@@ -23,10 +23,10 @@
 Please note that nodenative project is <em>under heavy development</em>.
 
 ## Feature highlights
- * Promises/Future functionality based on system event pool (`native::Promise<R>`, `native::Future<R>`)
- * Asynchronous callbacks based on system event pool (`native<Future<R>> native::async(F, Args...)`)
+ * Basic functionality of Promise/A+ based on event pool (`native::Promise<R>`, `native::Future<R>`, `native<Future<R>> native::async(F, Args...)`)
  * Thread pool based on uv_work* (`native::worker(F, Args...)`)
  * HTTP protocol
+ * File System I/O
 
 ## Sample code
 
@@ -40,8 +40,8 @@ int main() {
     Server server;
     if(!server.listen("0.0.0.0", 8080, [](http::shared_ptr<Transaction> iTransaction) {
         ServerResponse& res = iTransaction->getResponse();
-        res.set_status(200);
-        res.set_header("Content-Type", "text/plain");
+        res.setStatus(200);
+        res.setHeader("Content-Type", "text/plain");
         res.end("C++ FTW\n");
     })) return 1; // Failed to run server.
 

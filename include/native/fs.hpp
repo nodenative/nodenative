@@ -8,6 +8,12 @@
 #include <functional>
 
 namespace native {
+/**
+ * @defgroup fs File System
+ * File System methods
+ * @{
+ */
+
 // TODO: implement functions that accept Loop pointer as extra argument.
 namespace fs {
 
@@ -237,6 +243,10 @@ public:
   static bool
   write(const std::string &path, const std::string &str, std::function<void(int nwritten, Error e)> callback);
 };
+
+/**
+ * @}  // end of fs
+ */
 
 } /* namespace native */
 
