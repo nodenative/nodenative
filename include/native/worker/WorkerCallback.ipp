@@ -99,12 +99,12 @@ void WorkerCallback<Future<R>, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
   std::shared_ptr<WorkerCallbackBase> instance = this->getInstance();
   try {
     this->_f(std::get<Is>(this->_args)...)
-        .template then([instance](R &&r) {
+        .template then<std::function<void(R)>>([instance](R &&r) {
           WorkerCallback<Future<R>, Args...> *currPtr =
               static_cast<WorkerCallback<Future<R>, Args...> *>(instance.get());
           currPtr->getFuture()->resolve(std::forward<R>(r));
         })
-        .template error([instance](const FutureError &iError) {
+        .template error<std::function<void(const FutureError &)>>([instance](const FutureError &iError) {
           WorkerCallback<Future<R>, Args...> *currPtr =
               static_cast<WorkerCallback<Future<R>, Args...> *>(instance.get());
           currPtr->getFuture()->reject(iError);
@@ -120,12 +120,12 @@ void WorkerCallback<Future<void>, Args...>::callFn(helper::TemplateSeqInd<Is...>
   std::shared_ptr<WorkerCallbackBase> instance = this->getInstance();
   try {
     this->_f(std::get<Is>(this->_args)...)
-        .template then([instance]() {
+        .template then<std::function<void()>>([instance]() {
           WorkerCallback<Future<void>, Args...> *currPtr =
               static_cast<WorkerCallback<Future<void>, Args...> *>(instance.get());
           currPtr->getFuture()->resolve();
         })
-        .template error([instance](const FutureError &iError) {
+        .template error<std::function<void(const FutureError &)>>([instance](const FutureError &iError) {
           WorkerCallback<Future<void>, Args...> *currPtr =
               static_cast<WorkerCallback<Future<void>, Args...> *>(instance.get());
           currPtr->getFuture()->reject(iError);

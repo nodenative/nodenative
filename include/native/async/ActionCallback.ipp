@@ -211,12 +211,12 @@ void ActionCallback<Future<R>, Args...>::callFn(helper::TemplateSeqInd<Is...>) {
   std::shared_ptr<ActionCallbackBase<void>> iInstance = this->getInstance();
   try {
     this->_f(std::get<Is>(this->_args)...)
-        .then([iInstance](R &&r) {
+        .template then<std::function<void(R)>>([iInstance](R &&r) {
           ActionCallback<Future<R>, Args...> *currPtr =
               static_cast<ActionCallback<Future<R>, Args...> *>(iInstance.get());
           currPtr->getFuture()->resolve(std::forward<R>(r));
         })
-        .error([iInstance](const FutureError &iError) {
+        .template error<std::function<void(const FutureError &)>>([iInstance](const FutureError &iError) {
           ActionCallback<Future<R>, Args...> *currPtr =
               static_cast<ActionCallback<Future<R>, Args...> *>(iInstance.get());
           currPtr->getFuture()->reject(iError);
@@ -232,12 +232,12 @@ void ActionCallback<Future<void>, Args...>::callFn(helper::TemplateSeqInd<Is...>
   std::shared_ptr<ActionCallbackBase<void>> iInstance = this->getInstance();
   try {
     this->_f(std::get<Is>(this->_args)...)
-        .then([iInstance]() {
+        .template then<std::function<void()>>([iInstance]() {
           ActionCallback<Future<void>, Args...> *currPtr =
               static_cast<ActionCallback<Future<void>, Args...> *>(iInstance.get());
           currPtr->getFuture()->resolve();
         })
-        .error([iInstance](const FutureError &iError) {
+        .template error<std::function<void(const FutureError &)>>([iInstance](const FutureError &iError) {
           ActionCallback<Future<void>, Args...> *currPtr =
               static_cast<ActionCallback<Future<void>, Args...> *>(iInstance.get());
           currPtr->getFuture()->reject(iError);
@@ -274,12 +274,12 @@ void ActionCallbackP1<Future<R>, P, Args...>::callFn(P p, helper::TemplateSeqInd
   std::shared_ptr<ActionCallbackBase<P>> iInstance = this->getInstance();
   try {
     this->_f(std::forward<P>(p), std::get<Is>(this->_args)...)
-        .template then([iInstance](R r) {
+        .template then<std::function<void(R)>>([iInstance](R &&r) {
           ActionCallbackP1<Future<R>, P, Args...> *currPtr =
               static_cast<ActionCallbackP1<Future<R>, P, Args...> *>(iInstance.get());
           currPtr->getFuture()->resolve(std::forward<R>(r));
         })
-        .template error([iInstance](const FutureError &iError) {
+        .template error<std::function<void(const FutureError &)>>([iInstance](const FutureError &iError) {
           ActionCallbackP1<Future<R>, P, Args...> *currPtr =
               static_cast<ActionCallbackP1<Future<R>, P, Args...> *>(iInstance.get());
           currPtr->getFuture()->reject(iError);
@@ -295,12 +295,12 @@ void ActionCallbackP1<Future<void>, P, Args...>::callFn(P p, helper::TemplateSeq
   std::shared_ptr<ActionCallbackBase<P>> iInstance = this->getInstance();
   try {
     this->_f(std::forward<P>(p), std::get<Is>(this->_args)...)
-        .template then([iInstance]() {
+        .template then<std::function<void()>>([iInstance]() {
           ActionCallbackP1<Future<void>, P, Args...> *currPtr =
               static_cast<ActionCallbackP1<Future<void>, P, Args...> *>(iInstance.get());
           currPtr->getFuture()->resolve();
         })
-        .template error([iInstance](const FutureError &iError) {
+        .template error<std::function<void(const FutureError &)>>([iInstance](const FutureError &iError) {
           ActionCallbackP1<Future<void>, P, Args...> *currPtr =
               static_cast<ActionCallbackP1<Future<void>, P, Args...> *>(iInstance.get());
           currPtr->getFuture()->reject(iError);
