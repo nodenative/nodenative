@@ -3,6 +3,7 @@
 
 #include "http/HttpUtils.hpp"
 #include "http/Server.hpp"
+#include "http/ServerPlugin.hpp"
 #include "http/ServerRequest.hpp"
 #include "http/ServerResponse.hpp"
 #include "http/Transaction.hpp"

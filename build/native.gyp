@@ -35,6 +35,7 @@
                 '../src/http/OutgoingMessage.cpp',
                 '../src/http/Transaction.cpp',
                 '../src/http/Server.cpp',
+                '../src/http/ServerPlugin.cpp',
                 '../src/http/ServerRequest.cpp',
                 '../src/http/ServerResponse.cpp',
                 '../src/http/UrlObject.cpp',
@@ -202,4 +203,3 @@
         }
     ]
 }
-
