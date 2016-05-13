@@ -84,7 +84,7 @@ ninja -C out/Debug/
 alternatively you can set custom paths to http-parser and libuv if you dont want to use the submodules.
 If it is build with make in debug mode, then executables are saved to out/Debug dir.
 
-### Build code
+### Build documentation
 
 To build documentation just run the `doxygen doxyfile` command from the project root. The result document will be generated into `./out/doc/` path.
 
