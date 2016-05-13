@@ -6,8 +6,8 @@
 namespace native {
 namespace http {
 
-std::shared_ptr<Transaction> Transaction::Create(std::shared_ptr<Server> iServer) {
-  std::shared_ptr<Transaction> instance(new Transaction(iServer));
+TransactionInstance Transaction::Create(std::shared_ptr<Server> iServer) {
+  TransactionInstance instance(new Transaction(iServer));
   instance->_instance = instance;
   return instance;
 }
