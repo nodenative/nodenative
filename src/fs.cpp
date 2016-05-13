@@ -1,5 +1,7 @@
 #include "native/fs.hpp"
 #include "native/async/RequestPromise.hpp"
+#include "native/worker.hpp"
+#include "native/worker.ipp"
 
 using namespace native;
 
@@ -135,29 +137,47 @@ Stats &Stats::operator=(const uv_stat_t *stats) {
   return *this;
 }
 
-Future<file_handle> open(const std::string &path, const int flags, const int mode) {
-  std::shared_ptr<Loop> loopInst = Loop::GetInstanceOrCreateDefault();
-  auto reqInstance = RequestPromise<native::fs::file_handle, uv_fs_t>::Create(loopInst);
+#define CALL_SYNC_METHOD_IN_WORKER_VOID(functionName, ...)                                                             \
+  return worker([__VA_ARGS__]() {                                                                                      \
+    try {                                                                                                              \
+      functionName##Sync(__VA_ARGS__);                                                                                 \
+    } catch (Error err) {                                                                                              \
+      FutureError ferr(err.str());                                                                                     \
+      throw ferr;                                                                                                      \
+    }                                                                                                                  \
+  });
+
+#define CALL_SYNC_METHOD_IN_WORKER(functionName, returnTypeName, ...)                                                  \
+  return worker([__VA_ARGS__]() -> returnTypeName {                                                                    \
+    try {                                                                                                              \
+      return functionName##Sync(__VA_ARGS__);                                                                          \
+    } catch (Error err) {                                                                                              \
+      FutureError ferr(err.str());                                                                                     \
+      throw ferr;                                                                                                      \
+    }                                                                                                                  \
+  });
+
+#define UV_FS_DECL()                                                                                                   \
+  std::shared_ptr<Loop> loopInst = Loop::GetInstanceOrCreateDefault();                                                 \
+  uv_fs_t req;                                                                                                         \
   Error err;
-  if ((err = uv_fs_open(loopInst->get(), &reqInstance->_req, path.c_str(), flags, mode, [](uv_fs_t *req) {
-         NNATIVE_ASSERT(req->fs_type == UV_FS_OPEN);
-         std::unique_ptr<RequestPromise<native::fs::file_handle, uv_fs_t>> reqInstance(
-             static_cast<RequestPromise<native::fs::file_handle, uv_fs_t> *>(req->data));
 
-         if (req->result < 0) {
-           Error err(req->result);
-           reqInstance->_promise.reject(err.str());
-         } else {
-           reqInstance->_promise.resolve(req->result);
-         }
-
-         uv_fs_req_cleanup(req);
-       }))) {
-    reqInstance->_promise.reject(err.str());
-    uv_fs_req_cleanup(&reqInstance->_req);
+#define UV_FS_METHOD_SYNCCALL(method, ...)                                                                             \
+  if ((err = uv_fs_##method(loopInst->get(), &req, __VA_ARGS__, nullptr))) {                                           \
+    uv_fs_req_cleanup(&req);                                                                                           \
+    throw err;                                                                                                         \
   }
 
-  return reqInstance.release()->_promise.getFuture();
+#define UV_FS_METHOD_SYNCCALL_DECL(method, ...)                                                                        \
+  UV_FS_DECL()                                                                                                         \
+  UV_FS_METHOD_SYNCCALL(method, __VA_ARGS__)
+
+#define UV_FS_METHOD_SYNCCALL_VOID(method, ...)                                                                        \
+  UV_FS_METHOD_SYNCCALL_DECL(method, __VA_ARGS__)                                                                      \
+  uv_fs_req_cleanup(&req);
+
+Future<file_handle> open(const std::string &path, const int flags, const int mode) {
+  CALL_SYNC_METHOD_IN_WORKER(open, file_handle, path, flags, mode);
 }
 
 Future<file_handle> open(const std::string &path, const std::string &flags, const int mode) {
@@ -184,33 +204,7 @@ file_handle openSync(const std::string &path, const std::string &flags, const in
 }
 
 Future<std::shared_ptr<std::string>> read(const file_handle fd, const size_t len, const off_t offset) {
-  std::shared_ptr<Loop> loopInst = Loop::GetInstanceOrCreateDefault();
-  std::shared_ptr<std::string> bufInst(new std::string());
-  bufInst->resize(len);
-  auto reqInstance =
-      RequestPromiseInstance<std::shared_ptr<std::string>, uv_fs_t, std::string>::Create(loopInst, bufInst);
-  const uv_buf_t iov = uv_buf_init(const_cast<char *>(bufInst->c_str()), len);
-  Error err;
-  if ((err = uv_fs_read(loopInst->get(), &reqInstance->_req, fd, &iov, 1, offset, [](uv_fs_t *req) {
-         NNATIVE_ASSERT(req->fs_type == UV_FS_READ);
-         std::unique_ptr<RequestPromiseInstance<std::shared_ptr<std::string>, uv_fs_t, std::string>> reqInstance(
-             static_cast<RequestPromiseInstance<std::shared_ptr<std::string>, uv_fs_t, std::string> *>(req->data));
-
-         if (req->result < 0) {
-           Error err(req->result);
-           reqInstance->_promise.reject(err.str());
-         } else {
-           reqInstance->_instance->resize(req->result);
-           reqInstance->_promise.resolve(reqInstance->_instance);
-         }
-
-         uv_fs_req_cleanup(req);
-       }))) {
-    reqInstance->_promise.reject(err.str());
-    uv_fs_req_cleanup(&reqInstance->_req);
-  }
-
-  return reqInstance.release()->_promise.getFuture();
+  CALL_SYNC_METHOD_IN_WORKER(read, std::shared_ptr<std::string>, fd, len, offset);
 }
 
 std::shared_ptr<std::string> readSync(const file_handle fd, const size_t len, const off_t offset) {
@@ -232,31 +226,7 @@ std::shared_ptr<std::string> readSync(const file_handle fd, const size_t len, co
 }
 
 Future<int> write(const file_handle fd, const char *buf, const size_t len, const off_t offset) {
-  std::shared_ptr<Loop> loopInst = Loop::GetInstanceOrCreateDefault();
-  // TODO: remove const_cast<> !!
-  const uv_buf_t iov = uv_buf_init(const_cast<char *>(buf), len);
-  auto reqInstance = RequestPromise<int, uv_fs_t>::Create(loopInst);
-
-  Error err;
-  if ((err = uv_fs_write(loopInst->get(), &reqInstance->_req, fd, &iov, 1, offset, [](uv_fs_t *req) {
-         NNATIVE_ASSERT(req->fs_type == UV_FS_WRITE);
-         std::unique_ptr<RequestPromise<int, uv_fs_t>> reqInstance(
-             static_cast<RequestPromise<int, uv_fs_t> *>(req->data));
-
-         if (req->result < 0) {
-           Error err(req->result);
-           reqInstance->_promise.reject(err.str());
-         } else {
-           reqInstance->_promise.resolve(req->result);
-         }
-
-         uv_fs_req_cleanup(req);
-       }))) {
-    reqInstance->_promise.reject(err.str());
-    uv_fs_req_cleanup(&reqInstance->_req);
-  }
-
-  return reqInstance.release()->_promise.getFuture();
+  CALL_SYNC_METHOD_IN_WORKER(write, int, fd, buf, len, offset);
 }
 
 Future<int> write(const file_handle fd, const std::string &buf, const off_t offset) {
@@ -303,178 +273,118 @@ internal::rte_context>(req);
     return true;
 }
 */
-#define UV_FS_METHOD_CALL_PROMISE_VOID(method, expectedFsType, ...)                                                    \
-  std::shared_ptr<Loop> loopInst = Loop::GetInstanceOrCreateDefault();                                                 \
-  auto reqInstance = RequestPromise<void, uv_fs_t>::Create(loopInst);                                                  \
-  Error err;                                                                                                           \
-  if ((err = uv_fs_##method(loopInst->get(), &reqInstance->_req, __VA_ARGS__, [](uv_fs_t *req) {                       \
-         NNATIVE_ASSERT(req->fs_type == expectedFsType);                                                               \
-         std::unique_ptr<RequestPromise<void, uv_fs_t>> reqInstance(                                                   \
-             static_cast<RequestPromise<void, uv_fs_t> *>(req->data));                                                 \
-                                                                                                                       \
-         if (req->result < 0) {                                                                                        \
-           Error err(req->result);                                                                                     \
-           reqInstance->_promise.reject(err.str());                                                                    \
-         } else {                                                                                                      \
-           reqInstance->_promise.resolve();                                                                            \
-         }                                                                                                             \
-         uv_fs_req_cleanup(req);                                                                                       \
-       }))) {                                                                                                          \
-    reqInstance->_promise.reject(err.str());                                                                           \
-    uv_fs_req_cleanup(&reqInstance->_req);                                                                             \
-  }                                                                                                                    \
-  return reqInstance.release()->_promise.getFuture();
 
-#define UV_FS_DECL()                                                                                                   \
-  std::shared_ptr<Loop> loopInst = Loop::GetInstanceOrCreateDefault();                                                 \
-  uv_fs_t req;                                                                                                         \
-  Error err;
+Future<void> access(const std::string &path, const int mode) { CALL_SYNC_METHOD_IN_WORKER_VOID(access, path, mode); }
 
-#define UV_FS_METHOD_SYNCCALL(method, expectedFsType, ...)                                                             \
-  if ((err = uv_fs_##method(loopInst->get(), &req, __VA_ARGS__, nullptr))) {                                           \
-    uv_fs_req_cleanup(&req);                                                                                           \
-    throw err;                                                                                                         \
-  }
+void accessSync(const std::string &path, const int mode) { UV_FS_METHOD_SYNCCALL_VOID(access, path.c_str(), mode); }
 
-#define UV_FS_METHOD_SYNCCALL_DECL(method, expectedFsType, ...)                                                        \
-  UV_FS_DECL()                                                                                                         \
-  UV_FS_METHOD_SYNCCALL(method, expectedFsType, __VA_ARGS__)
+Future<void> close(const file_handle fd) { CALL_SYNC_METHOD_IN_WORKER_VOID(close, fd); }
 
-#define UV_FS_METHOD_SYNCCALL_VOID(method, expectedFsType, ...)                                                        \
-  UV_FS_METHOD_SYNCCALL_DECL(method, expectedFsType, __VA_ARGS__)                                                      \
-  uv_fs_req_cleanup(&req);
+void closeSync(const file_handle fd) { UV_FS_METHOD_SYNCCALL_VOID(close, fd); }
 
-Future<void> access(const std::string &path, int mode) {
-  UV_FS_METHOD_CALL_PROMISE_VOID(access, UV_FS_MKDIR, path.c_str(), mode);
-}
+Future<void> unlink(const std::string &path) { CALL_SYNC_METHOD_IN_WORKER_VOID(unlink, path); }
 
-void accessSync(const std::string &path, int mode) {
-  UV_FS_METHOD_SYNCCALL_VOID(access, UV_FS_MKDIR, path.c_str(), mode);
-}
+void unlinkSync(const std::string &path) { UV_FS_METHOD_SYNCCALL_VOID(unlink, path.c_str()); }
 
-Future<void> close(const file_handle fd) { UV_FS_METHOD_CALL_PROMISE_VOID(close, UV_FS_CLOSE, fd); }
+Future<void> mkdir(const std::string &path, int mode) { CALL_SYNC_METHOD_IN_WORKER_VOID(mkdir, path, mode); }
 
-void closeSync(const file_handle fd) { UV_FS_METHOD_SYNCCALL_VOID(close, UV_FS_CLOSE, fd); }
+void mkdirSync(const std::string &path, int mode) { UV_FS_METHOD_SYNCCALL_VOID(mkdir, path.c_str(), mode); }
 
-Future<void> unlink(const std::string &path) { UV_FS_METHOD_CALL_PROMISE_VOID(unlink, UV_FS_UNLINK, path.c_str()); }
-
-void unlinkSync(const std::string &path) { UV_FS_METHOD_SYNCCALL_VOID(unlink, UV_FS_UNLINK, path.c_str()); }
-
-Future<void> mkdir(const std::string &path, int mode) {
-  UV_FS_METHOD_CALL_PROMISE_VOID(mkdir, UV_FS_MKDIR, path.c_str(), mode);
-}
-
-void mkdirSync(const std::string &path, int mode) {
-  UV_FS_METHOD_SYNCCALL_VOID(mkdir, UV_FS_MKDIR, path.c_str(), mode);
-}
-
-Future<std::string> mkdtemp(const std::string &prefix) {
-  return async([prefix]() -> std::string {
-    try {
-      return mkdtempSync(prefix);
-    } catch (Error &err) {
-      FutureError ferr(err.str());
-      throw ferr;
-    }
-  });
-}
+Future<std::string> mkdtemp(const std::string &prefix) { CALL_SYNC_METHOD_IN_WORKER(mkdtemp, std::string, prefix); }
 
 std::string mkdtempSync(const std::string &prefix) {
-  UV_FS_METHOD_SYNCCALL_DECL(mkdtemp, UV_FS_MKDTEMP, prefix.c_str());
+  UV_FS_METHOD_SYNCCALL_DECL(mkdtemp, prefix.c_str());
   std::string res(static_cast<const char *>(req.path));
   uv_fs_req_cleanup(&req);
   return res;
 }
 
-Future<void> rmdir(const std::string &path) { UV_FS_METHOD_CALL_PROMISE_VOID(rmdir, UV_FS_RMDIR, path.c_str()); }
+Future<void> rmdir(const std::string &path) { CALL_SYNC_METHOD_IN_WORKER_VOID(rmdir, path); }
 
-void rmdirSync(const std::string &path) { UV_FS_METHOD_SYNCCALL_VOID(rmdir, UV_FS_RMDIR, path.c_str()); }
+void rmdirSync(const std::string &path) { UV_FS_METHOD_SYNCCALL_VOID(rmdir, path.c_str()); }
 
-Future<void> rename(const std::string &path, const std::string &new_path) {
-  UV_FS_METHOD_CALL_PROMISE_VOID(rename, UV_FS_RENAME, path.c_str(), new_path.c_str());
+Future<void> rename(const std::string &iOldPath, const std::string &iNewPath) {
+  CALL_SYNC_METHOD_IN_WORKER_VOID(rename, iOldPath, iNewPath);
 }
 
-void renameSync(const std::string &path, const std::string &new_path) {
-  UV_FS_METHOD_SYNCCALL_VOID(rename, UV_FS_RENAME, path.c_str(), new_path.c_str());
+void renameSync(const std::string &iOldPath, const std::string &iNewPath) {
+  UV_FS_METHOD_SYNCCALL_VOID(rename, iOldPath.c_str(), iNewPath.c_str());
 }
 
-Future<void> chmod(const std::string &path, int mode) {
-  UV_FS_METHOD_CALL_PROMISE_VOID(chmod, UV_FS_CHMOD, path.c_str(), mode);
-}
+Future<void> chmod(const std::string &path, int mode) { CALL_SYNC_METHOD_IN_WORKER_VOID(chmod, path, mode); }
 
-void chmodSync(const std::string &path, int mode) {
-  UV_FS_METHOD_SYNCCALL_VOID(chmod, UV_FS_CHMOD, path.c_str(), mode);
-}
+void chmodSync(const std::string &path, int mode) { UV_FS_METHOD_SYNCCALL_VOID(chmod, path.c_str(), mode); }
 
-Future<void> fchmod(const file_handle fd, int mode) { UV_FS_METHOD_CALL_PROMISE_VOID(fchmod, UV_FS_CHMOD, fd, mode); }
+Future<void> fchmod(const file_handle fd, int mode) { CALL_SYNC_METHOD_IN_WORKER_VOID(fchmod, fd, mode); }
 
-void fchmodSync(const file_handle fd, int mode) { UV_FS_METHOD_SYNCCALL_VOID(fchmod, UV_FS_CHMOD, fd, mode); }
+void fchmodSync(const file_handle fd, int mode) { UV_FS_METHOD_SYNCCALL_VOID(fchmod, fd, mode); }
 
 Future<void> chown(const std::string &path, int uid, int gid) {
-  UV_FS_METHOD_CALL_PROMISE_VOID(chown, UV_FS_CHOWN, path.c_str(), uid, gid);
+  CALL_SYNC_METHOD_IN_WORKER_VOID(chown, path, uid, gid);
 }
 
-void chownSync(const std::string &path, int uid, int gid) {
-  UV_FS_METHOD_SYNCCALL_VOID(chown, UV_FS_CHOWN, path.c_str(), uid, gid);
-}
+void chownSync(const std::string &path, int uid, int gid) { UV_FS_METHOD_SYNCCALL_VOID(chown, path.c_str(), uid, gid); }
 
-Future<void> fchown(const file_handle fd, int uid, int gid) {
-  UV_FS_METHOD_CALL_PROMISE_VOID(fchown, UV_FS_CHOWN, fd, uid, gid);
-}
+Future<void> fchown(const file_handle fd, int uid, int gid) { CALL_SYNC_METHOD_IN_WORKER_VOID(fchown, fd, uid, gid); }
 
-void fchownSync(const file_handle fd, int uid, int gid) {
-  UV_FS_METHOD_SYNCCALL_VOID(fchown, UV_FS_CHOWN, fd, uid, gid);
-}
+void fchownSync(const file_handle fd, int uid, int gid) { UV_FS_METHOD_SYNCCALL_VOID(fchown, fd, uid, gid); }
 
-Future<void> fdatasync(const file_handle fd) { UV_FS_METHOD_CALL_PROMISE_VOID(fdatasync, UV_FS_FDATASYNC, fd); }
+Future<void> fdatasync(const file_handle fd) { CALL_SYNC_METHOD_IN_WORKER_VOID(fdatasync, fd); }
 
-void fdatasyncSync(const file_handle fd) { UV_FS_METHOD_SYNCCALL_VOID(fdatasync, UV_FS_FDATASYNC, fd); }
+void fdatasyncSync(const file_handle fd) { UV_FS_METHOD_SYNCCALL_VOID(fdatasync, fd); }
 
-Future<void> fsync(const file_handle fd) { UV_FS_METHOD_CALL_PROMISE_VOID(fsync, UV_FS_FSYNC, fd); }
+Future<void> fsync(const file_handle fd) { CALL_SYNC_METHOD_IN_WORKER_VOID(fsync, fd); }
 
-void fsyncSync(const file_handle fd) { UV_FS_METHOD_SYNCCALL_VOID(fsync, UV_FS_FSYNC, fd); }
+void fsyncSync(const file_handle fd) { UV_FS_METHOD_SYNCCALL_VOID(fsync, fd); }
 
-Future<void> ftruncate(const file_handle fd, const size_t len) {
-  UV_FS_METHOD_CALL_PROMISE_VOID(ftruncate, UV_FS_CHOWN, fd, len);
-}
+Future<void> ftruncate(const file_handle fd, const size_t len) { CALL_SYNC_METHOD_IN_WORKER_VOID(ftruncate, fd, len); }
 
-void ftruncateSync(const file_handle fd, const size_t len) {
-  UV_FS_METHOD_SYNCCALL_VOID(ftruncate, UV_FS_CHOWN, fd, len);
-}
+void ftruncateSync(const file_handle fd, const size_t len) { UV_FS_METHOD_SYNCCALL_VOID(ftruncate, fd, len); }
 
 Future<void> futime(const file_handle fd, const double atime, const double mtime) {
-  UV_FS_METHOD_CALL_PROMISE_VOID(futime, UV_FS_FUTIME, fd, atime, mtime);
+  CALL_SYNC_METHOD_IN_WORKER_VOID(futime, fd, atime, mtime);
 }
 
 void futimeSync(const file_handle fd, const double atime, const double mtime) {
-  UV_FS_METHOD_SYNCCALL_VOID(futime, UV_FS_FUTIME, fd, atime, mtime);
+  UV_FS_METHOD_SYNCCALL_VOID(futime, fd, atime, mtime);
 }
 
 Future<void> utime(const std::string &path, const double atime, const double mtime) {
-  UV_FS_METHOD_CALL_PROMISE_VOID(utime, UV_FS_UTIME, path.c_str(), atime, mtime);
+  CALL_SYNC_METHOD_IN_WORKER_VOID(utime, path, atime, mtime);
 }
 
 void utimeSync(const std::string &path, const double atime, const double mtime) {
-  UV_FS_METHOD_SYNCCALL_VOID(utime, UV_FS_UTIME, path.c_str(), atime, mtime);
+  UV_FS_METHOD_SYNCCALL_VOID(utime, path.c_str(), atime, mtime);
 }
 
 Future<void> link(const std::string &srcpath, const std::string &dstpath) {
-  UV_FS_METHOD_CALL_PROMISE_VOID(link, UV_FS_LINK, srcpath.c_str(), dstpath.c_str());
+  CALL_SYNC_METHOD_IN_WORKER_VOID(link, srcpath, dstpath);
 }
 
 void linkSync(const std::string &srcpath, const std::string &dstpath) {
-  UV_FS_METHOD_SYNCCALL_VOID(link, UV_FS_LINK, srcpath.c_str(), dstpath.c_str());
+  UV_FS_METHOD_SYNCCALL_VOID(link, srcpath.c_str(), dstpath.c_str());
+}
+
+Future<void> symlink(const std::string &srcpath, const std::string &dstpath, const std::string &type) {
+  CALL_SYNC_METHOD_IN_WORKER_VOID(symlink, srcpath, dstpath, type);
+}
+
+void symlinkSync(const std::string &srcpath, const std::string &dstpath, const std::string &type) {
+  int typeFlag = 0;
+  if (type == "dir") {
+    typeFlag |= UV_FS_SYMLINK_DIR;
+  } else if (type == "junction") {
+    typeFlag |= UV_FS_SYMLINK_JUNCTION;
+  } else if (type != "file") {
+    Error err("wring type " + type + ". Expected file, dir or junction");
+    throw err;
+  }
+
+  UV_FS_METHOD_SYNCCALL_VOID(symlink, srcpath.c_str(), dstpath.c_str(), typeFlag);
 }
 
 Future<std::shared_ptr<std::string>> readFile(const std::string &path, const int flags) {
-  return async([path, flags]() -> std::shared_ptr<std::string> {
-    try {
-      return readFileSync(path, flags);
-    } catch (Error &err) {
-      FutureError ferr(err.str());
-      throw ferr;
-    }
-  });
+  CALL_SYNC_METHOD_IN_WORKER(readFile, std::shared_ptr<std::string>, path, flags);
 }
 
 std::shared_ptr<std::string> readFileSync(const std::string &path, const int flags) {
@@ -485,19 +395,11 @@ std::shared_ptr<std::string> readFileSync(const std::string &path, const int fla
 }
 
 Future<std::shared_ptr<std::string>> readFile(const file_handle fd, const int flags) {
-  return async([fd, flags]() -> std::shared_ptr<std::string> {
-    try {
-      return readFileSync(fd, flags);
-    } catch (Error &err) {
-      FutureError ferr(err.str());
-      throw ferr;
-    }
-  });
+  CALL_SYNC_METHOD_IN_WORKER(readFile, std::shared_ptr<std::string>, fd, flags);
 }
 
 std::shared_ptr<std::string> readFileSync(const file_handle fd, const int flags) {
   std::shared_ptr<Loop> loopInst = Loop::GetInstanceOrCreateDefault();
-
   std::shared_ptr<Stats> stats = fstatSync(fd);
 
   size_t len = 0;
@@ -553,25 +455,26 @@ std::shared_ptr<std::string> readFileSync(const file_handle fd, const int flags)
   return bufInst;
 }
 
-Future<std::string> readlink(const std::string &prefix) {
-  return async([prefix]() -> std::string {
-    try {
-      return readlinkSync(prefix);
-    } catch (Error &err) {
-      FutureError ferr(err.str());
-      throw ferr;
-    }
-  });
-}
+Future<std::string> readlink(const std::string &prefix) { CALL_SYNC_METHOD_IN_WORKER(readlink, std::string, prefix); }
 
 std::string readlinkSync(const std::string &prefix) {
-  UV_FS_METHOD_SYNCCALL_DECL(readlink, UV_FS_MKDTEMP, prefix.c_str());
+  UV_FS_METHOD_SYNCCALL_DECL(readlink, prefix.c_str());
   std::string res(static_cast<const char *>(req.ptr));
   uv_fs_req_cleanup(&req);
   return res;
 }
 
-#undef UV_FS_METHOD_CALL_PROMISE_VOID
+Future<std::string> realpath(const std::string &prefix) { CALL_SYNC_METHOD_IN_WORKER(realpath, std::string, prefix) }
+
+std::string realpathSync(const std::string &prefix) {
+  UV_FS_METHOD_SYNCCALL_DECL(realpath, prefix.c_str());
+  std::string res(static_cast<const char *>(req.ptr));
+  uv_fs_req_cleanup(&req);
+  return res;
+}
+
+#undef CALL_SYNC_METHOD_IN_WORKER_VOID
+#undef CALL_SYNC_METHOD_IN_WORKER
 #undef UV_FS_DECL
 #undef UV_FS_METHOD_SYNCCALL
 #undef UV_FS_METHOD_SYNCCALL_DECL

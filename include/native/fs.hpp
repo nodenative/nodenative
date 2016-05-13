@@ -83,8 +83,8 @@ bool read_to_end(file_handle fd, std::function<void(const std::string& str,
 Error e)> callback);
 */
 
-Future<void> access(const file_handle fd, const int mode);
-void accessSync(const file_handle fd, const int mode);
+Future<void> access(const std::string &path, const int mode);
+void accessSync(const std::string &path, const int mode);
 
 Future<void> close(const file_handle fd);
 void closeSync(const file_handle fd);
@@ -101,8 +101,8 @@ std::string mkdtempSync(const std::string &prefix);
 Future<void> rmdir(const std::string &path);
 void rmdirSync(const std::string &path);
 
-Future<void> rename(const std::string &path, const std::string &new_path);
-void renameSync(const std::string &path, const std::string &new_path);
+Future<void> rename(const std::string &iOldPath, const std::string &iNewPath);
+void renameSync(const std::string &iOldPath, const std::string &iNewPath);
 
 Future<void> chmod(const std::string &path, const int mode);
 void chmodSync(const std::string &path, const int mode);
@@ -183,6 +183,9 @@ void utimeSync(const std::string &path, const double atime, const double mtime);
 Future<void> link(const std::string &srcpath, const std::string &dstpath);
 void linkSync(const std::string &srcpath, const std::string &dstpath);
 
+Future<void> symlink(const std::string &srcpath, const std::string &dstpath, const std::string &type = "file");
+void symlinkSync(const std::string &srcpath, const std::string &dstpath, const std::string &type = "file");
+
 /**
  * Asynchronous `readdir(3)`. Reads the contents of a directory.
  */
@@ -205,6 +208,14 @@ std::shared_ptr<std::string> readFileSync(const file_handle fd, const int flags 
 
 Future<std::string> readlink(const std::string &path);
 std::string readlinkSync(const std::string &path);
+
+/**
+ * Equivalent to realpath(3) on Unix. Windows uses GetFinalPathNameByHandle().
+ * @note This function is not implemented on Windows XP and Windows Server 2003. On these systems, UV_ENOSYS is
+ * returned.
+ */
+Future<std::string> realpath(const std::string &path);
+std::string realpathSync(const std::string &path);
 
 Future<std::shared_ptr<Stats>> stat(const std::string &path);
 Future<std::shared_ptr<Stats>> fstat(const file_handle fd);
