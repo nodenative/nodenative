@@ -34,6 +34,7 @@ public:
 
   /// Method of the request message
   unsigned short getMethod() const { return _method; }
+  std::string getMethodStr() const;
 
 #define XX(num, name, desc)                                                                                            \
   bool isMethod##name() const { return _method == num; }

@@ -17,7 +17,10 @@ std::shared_ptr<Server> Server::Create(std::shared_ptr<Loop> iLoop) {
   return instance;
 }
 
-Server::Server(std::shared_ptr<Loop> iLoop) : _socket(native::net::Tcp::Create(iLoop)) { NNATIVE_FCALL(); }
+Server::Server(std::shared_ptr<Loop> iLoop)
+    : ServerPlugin::ServerPlugin(iLoop), _socket(native::net::Tcp::Create(iLoop)) {
+  NNATIVE_FCALL();
+}
 
 Server::~Server() {
   NNATIVE_FCALL();

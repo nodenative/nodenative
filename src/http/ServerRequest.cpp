@@ -1,4 +1,5 @@
 #include "native/http/ServerRequest.hpp"
+#include "native/http/Server.hpp"
 #include "native/http/Transaction.hpp"
 
 namespace native {
@@ -23,7 +24,11 @@ void ServerRequest::initParser(std::function<void(std::shared_ptr<Transaction>)>
 void ServerRequest::onMessageComplete() {
   NNATIVE_FCALL();
 
-  _callback(_transaction.lock());
+  if (_callback) {
+    _callback(_transaction.lock());
+  }
+
+  _transaction.lock()->_server->execute(url().path(), _transaction.lock());
 }
 
 } /* namespace http */

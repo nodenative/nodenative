@@ -11,9 +11,23 @@ std::string getRegexLibName();
 class Smatch {
 public:
   virtual ~Smatch() {}
+
+  /**
+   * [str description]
+   * @param  i [description]
+   * @return   [description]
+   */
   virtual std::string str(const int i = 0) const = 0;
+
+  /**
+   * @return Number of capturing groups
+   */
   virtual int size() const = 0;
   virtual int position() const = 0;
+
+  /**
+   * @return Length of the matched string
+   */
   virtual int length() const = 0;
 };
 

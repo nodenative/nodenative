@@ -21,6 +21,7 @@ public:
   std::string path() const;
   std::string query() const;
   std::string fragment() const;
+  const std::string &str() const { return _buf; }
 
   void fromBuf(const char *buf, std::size_t len, bool is_connect = false);
 

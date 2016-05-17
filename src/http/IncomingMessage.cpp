@@ -24,6 +24,16 @@ bool IncomingMessage::getHeader(const std::string &key, std::string &value) cons
   return false;
 }
 
+std::string IncomingMessage::getMethodStr() const {
+#define XX(num, name, desc)                                                                                            \
+  case num:                                                                                                            \
+    return #desc;
+
+  switch (_method) { HTTP_METHOD_MAP(XX) }
+#undef XX
+  return "";
+}
+
 void IncomingMessage::initParser() {
   NNATIVE_FCALL();
 
