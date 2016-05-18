@@ -22,6 +22,7 @@ class Transaction : public std::enable_shared_from_this<Transaction> {
   friend class ServerRequest;
   friend class ServerResponse;
   friend class Server;
+  friend class ServerPlugin;
 
 protected:
   Transaction(std::shared_ptr<Server> server);

@@ -31,6 +31,7 @@ public:
   Future<void> write(const std::string &str);
   virtual Future<void> end(const std::string &body);
   virtual Future<void> end();
+  bool isSent() { return _sent; }
 
 protected:
   const bool _isRequest;
@@ -38,6 +39,7 @@ protected:
   int _statusCode;
   bool _headerSent;
   bool _closed;
+  bool _sent;
 
   bool _last;
   bool _chunkedEncoding;

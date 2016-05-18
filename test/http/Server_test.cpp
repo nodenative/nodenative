@@ -1,4 +1,4 @@
-#include "gmock/gmock.h"
+#include <gmock/gmock.h>
 #include <native/native.hpp>
 
 using namespace native;
@@ -10,7 +10,7 @@ int getPort() { return 8080; }
 
 } /* namespace */
 
-TEST(HttpTest, Basic)
+TEST(HttpServerTest, Basic)
 // void deactivated()
 {
   std::shared_ptr<http::Server> server = http::Server::Create();

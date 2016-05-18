@@ -14,6 +14,7 @@ namespace http {
  */
 class Server : public ServerPlugin {
   friend class Transaction;
+  friend class ServerPlugin;
 
 protected:
   Server(std::shared_ptr<Loop> iLoop);
@@ -31,6 +32,7 @@ public:
   std::shared_ptr<Server> getInstance();
 
 protected:
+  std::shared_ptr<Loop> _loop;
   std::shared_ptr<native::net::Tcp> _socket;
   std::shared_ptr<Server> _instance;
 };

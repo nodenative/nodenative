@@ -5,7 +5,7 @@ namespace native {
 namespace http {
 
 OutgoingMessage::OutgoingMessage(const bool iIsRequest)
-    : _isRequest(iIsRequest), _statusCode(200), _headerSent(false), _closed(false), _last(false),
+    : _isRequest(iIsRequest), _statusCode(200), _headerSent(false), _closed(false), _sent(false), _last(false),
       _chunkedEncoding(false), _useChunkedEncodingByDefault(false), _sendDate(false), _shouldKeepAlive(true),
       _contentLength(-1), _hasBody(false) {
   _headers["Content-Type"] = "text/html";
@@ -37,6 +37,7 @@ Future<void> OutgoingMessage::write(const std::string &str) {
       _headers["Content-Length"] = ss.str();
       // mark as closed because content length is reached
       _closed = true;
+      _sent = true;
     }
 
     _headerSent = true;
@@ -59,6 +60,7 @@ Future<void> OutgoingMessage::end(const std::string &str) {
   NNATIVE_ASSERT(!_closed);
   Future<void> future = write(str);
   _closed = true;
+  _sent = true;
   return future;
 }
 

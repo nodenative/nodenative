@@ -1,5 +1,6 @@
 #include "native/http/ServerRequest.hpp"
 #include "native/http/Server.hpp"
+#include "native/http/ServerResponse.hpp"
 #include "native/http/Transaction.hpp"
 
 namespace native {
@@ -26,6 +27,10 @@ void ServerRequest::onMessageComplete() {
 
   if (_callback) {
     _callback(_transaction.lock());
+  }
+
+  if (_transaction.lock()->getResponse().isSent()) {
+    return;
   }
 
   _transaction.lock()->_server->execute(url().path(), _transaction.lock());

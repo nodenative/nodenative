@@ -31,6 +31,7 @@ public:
   }
 
   std::shared_ptr<Handle> getInstanceHandle();
+  std::shared_ptr<Loop> getLoop() { return _loop; }
 
   bool isActive();
 

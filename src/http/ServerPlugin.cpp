@@ -1,5 +1,7 @@
 #include "native/http/ServerPlugin.hpp"
+#include "native/http/Server.hpp"
 #include "native/http/ServerRequest.hpp"
+#include "native/http/ServerResponse.hpp"
 
 namespace native {
 namespace http {
@@ -78,6 +80,9 @@ Future<void> ServerPlugin::execute(const std::string &iUriPath, TransactionInsta
 
       if (!isFirst) {
         result = result.then([callbackWeak, iTransaction, newUriPath]() -> Future<void> {
+          if (iTransaction->getResponse().isSent()) {
+            return Promise<void>::Resolve(iTransaction->_server->_loop);
+          }
           return callbackWeak.lock()->execute(newUriPath, iTransaction);
         });
       } else {
