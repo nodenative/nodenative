@@ -24,6 +24,7 @@ public:
   Server() = delete;
   virtual ~Server();
 
+  bool listen(const std::string &ip, int port);
   bool listen(const std::string &ip, int port, std::function<void(TransactionInstance)> callback);
   Future<std::shared_ptr<Server>> close();
 

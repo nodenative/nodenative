@@ -8,4 +8,6 @@
 #include "http/ServerResponse.hpp"
 #include "http/Transaction.hpp"
 
+namespace native {} /* namespace native */
+
 #endif /* __NATIVE_HTTP_HPP__ */

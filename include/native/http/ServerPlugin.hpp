@@ -77,8 +77,10 @@ struct PluginData : public CallbackDataBase {
 };
 
 struct CallbackData : public CallbackDataBase {
-  CallbackData(const std::string &iUri, std::function<Future<void>(TransactionInstance)> iCallback)
-      : CallbackDataBase(iUri, true /*iFullPathMatch*/), callback(iCallback) {}
+  CallbackData(const std::string &iUri,
+               std::function<Future<void>(TransactionInstance)> iCallback,
+               const bool iFullPathMatch)
+      : CallbackDataBase(iUri, iFullPathMatch), callback(iCallback) {}
 
   Future<void> execute(const std::string &iUriPath, TransactionInstance iTransaction) override {
     return callback(iTransaction);

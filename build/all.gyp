@@ -35,6 +35,7 @@
                 '../test/crypto_test.cpp',
                 '../test/fs_test.cpp',
                 '../test/http/Server_test.cpp',
+                '../test/http/ServerPlugin_test.cpp',
                 '../test/timer_test.cpp',
                 '../test/async_test.cpp',
                 '../test/future_then_test.cpp',

@@ -140,7 +140,7 @@ std::shared_ptr<CallbackData> ServerPlugin::addMethodSync(const std::string &iMe
 std::shared_ptr<CallbackData> ServerPlugin::addMethod(const std::string &iMethod,
                                                       const std::string &iUri,
                                                       std::function<Future<void>(TransactionInstance)> iCallback) {
-  std::shared_ptr<CallbackData> callback(new CallbackData(iUri, iCallback));
+  std::shared_ptr<CallbackData> callback(new CallbackData(iUri, iCallback, !iMethod.empty()));
   _methodCallbackMap[iMethod].push_back(callback);
   return callback;
 }

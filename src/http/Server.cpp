@@ -31,6 +31,11 @@ Server::~Server() {
 
 std::shared_ptr<Server> Server::getInstance() { return std::static_pointer_cast<Server>(ServerPlugin::getInstance()); }
 
+bool Server::listen(const std::string &ip, int port) {
+  NNATIVE_FCALL();
+  return listen(ip, port, std::function<void(std::shared_ptr<Transaction>)>());
+}
+
 bool Server::listen(const std::string &ip, int port, std::function<void(std::shared_ptr<Transaction>)> callback) {
   NNATIVE_FCALL();
   if (!_socket->bind(ip, port)) {
