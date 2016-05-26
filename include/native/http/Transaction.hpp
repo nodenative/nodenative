@@ -39,7 +39,7 @@ public:
   Future<void> close();
 
 private:
-  bool parse(std::function<void(std::shared_ptr<Transaction>)> callback);
+  Future<void> parse();
 
 protected:
   virtual std::unique_ptr<ServerRequest> createRequest();

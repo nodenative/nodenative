@@ -51,7 +51,6 @@ std::shared_ptr<Loop> Loop::Create(bool iDefault) {
   }
 
   std::shared_ptr<Loop> instance(new Loop());
-  instance->_instance = instance;
 
   if (iDefault) {
     savedPtr = instance;
@@ -112,7 +111,7 @@ bool Loop::run() {
   NNATIVE_ASSERT(_uv_loop);
   _started = true;
   _threadId = std::this_thread::get_id();
-  registerLoop(_instance.lock());
+  registerLoop(getInstance());
   const bool result = (uv_run(_uv_loop.get(), UV_RUN_DEFAULT) == 0);
   _started = false;
   return result;
@@ -123,7 +122,7 @@ bool Loop::run_once() {
   NNATIVE_ASSERT(_uv_loop);
   _started = true;
   _threadId = std::this_thread::get_id();
-  registerLoop(_instance.lock());
+  registerLoop(getInstance());
   const bool result = (uv_run(_uv_loop.get(), UV_RUN_ONCE) == 0);
   _started = false;
   return result;
@@ -132,7 +131,7 @@ bool Loop::run_once() {
 bool Loop::run_nowait() {
   _started = true;
   _threadId = std::this_thread::get_id();
-  registerLoop(_instance.lock());
+  registerLoop(getInstance());
   const bool result = (uv_run(_uv_loop.get(), UV_RUN_NOWAIT) == 0);
   _started = false;
   return result;

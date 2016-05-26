@@ -43,16 +43,69 @@ bool Server::listen(const std::string &ip, int port, std::function<void(std::sha
     return false;
   }
 
+  _callback = callback;
+
   std::weak_ptr<Server> instanceWeak = getInstance();
 
-  if (!_socket->listen([instanceWeak, callback](native::Error e) {
+  if (!_socket->listen([instanceWeak](native::Error e) {
         NNATIVE_FCALL();
         NNATIVE_DEBUG("start listen");
         if (e) {
           // TODO: handle client connection Error
         } else {
           std::shared_ptr<Transaction> transaction = Transaction::Create(instanceWeak.lock());
-          transaction->parse(callback);
+          std::weak_ptr<Transaction> transactionWeak = transaction;
+
+          transaction->parse()
+              .then([transactionWeak, instanceWeak]() -> Future<void> {
+                if (transactionWeak.expired()) {
+                  NNATIVE_INFO("Transaction expired.");
+                  return Promise<void>::Resolve(instanceWeak.lock()->_loop);
+                }
+
+                std::shared_ptr<Transaction> transaction = transactionWeak.lock();
+                std::shared_ptr<Server> instance = instanceWeak.lock();
+
+                if (instance->_callback) {
+                  instance->_callback(transaction);
+                }
+
+                if (transaction->getResponse().isSent()) {
+                  return Promise<void>::Resolve(instanceWeak.lock()->_loop);
+                }
+
+                const std::string urlPath = transaction->_request->url().path();
+
+                return instance->execute(urlPath, transaction);
+              })
+              .then([transactionWeak]() {
+                if (!transactionWeak.expired() && !transactionWeak.lock()->getResponse().isSent()) {
+                  // send a 404 status
+                  http::ServerResponse &res = transactionWeak.lock()->getResponse();
+                  res.setStatus(404);
+                  res.end();
+                }
+              })
+              .error([transactionWeak](const FutureError &err) {
+                NNATIVE_INFO("Transaction error: " << err.message());
+                if (transactionWeak.expired()) {
+                  NNATIVE_INFO("Transaction expired.");
+                  return;
+                }
+
+                std::shared_ptr<Transaction> transaction = transactionWeak.lock();
+
+                if (transaction->getResponse().isSent()) {
+                  return;
+                }
+
+                NNATIVE_INFO("Trying to send 500 to client");
+
+                // send a 500 status
+                http::ServerResponse &res = transaction->getResponse();
+                res.setStatus(500);
+                res.end(err.message());
+              });
         }
         NNATIVE_DEBUG("end listen");
       })) {

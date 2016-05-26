@@ -26,7 +26,7 @@ UrlObject::~UrlObject() {
 std::string UrlObject::schema() const {
   if (hasSchema())
     return _buf.substr(_handle.field_data[UF_SCHEMA].off, _handle.field_data[UF_SCHEMA].len);
-  return "HTTP";
+  return "http";
 }
 
 std::string UrlObject::host() const {
@@ -39,7 +39,7 @@ std::string UrlObject::host() const {
 int UrlObject::port() const {
   if (hasPath())
     return static_cast<int>(_handle.port);
-  return (schema() == "HTTP" ? 80 : 443);
+  return (schema() == "http" ? 80 : 443);
 }
 
 std::string UrlObject::path() const {
@@ -60,7 +60,7 @@ std::string UrlObject::fragment() const {
   return std::string();
 }
 
-void UrlObject::fromBuf(const char *buf, std::size_t len, bool is_connect) {
+void UrlObject::parse(const char *buf, std::size_t len, bool is_connect) {
   // TODO: validate input parameters
 
   _buf = std::string(buf, len);

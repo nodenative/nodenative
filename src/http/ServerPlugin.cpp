@@ -15,7 +15,8 @@ bool CallbackDataBase::matchUri(const std::string &iUri, size_t &oLength) {
 
   if (uriRegex->match(iUri, match, (uriRegexMatchWholePath ? Regex::ANCHOR_START : Regex::ANCHOR_BOTH))) {
     size_t matchLength = match->length();
-    if (matchLength > 0 && (matchLength = iUri.length() || iUri[matchLength] == '/')) {
+    if (matchLength > 0 && (matchLength == iUri.length() || iUri[matchLength] == '/')) {
+      oLength = matchLength;
       return true;
     }
   }
@@ -34,6 +35,7 @@ std::shared_ptr<ServerPlugin> ServerPlugin::getInstance() { return shared_from_t
 bool ServerPlugin::getCallbacksByMethod(const std::string &iMethod,
                                         const std::string &iUriPath,
                                         std::map<size_t, std::list<std::shared_ptr<CallbackDataBase>>> &oCallbacks) {
+  NNATIVE_DEBUG("getCallbacksByMethod, method: " << iMethod << ", uri: " << iUriPath)
   MethodCallbackMap::iterator methodsIt = _methodCallbackMap.find(iMethod);
   bool found = false;
 
@@ -41,6 +43,7 @@ bool ServerPlugin::getCallbacksByMethod(const std::string &iMethod,
     for (std::shared_ptr<CallbackDataBase> callback : methodsIt->second) {
       size_t length;
       if (callback->matchUri(iUriPath, length)) {
+        NNATIVE_DEBUG("found uri match, length:" << length << ", pattern: " << callback->uri.getPattern())
         found = true;
         oCallbacks[length].push_back(callback);
       }

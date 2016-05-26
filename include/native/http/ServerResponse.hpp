@@ -19,15 +19,21 @@ class ServerResponse : public OutgoingMessage {
 
 protected:
   ServerResponse(std::shared_ptr<Transaction> iTransaction);
-  virtual Future<void> send(const std::string &data) override;
+  void setHeaderFirstLine(std::stringstream &ioMessageRaw) const override;
+  virtual Future<void> sendData(const std::string &data) override;
+  Future<void> endData(const std::string &data) override;
 
 public:
   ServerResponse() = delete;
   ~ServerResponse();
 
-  Future<void> end(const std::string &data) override;
+  void setStatus(int status_code);
+
+  Future<void> end(const std::string &data) { return endData(data); }
+  virtual Future<void> end() { return end(""); }
 
 protected:
+  int _statusCode;
   std::weak_ptr<Transaction> _transaction;
 };
 

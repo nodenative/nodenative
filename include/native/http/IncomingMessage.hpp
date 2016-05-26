@@ -2,6 +2,7 @@
 #define __NATIVE_HTTP_INCOMINGMESSAGE_HPP__
 
 #include "../text.hpp"
+#include "MessageBase.hpp"
 #include "UrlObject.hpp"
 
 #include <map>
@@ -13,28 +14,30 @@ namespace http {
 /**
  * Incoming HTTP message, can be request or response
  */
-class IncomingMessage {
+class IncomingMessage : public MessageBase {
 protected:
   IncomingMessage() = delete;
   IncomingMessage(const bool iIsRequest);
   virtual void onMessageComplete() = 0;
 
+  int parse(const char *buf, int len);
+  int parse(const std::string &buf) { return parse(buf.c_str(), buf.size()); };
+
 public:
   virtual ~IncomingMessage();
 
-  void initParser();
-  void parse(const char *buf, int len);
-
+  bool isUpgrade() const { return _upgrade; }
   const UrlObject &url() const { return _url; }
   const std::string &getHeader(const std::string &key) const;
   bool getHeader(const std::string &key, std::string &value) const;
   const std::string &getBody(void) const { return _body; }
-  unsigned short getHttpMajor() const { return _httpMajor; }
-  unsigned short getHttpMinor() const { return _httpMinor; }
 
   /// Method of the request message
   unsigned short getMethod() const { return _method; }
   std::string getMethodStr() const;
+
+  bool isHeaderComplete() const { return _headerComplete; }
+  bool isMessageComplete() const { return _messageComplete; }
 
 #define XX(num, name, desc)                                                                                            \
   bool isMethod##name() const { return _method == num; }
@@ -44,12 +47,29 @@ public:
   /// Status code of the response message
   unsigned int getStatusCode() const { return _statusCode; }
 
+  /**
+   * Returns HTTP parser error name
+   *
+   * @return HTTP parser error name
+   */
+  std::string getErrorName() const;
+
+  /**
+   * Returns HTTP parser error description
+   *
+   * @return HTTP parser error description
+   */
+  std::string getErrorDescription() const;
+
 private:
+  void initParser();
+
   const bool _isRequest;
-  unsigned short _httpMajor;
-  unsigned short _httpMinor;
+  bool _upgrade;
+  bool _initiated;
   unsigned int _method;
   unsigned int _statusCode;
+  std::string _responseStatusString;
   UrlObject _url;
   std::map<std::string, std::string, native::text::ci_less> _headers;
   std::string _body;
@@ -60,6 +80,8 @@ private:
   bool _wasHeaderValue;
   std::string _lastHeaderField;
   std::string _lastHeaderValue;
+  bool _headerComplete;
+  bool _messageComplete;
 };
 
 } /* namespace http */

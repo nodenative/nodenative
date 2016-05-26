@@ -23,12 +23,13 @@ public:
   ServerRequest() = delete;
   ~ServerRequest();
 
+  bool isComplete() { return _complete; }
+
 protected:
-  void initParser(std::function<void(std::shared_ptr<Transaction>)> callback);
   void onMessageComplete() override;
 
   std::weak_ptr<Transaction> _transaction;
-  std::function<void(std::shared_ptr<Transaction> iServer)> _callback;
+  bool _complete;
 };
 
 } /* namespace http */

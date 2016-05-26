@@ -23,7 +23,9 @@ public:
   std::string fragment() const;
   const std::string &str() const { return _buf; }
 
-  void fromBuf(const char *buf, std::size_t len, bool is_connect = false);
+  void parse(const std::string &buf, bool is_connect = false) { parse(buf.c_str(), buf.size(), is_connect); }
+
+  void parse(const char *buf, std::size_t len, bool is_connect = false);
 
   bool hasSchema() const { return _handle.field_set & (1 << UF_SCHEMA); }
   bool hasHost() const { return _handle.field_set & (1 << UF_HOST); }

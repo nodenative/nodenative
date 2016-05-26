@@ -12,7 +12,7 @@ class AsyncBase;
 /**
  *  Class that represents the Loop instance.
  */
-class Loop {
+class Loop : public std::enable_shared_from_this<Loop> {
 protected:
   class HandleDeleter {
   public:
@@ -61,7 +61,7 @@ public:
    */
   uv_loop_t *get() { return _uv_loop.get(); }
 
-  std::shared_ptr<Loop> getInstance() { return _instance.lock(); }
+  std::shared_ptr<Loop> getInstance() { return shared_from_this(); }
 
   /**
    * Returns true if the current thread is the same as event Loop thread;
@@ -107,7 +107,6 @@ public:
 
 private:
   std::unique_ptr<uv_loop_t, HandleDeleter> _uv_loop;
-  std::weak_ptr<Loop> _instance;
   bool _started;
   std::thread::id _threadId;
 };

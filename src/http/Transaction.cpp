@@ -60,32 +60,55 @@ Future<void> Transaction::close() {
   });
 }
 
-bool Transaction::parse(std::function<void(std::shared_ptr<Transaction>)> callback) {
+Future<void> Transaction::parse() {
   NNATIVE_FCALL();
   // Create request and response if it is not yet created
   getRequest();
   getResponse();
-  _request->initParser(callback);
 
+  Promise<void> promise(_socket->getLoop());
   std::weak_ptr<Transaction> instanceWeak = getInstance();
 
-  _socket->readStart([instanceWeak](const char *buf, int len) {
+  _socket->readStart([instanceWeak, promise](const char *buf, int len) {
     NNATIVE_ASSERT(!instanceWeak.expired());
     std::shared_ptr<Transaction> instance = instanceWeak.lock();
     // NNATIVE_DEBUG("buff [" << buf << "], len: " << len);
-    // TODO: resolve multi part
-    if ((buf == nullptr) || (len <= 0)) {
-      instance->_response->setStatus(500);
-      instance->_response->end("Invalid request format.");
-    } else {
-      NNATIVE_DEBUG("start http_parser_execute");
-      instance->_request->parse(buf, len);
-      NNATIVE_DEBUG("end http_parser_execute");
+    if ((buf == nullptr) || (len < 0)) {
+      NNATIVE_INFO("received an negative length: " << len);
+      if (!instance->_response->isSent()) {
+        instance->_response->setStatus(500);
+        instance->_response->end("Invalid request format.");
+      }
+      return;
     }
+
+    NNATIVE_DEBUG("start http_parser_execute");
+    int parsed = instance->_request->parse(buf, len);
+    if (!instance->_request->isUpgrade() && parsed != len) {
+      // invalid request, close connection
+      NNATIVE_INFO("HTTP parser error: " << instance->_request->getErrorName() << ". Close transaction");
+      instance->close()
+          .then([promise]() {
+            Promise<void> nonConstPromise = promise;
+            nonConstPromise.resolve();
+          })
+          .error([promise](const FutureError &err) {
+            Promise<void> nonConstPromise = promise;
+            nonConstPromise.resolve();
+          });
+    }
+
+    if (instance->_request->isUpgrade() || instance->_request->isMessageComplete()) {
+      NNATIVE_DEBUG("complete request");
+      Promise<void> nonConstPromise = promise;
+      nonConstPromise.resolve();
+    }
+
+    NNATIVE_DEBUG("end http_parser_execute");
     // instance.reset();
   });
 
-  return true;
+  return promise.getFuture();
 }
 
 } /* namespace http */

@@ -6,18 +6,24 @@ namespace native {
 namespace http {
 
 ServerResponse::ServerResponse(std::shared_ptr<Transaction> iTransaction)
-    : OutgoingMessage(false), _transaction(iTransaction) {
+    : OutgoingMessage(), _statusCode(200), _transaction(iTransaction) {
   _headers["Content-Type"] = "text/html";
 }
 
 ServerResponse::~ServerResponse() {}
 
-Future<void> ServerResponse::send(const std::string &str) { return _transaction.lock()->_socket->write(str); }
+void ServerResponse::setHeaderFirstLine(std::stringstream &ioMessageRaw) const {
+  ioMessageRaw << "HTTP/1.1 " << _statusCode << " " << GetStatusText(_statusCode) << "\r\n";
+}
 
-Future<void> ServerResponse::end(const std::string &data) {
+void ServerResponse::setStatus(int status_code) { _statusCode = status_code; }
+
+Future<void> ServerResponse::sendData(const std::string &str) { return _transaction.lock()->_socket->write(str); }
+
+Future<void> ServerResponse::endData(const std::string &data) {
   std::weak_ptr<Transaction> transactionWeak = _transaction;
 
-  return OutgoingMessage::end(data).then([transactionWeak]() {
+  return OutgoingMessage::endData(data).then([transactionWeak]() {
     NNATIVE_DEBUG("close transaction socket");
     return transactionWeak.lock()->close();
   });

@@ -2,6 +2,7 @@
 #define __NATIVE_HTTP_OUTGOINGMESSAGE_HPP__
 
 #include "../text.hpp"
+#include "MessageBase.hpp"
 
 #include <map>
 #include <memory>
@@ -11,32 +12,28 @@ namespace native {
 
 namespace http {
 
-class OutgoingMessage {
+class OutgoingMessage : public MessageBase {
 protected:
-  OutgoingMessage() = delete;
-  OutgoingMessage(const bool iIsRequest);
-  virtual Future<void> send(const std::string &data) = 0;
+  OutgoingMessage();
+  virtual void setHeaderFirstLine(std::stringstream &ioMessageRaw) const = 0;
+  virtual Future<void> sendData(const std::string &data) = 0;
+
+  Future<void> writeData(const std::string &str);
+  virtual Future<void> endData(const std::string &body);
 
 public:
   virtual ~OutgoingMessage();
 
-  void setStatus(int status_code);
   void setHeader(const std::string &key, const std::string &value);
   bool getHeader(const std::string &key, std::string &value);
   bool removeHeader(const std::string &key);
-  static std::string GetStatusText(int status);
 
   std::string getMessageHeaderRaw() const;
 
-  Future<void> write(const std::string &str);
-  virtual Future<void> end(const std::string &body);
-  virtual Future<void> end();
   bool isSent() { return _sent; }
 
 protected:
-  const bool _isRequest;
   std::map<std::string, std::string, native::text::ci_less> _headers;
-  int _statusCode;
   bool _headerSent;
   bool _closed;
   bool _sent;

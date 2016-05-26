@@ -36,6 +36,7 @@ protected:
   std::shared_ptr<Loop> _loop;
   std::shared_ptr<native::net::Tcp> _socket;
   std::shared_ptr<Server> _instance;
+  std::function<void(std::shared_ptr<Transaction>)> _callback;
 };
 
 } // namespace http
