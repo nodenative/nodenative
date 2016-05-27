@@ -1,6 +1,6 @@
 #include "native/http/ClientRequest.hpp"
 #include "native/http/ClientResponse.hpp"
-#include "native/http/urlObject.hpp"
+#include "native/http/UrlObject.hpp"
 
 namespace native {
 namespace http {

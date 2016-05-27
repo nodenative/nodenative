@@ -102,7 +102,7 @@ int stringToFlags(const std::string &flagStr) {
   return it->second;
 }
 
-bool Stats::checkModeproperty(const int iFlag) { return ((mode & S_IFMT) == iFlag); }
+bool Stats::checkModeproperty(const int iFlag) { return ((mode & S_IFMT) == static_cast<const unsigned int>(iFlag)); }
 
 bool Stats::isDirectory() { return checkModeproperty(S_IFDIR); }
 bool Stats::isFile() { return checkModeproperty(S_IFREG); }

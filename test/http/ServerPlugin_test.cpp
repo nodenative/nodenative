@@ -35,7 +35,10 @@ TEST(DISABLED_ServerPlugin, CallbackData) {
     return called;
   };
 
-  EXPECT_EQ(true, cbCallGet("/", "/", true));
-  EXPECT_EQ(true, cbCallGet("/test", "/test", true));
-  EXPECT_EQ(false, cbCallGet("/test", "/tests", true));
+  const bool expectTrue = true;
+  const bool expectFalse = false;
+
+  EXPECT_EQ(expectTrue, cbCallGet("/", "/", true));
+  EXPECT_EQ(expectTrue, cbCallGet("/test", "/test", true));
+  EXPECT_EQ(expectFalse, cbCallGet("/test", "/tests", true));
 }
