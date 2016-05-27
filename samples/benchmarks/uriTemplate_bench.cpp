@@ -65,19 +65,60 @@ void initGlobalFormats() {
 int main() {
   std::string reLibName;
 
-  const double startTimeWall = getWallTime();
-  const double startTimeCPU = getCpuTime();
-
   initGlobalFormats();
   const UriTemplate uriTemplate("someText/{someText:FormatName4}/longUri/{format1:formatName1}");
   const std::string uriText("someText/AC_1234/01JAN15/someText/ABC/longUri/AB");
   const int timesParse = 1000000;
-  for (int i = 0; i < timesParse; ++i) {
+  int remained = timesParse;
+
+  double startTimeWall = getWallTime();
+  double startTimeCPU = getCpuTime();
+
+  auto cbWorker = [&uriTemplate, &uriText]() {
     UriTemplateValue extractedValues;
     uriTemplate.extract(extractedValues, uriText);
+  };
+
+  auto cbSync = [&remained, &startTimeWall, &startTimeCPU, &timesParse]() {
+    if (--remained == 0) {
+      const double elapcedWallTime = getWallTime() - startTimeWall;
+      const double elapsedCpuTime = getCpuTime() - startTimeCPU;
+      std::cout << native::getRegexLibName() << " UriTemplate::extract of " << timesParse
+                << " times extract. CPU time: " << elapsedCpuTime << ", wall time: " << elapcedWallTime << "\n";
+    }
+  };
+
+  std::cout << "same thread with for() ...\n";
+
+  startTimeWall = getWallTime();
+  startTimeCPU = getCpuTime();
+  remained = timesParse;
+
+  for (int i = 0; i < timesParse; ++i) {
+    cbWorker();
+    cbSync();
   }
-  const double elapcedWallTime = getWallTime() - startTimeWall;
-  const double elapsedCpuTime = getCpuTime() - startTimeCPU;
-  std::cout << native::getRegexLibName() << " UriTemplate::extract of " << timesParse
-            << " times extract. CPU time: " << elapsedCpuTime << ", wall time: " << elapcedWallTime << "\n";
+
+  std::cout << "std::worker...\n";
+
+  startTimeWall = getWallTime();
+  startTimeCPU = getCpuTime();
+  remained = timesParse;
+
+  for (int i = 0; i < timesParse; ++i) {
+    worker(cbWorker).then(cbSync);
+  }
+
+  run();
+
+  std::cout << "same thread with for() ...\n";
+
+  startTimeWall = getWallTime();
+  startTimeCPU = getCpuTime();
+  remained = timesParse;
+
+  for (int i = 0; i < timesParse; ++i) {
+    cbWorker();
+    cbSync();
+  }
 }
