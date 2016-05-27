@@ -105,9 +105,11 @@ int main() {
   startTimeCPU = getCpuTime();
   remained = timesParse;
 
-  for (int i = 0; i < timesParse; ++i) {
-    worker(cbWorker).then(cbSync);
-  }
+  async([cbWorker, cbSync]() {
+    for (int i = 0; i < timesParse; ++i) {
+      worker(cbWorker).then(cbSync);
+    }
+  });
 
   run();
 
