@@ -9,6 +9,9 @@
  * -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.*/
 
 #include "async/ActionCallback.ipp"
+#include "async/ActionCallbackBase.ipp"
+#include "async/ActionCallbackError.ipp"
+#include "async/ActionCallbackFinally.ipp"
 #include "async/Future.ipp"
 #include "async/FutureShared.ipp"
 #include "async/FutureSharedResolver.ipp"

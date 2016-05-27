@@ -63,12 +63,30 @@ public:
     return Future<R>(_p->template error<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...));
   }
 
+  /** Add an waiter callback for value or error. It will be called if the Future is resolved or rejected.
+   *
+   * An waiter callback may return a value or a Future value. To reject a state, it may throw an error.
+   * If a FutureError is thrown, then all dependencies will be considered as error.
+   * If it return a future value, the flow will continue only after the future value will be resolved
+   * @param f waiter (function or function object) callback, F(Args...).
+   * @param Args... static arguments
+   */
+  template <class F, typename... Args>
+  Future<typename ActionCallbackFinallyP1<typename std::result_of<F(Args...)>::type, R, Args...>::ResultType>
+  finally(F &&f, Args &&... args) {
+    return Future<typename ActionCallbackFinallyP1<typename std::result_of<F(Args...)>::type, R, Args...>::ResultType>(
+        _p->template finally<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...));
+  }
+
   std::shared_ptr<Loop> getLoop() const { return _p->getLoop(); }
 
 private:
   std::shared_ptr<FutureShared<R>> _p;
 };
 
+/**
+ * Specialisation class for Future<void>
+ */
 template <> class Future<void> {
   friend Promise<void>;
 
@@ -91,6 +109,13 @@ public:
 
   template <class F, typename... Args> Future<void> error(F &&f, Args &&... args) {
     return Future<void>(_p->template error<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...));
+  }
+
+  template <class F, typename... Args>
+  Future<typename ActionCallbackFinally<typename std::result_of<F(Args...)>::type, Args...>::ResultType>
+  finally(F &&f, Args &&... args) {
+    return Future<typename ActionCallbackFinally<typename std::result_of<F(Args...)>::type, Args...>::ResultType>(
+        _p->template finally<F, Args...>(std::forward<F>(f), std::forward<Args>(args)...));
   }
 
   std::shared_ptr<Loop> getLoop() const { return _p->getLoop(); }

@@ -6,9 +6,7 @@
  * -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.*/
 
 #include "../helper/TemplateSeqInd.hpp"
-#include "AsyncBase.hpp"
-#include "FutureError.hpp"
-#include "FutureSharedResolver.hpp"
+#include "ActionCallbackBase.hpp"
 
 namespace native {
 
@@ -16,49 +14,7 @@ template <class R> class FutureShared;
 
 template <typename R> class Future;
 
-/** Action callback base class template
- */
-template <typename P> class ActionCallbackBase : public AsyncBase {
-protected:
-  ActionCallbackBase(std::shared_ptr<Loop> iLoop);
-  void executeAsync() override;
-  void closeAsync() override;
-
-  std::unique_ptr<FutureSharedResolver<P>> _resolver;
-
-public:
-  virtual ~ActionCallbackBase() {}
-
-  std::shared_ptr<ActionCallbackBase<P>> getInstance();
-
-  void resolve(P p);
-  void reject(const FutureError &);
-
-  virtual void resolveCb(P) = 0;
-  virtual void rejectCb(const FutureError &) = 0;
-};
-
-/** Acction callback base class template specialization for void type.
- */
-template <> class ActionCallbackBase<void> : public AsyncBase {
-protected:
-  ActionCallbackBase(std::shared_ptr<Loop>);
-  void executeAsync() override;
-  void closeAsync() override;
-
-  std::unique_ptr<FutureSharedResolver<void>> _resolver;
-
-public:
-  virtual ~ActionCallbackBase() {}
-
-  std::shared_ptr<ActionCallbackBase<void>> getInstance();
-
-  void resolve();
-  void reject(const FutureError &iError);
-
-  virtual void resolveCb() = 0;
-  virtual void rejectCb(const FutureError &) = 0;
-};
+// Used by Future<void>::then()
 
 template <typename R, typename... Args> class ActionCallback : public ActionCallbackBase<void> {
   std::function<R(Args...)> _f;
@@ -147,6 +103,8 @@ public:
 
   std::shared_ptr<FutureShared<void>> getFuture();
 };
+
+// Used by Future<R>::then()
 
 /** Value resolver callback class template. It call the function callback in case if the future resolved
  */
@@ -238,52 +196,6 @@ public:
   Create(std::shared_ptr<Loop> iLoop, std::function<void(P, Args...)> f, Args &&... args);
 
   std::shared_ptr<FutureShared<void>> getFuture();
-};
-
-// Errors
-
-template <typename... Args> class ActionCallbackError : public ActionCallbackBase<void> {
-  std::function<void(const FutureError &, Args...)> _f;
-  std::tuple<Args...> _args;
-  std::shared_ptr<FutureShared<void>> _future;
-
-  template <std::size_t... Is> void callFn(const FutureError &iError, helper::TemplateSeqInd<Is...>);
-
-  void resolveCb() override;
-  void rejectCb(const FutureError &iError) override;
-
-  ActionCallbackError(std::shared_ptr<Loop> iLoop,
-                      std::function<void(const FutureError &, Args...)> f,
-                      Args &&... args);
-
-public:
-  ActionCallbackError() = delete;
-  static std::shared_ptr<ActionCallbackError<Args...>>
-  Create(std::shared_ptr<Loop> iLoop, std::function<void(const FutureError &, Args...)> f, Args &&... args);
-
-  std::shared_ptr<FutureShared<void>> getFuture();
-};
-
-/** Value resolver callback class template. It call the function callback in case if the future resolved
- */
-template <typename R, typename... Args> class ActionCallbackErrorP1 : public ActionCallbackBase<R> {
-  std::function<R(const FutureError &, Args...)> _f;
-  std::tuple<Args...> _args;
-  std::shared_ptr<FutureShared<R>> _future;
-
-  template <std::size_t... Is> void callFn(const FutureError &iError, helper::TemplateSeqInd<Is...>);
-
-  void resolveCb(R r) override;
-  void rejectCb(const FutureError &iError) override;
-
-  ActionCallbackErrorP1(std::shared_ptr<Loop> iLoop, std::function<R(const FutureError &, Args...)> f, Args &&... args);
-
-public:
-  ActionCallbackErrorP1() = delete;
-  static std::shared_ptr<ActionCallbackErrorP1<R, Args...>>
-  Create(std::shared_ptr<Loop> iLoop, std::function<R(const FutureError &, Args...)> f, Args &&... args);
-
-  std::shared_ptr<FutureShared<R>> getFuture();
 };
 
 } /* namespace native */

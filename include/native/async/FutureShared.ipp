@@ -93,6 +93,59 @@ FutureShared<void>::then(F &&f, Args &&... args) {
 
 template <class R>
 template <class F, typename... Args>
+std::shared_ptr<
+    FutureShared<typename ActionCallbackFinallyP1<typename std::result_of<F(Args...)>::type, R, Args...>::ResultType>>
+FutureShared<R>::finally(F &&f, Args &&... args) {
+  using return_type = typename std::result_of<F(Args...)>::type;
+  auto action =
+      ActionCallbackFinallyP1<return_type, R, Args...>::Create(_loop, std::forward<F>(f), std::forward<Args>(args)...);
+  auto currFuture = action->getFuture();
+
+  if (!this->_loop->isNotOnEventLoopThread() && !this->_resolver) {
+    _actions.push_back(action);
+  } else {
+    // avoid race condition
+    std::shared_ptr<FutureShared<R>> instance = this->shared_from_this();
+    async(this->_loop, [instance, action]() {
+      instance->_actions.push_back(action);
+
+      if (instance->_resolver) {
+        instance->_resolver->resolve(action);
+      }
+    });
+  }
+
+  return currFuture;
+}
+
+template <class F, typename... Args>
+std::shared_ptr<
+    FutureShared<typename ActionCallbackFinally<typename std::result_of<F(Args...)>::type, Args...>::ResultType>>
+FutureShared<void>::finally(F &&f, Args &&... args) {
+  using return_type = typename std::result_of<F(Args...)>::type;
+  auto action =
+      ActionCallbackFinally<return_type, Args...>::Create(_loop, std::forward<F>(f), std::forward<Args>(args)...);
+  auto currFuture = action->getFuture();
+
+  if (!this->_loop->isNotOnEventLoopThread() && !this->_resolver) {
+    _actions.push_back(action);
+  } else {
+    // avoid race condition
+    std::shared_ptr<FutureShared<void>> instance = this->shared_from_this();
+
+    async(this->_loop, [instance, action]() {
+      instance->_actions.push_back(action);
+
+      if (instance->_resolver) {
+        instance->_resolver->resolve(action);
+      }
+    });
+  }
+  return currFuture;
+}
+
+template <class R>
+template <class F, typename... Args>
 std::shared_ptr<FutureShared<R>> FutureShared<R>::error(F &&f, Args &&... args) {
   std::shared_ptr<ActionCallbackErrorP1<R, Args...>> action =
       ActionCallbackErrorP1<R, Args...>::Create(_loop, std::forward<F>(f), std::forward<Args>(args)...);

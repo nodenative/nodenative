@@ -2,6 +2,9 @@
 #define __NATIVE_ASYNC_HPP__
 
 #include "async/ActionCallback.hpp"
+#include "async/ActionCallbackBase.hpp"
+#include "async/ActionCallbackError.hpp"
+#include "async/ActionCallbackFinally.hpp"
 #include "async/Future.hpp"
 #include "async/FutureError.hpp"
 #include "async/FutureShared.hpp"

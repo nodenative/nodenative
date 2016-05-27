@@ -10,36 +10,6 @@
 
 namespace native {
 
-template <typename P> ActionCallbackBase<P>::ActionCallbackBase(std::shared_ptr<Loop> iLoop) : AsyncBase(iLoop) {}
-
-template <typename P> std::shared_ptr<ActionCallbackBase<P>> ActionCallbackBase<P>::getInstance() {
-  return std::static_pointer_cast<ActionCallbackBase<P>, AsyncBase>(AsyncBase::getInstance());
-}
-
-template <typename P> void ActionCallbackBase<P>::executeAsync() {
-  NNATIVE_FCALL();
-  NNATIVE_ASSERT(_resolver);
-  _resolver->resolveCb(this->getInstance());
-}
-
-template <typename P> void ActionCallbackBase<P>::closeAsync() {
-  NNATIVE_FCALL();
-  NNATIVE_ASSERT(_resolver);
-  _resolver.reset();
-}
-
-template <typename P> void ActionCallbackBase<P>::resolve(P p) {
-  NNATIVE_ASSERT(!_resolver);
-  _resolver = std::make_unique<FutureSharedResolverValue<P>>(std::forward<P>(p));
-  this->enqueue();
-}
-
-template <typename P> void ActionCallbackBase<P>::reject(const FutureError &iError) {
-  NNATIVE_ASSERT(!_resolver);
-  _resolver = std::make_unique<FutureSharedResolverError<P>>(iError);
-  this->enqueue();
-}
-
 template <typename R, typename... Args>
 std::shared_ptr<ActionCallback<R, Args...>>
 ActionCallback<R, Args...>::Create(std::shared_ptr<Loop> iLoop, std::function<R(Args...)> f, Args &&... args) {
@@ -386,82 +356,6 @@ void ActionCallbackP1<Future<void>, P, Args...>::rejectCb(const FutureError &iEr
 
 template <typename P, typename... Args> void ActionCallbackP1<void, P, Args...>::rejectCb(const FutureError &iError) {
   this->getFuture()->reject(iError);
-}
-
-// Error
-
-template <typename... Args>
-std::shared_ptr<ActionCallbackError<Args...>> ActionCallbackError<Args...>::Create(
-    std::shared_ptr<Loop> iLoop, std::function<void(const FutureError &, Args...)> f, Args &&... args) {
-  return std::shared_ptr<ActionCallbackError<Args...>>(
-      new ActionCallbackError<Args...>(iLoop, f, std::forward<Args>(args)...));
-}
-
-template <typename R, typename... Args>
-std::shared_ptr<ActionCallbackErrorP1<R, Args...>> ActionCallbackErrorP1<R, Args...>::Create(
-    std::shared_ptr<Loop> iLoop, std::function<R(const FutureError &, Args...)> f, Args &&... args) {
-  return std::shared_ptr<ActionCallbackErrorP1<R, Args...>>(
-      new ActionCallbackErrorP1<R, Args...>(iLoop, f, std::forward<Args>(args)...));
-}
-
-template <typename... Args>
-ActionCallbackError<Args...>::ActionCallbackError(std::shared_ptr<Loop> iLoop,
-                                                  std::function<void(const FutureError &, Args...)> f,
-                                                  Args &&... args)
-    : ActionCallbackBase<void>(iLoop), _f(f), _args(std::forward<Args>(args)...),
-      _future(FutureShared<void>::Create(iLoop)) {}
-
-template <typename R, typename... Args>
-ActionCallbackErrorP1<R, Args...>::ActionCallbackErrorP1(std::shared_ptr<Loop> iLoop,
-                                                         std::function<R(const FutureError &, Args...)> f,
-                                                         Args &&... args)
-    : ActionCallbackBase<R>(iLoop), _f(f), _args(std::forward<Args>(args)...), _future(FutureShared<R>::Create(iLoop)) {
-}
-
-template <typename... Args> std::shared_ptr<FutureShared<void>> ActionCallbackError<Args...>::getFuture() {
-  NNATIVE_ASSERT(this->_future);
-  return this->_future;
-}
-
-template <typename R, typename... Args>
-std::shared_ptr<FutureShared<R>> ActionCallbackErrorP1<R, Args...>::getFuture() {
-  NNATIVE_ASSERT(this->_future);
-  return this->_future;
-}
-
-template <typename R, typename... Args>
-template <std::size_t... Is>
-void ActionCallbackErrorP1<R, Args...>::callFn(const FutureError &iError, helper::TemplateSeqInd<Is...>) {
-  try {
-    this->getFuture()->resolve(std::forward<R>(this->_f(iError, std::get<Is>(this->_args)...)));
-  } catch (const FutureError &e) {
-    this->getFuture()->reject(e);
-  }
-}
-
-template <typename... Args>
-template <std::size_t... Is>
-void ActionCallbackError<Args...>::callFn(const FutureError &iError, helper::TemplateSeqInd<Is...>) {
-  try {
-    this->_f(iError, std::get<Is>(this->_args)...);
-    this->getFuture()->resolve();
-  } catch (const FutureError &e) {
-    this->getFuture()->reject(e);
-  }
-}
-
-template <typename... Args> void ActionCallbackError<Args...>::resolveCb() { this->getFuture()->resolve(); }
-
-template <typename R, typename... Args> void ActionCallbackErrorP1<R, Args...>::resolveCb(R r) {
-  this->getFuture()->resolve(std::forward<R>(r));
-}
-
-template <typename... Args> void ActionCallbackError<Args...>::rejectCb(const FutureError &iError) {
-  this->template callFn(iError, helper::TemplateSeqIndGen<sizeof...(Args)>());
-}
-
-template <typename P, typename... Args> void ActionCallbackErrorP1<P, Args...>::rejectCb(const FutureError &iError) {
-  this->template callFn(iError, helper::TemplateSeqIndGen<sizeof...(Args)>());
 }
 
 } /* namespace native */

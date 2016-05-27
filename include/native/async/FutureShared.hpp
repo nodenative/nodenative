@@ -4,6 +4,8 @@
 #include "../Loop.hpp"
 #include "./FutureSharedResolver.hpp"
 #include "ActionCallback.hpp"
+#include "ActionCallbackError.hpp"
+#include "ActionCallbackFinally.hpp"
 
 #include <atomic>
 #include <memory>
@@ -38,6 +40,11 @@ public:
   then(F &&f, Args &&... args);
 
   template <class F, typename... Args> std::shared_ptr<FutureShared<R>> error(F &&f, Args &&... args);
+
+  template <class F, typename... Args>
+  std::shared_ptr<
+      FutureShared<typename ActionCallbackFinallyP1<typename std::result_of<F(Args...)>::type, R, Args...>::ResultType>>
+  finally(F &&f, Args &&... args);
 };
 
 template <> class FutureShared<void> : public std::enable_shared_from_this<FutureShared<void>> {
@@ -66,6 +73,11 @@ public:
   then(F &&f, Args &&... args);
 
   template <class F, typename... Args> std::shared_ptr<FutureShared<void>> error(F &&f, Args &&... args);
+
+  template <class F, typename... Args>
+  std::shared_ptr<
+      FutureShared<typename ActionCallbackFinally<typename std::result_of<F(Args...)>::type, Args...>::ResultType>>
+  finally(F &&f, Args &&... args);
 };
 
 } /* namespace native */
