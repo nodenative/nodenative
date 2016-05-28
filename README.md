@@ -1,6 +1,6 @@
 # nodenative
 
-<b>nodenative</b> is a [C++14](http://en.wikipedia.org/wiki/C%2B%2B14) (aka C++1y) port for [node.js](https://github.com/joyent/node).
+<b>nodenative</b> is a [C++14](http://en.wikipedia.org/wiki/C%2B%2B14) (aka C++1y) port for [node.js](https://github.com/joyent/node). This is alive project of [d5's node.native](https://github.com/d5/node.native) changed considerably for better maintenance.
 <table>
   <thead>
     <tr>
@@ -23,7 +23,8 @@
 Please note that nodenative project is <em>under heavy development</em>.
 
 ## Feature highlights
- * Basic functionality of Promise/A+ based on event pool (`native::Promise<R>`, `native::Future<R>`, `native<Future<R>> native::async(F, Args...)`)
+ * Basic functionality of Promise/A+ based on event pool (`native::Promise<R>`, `native::async(F, Args...)`).
+ * A Future callback may return a future object. The next callback waiter will wait till the result future value is resolved.
  * Thread pool based on uv_work* (`native::worker(F, Args...)`)
  * HTTP protocol
  * File System I/O
