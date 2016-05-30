@@ -37,6 +37,8 @@ bool Stream::readStart(std::function<void(const char *buf, ssize_t len)> callbac
                             Stream *thisPtr = static_cast<Stream *>(s->data);
                             std::unique_ptr<char[]> bufData(buf->base);
                             if (nread < 0) {
+                              Error err = nread;
+                              // NNATIVE_INFO("Error " << nread << ", name: " << err.name() << ", str:" << err.str())
                               NNATIVE_ASSERT(nread == UV_EOF);
                               thisPtr->_readCb(nullptr, nread);
                             } else if (nread >= 0) {

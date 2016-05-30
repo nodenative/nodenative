@@ -64,7 +64,7 @@ void Handle::releaseInstanceHandle() {
   NNATIVE_ASSERT(_instanceHandleCount > 0);
   NNATIVE_ASSERT(_instanceHandle);
   if (--_instanceHandleCount == 0) {
-    NNATIVE_DEBUG("reset sinatnce handle");
+    NNATIVE_DEBUG("reset instance handle");
     _instanceHandle.reset();
   }
   NNATIVE_DEBUG("Remain handle instance count: " << _instanceHandleCount);

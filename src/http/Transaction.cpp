@@ -78,6 +78,7 @@ Future<void> Transaction::parse() {
       if (!instance->_response->isSent()) {
         instance->_response->setStatus(500);
         instance->_response->end("Invalid request format.");
+        NNATIVE_INFO("Invalid request sent");
       }
       return;
     }
