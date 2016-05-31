@@ -8,12 +8,8 @@ using namespace native;
 
 namespace {
 void initGlobalFormats() {
-  static bool initiated = false;
-  if (initiated) {
-    return;
-  }
+  UriTemplateFormat::ClearGlobalFormats();
 
-  initiated = true;
   UriTemplateFormat::AddGlobalFormat("formatName1", "(?:[A-Z0-9\\-]{2}|[A-Z]{3})");
   UriTemplateFormat::AddGlobalFormat("FormatName2", "[0-9]{1,4}[A-Z]?");
   UriTemplateFormat::AddGlobalFormat("FormatName3", "[0-9]{2}[A-Z]{3}[0-9]{2}");

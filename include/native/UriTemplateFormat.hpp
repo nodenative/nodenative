@@ -74,6 +74,8 @@ public:
    * @error: assert if it trying to add a duplicate global format name
    */
   static void AddGlobalFormat(const std::string &iFormatName, const std::string &iTemplate);
+  static void ClearGlobalFormats() { GetGlobalFormats().clear(); }
+  static int GetGlobalFormatsSize() { return GetGlobalFormats().size(); };
 
 private:
   /// format name string

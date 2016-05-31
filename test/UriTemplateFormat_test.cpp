@@ -20,11 +20,13 @@ void checkNewGlobalFormat(const std::string key,
 } /* namespace */
 
 TEST(UriTemplateFormatTest, GlobalFormatSimpleText) {
+  UriTemplateFormat::ClearGlobalFormats();
   checkNewGlobalFormat("GlobalFormatSimpleText", "someTextValue", "someTextValue", "(someTextValue)");
   EXPECT_EQ(UriTemplateFormat::GetGlobalFormat("GlobalFormatSimpleText").isRegExOnly(), true);
 }
 
 TEST(UriTemplateFormatTest, GrobalFormatExceptionOnDuplicate) {
+  UriTemplateFormat::ClearGlobalFormats();
   const std::string formatKey("GrobalFormatExceptionOnDuplicate");
   const std::string formatValue("sameTextValue");
 
@@ -33,16 +35,19 @@ TEST(UriTemplateFormatTest, GrobalFormatExceptionOnDuplicate) {
 }
 
 TEST(UriTemplateFormatTest, GlobalFormatSimpleRegExp) {
+  UriTemplateFormat::ClearGlobalFormats();
   checkNewGlobalFormat("GlobalFormatSimpleRegExp", "[A-Z]+", "[A-Z]+", "([A-Z]+)");
-  EXPECT_EQ(UriTemplateFormat::GetGlobalFormat("GrobalFormatExceptionOnDuplicate").isRegExOnly(), true);
+  EXPECT_EQ(UriTemplateFormat::GetGlobalFormat("GlobalFormatSimpleRegExp").isRegExOnly(), true);
 }
 
 TEST(UriTemplateFormatTest, GlobalFormatNoneCapturingGroup) {
+  UriTemplateFormat::ClearGlobalFormats();
   checkNewGlobalFormat("GlobalFormatNoneCapturingGroup", "(?:[A-Z]+)SomeText", "(?:[A-Z]+)SomeText",
                        "((?:[A-Z]+)SomeText)");
 }
 
 TEST(UriTemplateFormatTest, GrobalFormatExceptionOnCapturingGroup) {
+  UriTemplateFormat::ClearGlobalFormats();
   const std::string formatKey("GrobalFormatExceptionOnCapturingGroup");
   const std::string formatValue("(CapturingGroup)");
 
@@ -50,6 +55,7 @@ TEST(UriTemplateFormatTest, GrobalFormatExceptionOnCapturingGroup) {
 }
 
 TEST(UriTemplateFormatTest, GrobalFormatUriTemplate) {
+  UriTemplateFormat::ClearGlobalFormats();
   checkNewGlobalFormat("GrobalFormatUriTemplatePar1", "[A-Z]+", "[A-Z]+", "([A-Z]+)");
   checkNewGlobalFormat("GrobalFormatUriTemplate", "someText{par1:GrobalFormatUriTemplatePar1}", "someText[A-Z]+",
                        "(someText([A-Z]+))");
@@ -57,6 +63,7 @@ TEST(UriTemplateFormatTest, GrobalFormatUriTemplate) {
 }
 
 TEST(UriTemplateFormatTest, GrobalFormatUriTemplate2) {
+  UriTemplateFormat::ClearGlobalFormats();
   checkNewGlobalFormat("GrobalFormatUriTemplate2Par1", "Before1[A-Z]+After1", "Before1[A-Z]+After1",
                        "(Before1[A-Z]+After1)");
   checkNewGlobalFormat("GrobalFormatUriTemplate2Par2", "Before2[A-Z]+{par1:GrobalFormatUriTemplate2Par1}After2",
