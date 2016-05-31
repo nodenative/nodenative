@@ -37,8 +37,11 @@ std::string UrlObject::host() const {
 }
 
 int UrlObject::port() const {
-  if (hasPath())
-    return static_cast<int>(_handle.port);
+  int port = static_cast<int>(_handle.port);
+  if (port != 0) {
+    return port;
+  }
+
   return (schema() == "http" ? 80 : 443);
 }
 

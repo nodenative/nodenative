@@ -12,15 +12,23 @@ ClientRequest::ClientRequest(std::shared_ptr<Loop> iLoop,
                              const std::string &path)
     : _method(method), _host(host), _port(port), _path(path), _loop(iLoop), _connected(false) {
   _socket = net::Tcp::Create();
+  if (_path.empty()) {
+    _path = "/";
+  }
 }
 
 std::shared_ptr<ClientRequest>
 ClientRequest::Create(std::shared_ptr<Loop> iLoop, const std::string &method, const std::string &uri) {
   UrlObject urlObj;
   urlObj.parse(uri);
-  const std::string host = urlObj.host();
+  std::string host = urlObj.host();
   const int port = urlObj.port();
   std::string path = urlObj.path();
+  const std::string query = urlObj.query();
+
+  if (!query.empty()) {
+    path += "?" + query;
+  }
 
   return Create(iLoop, method, host, port, path);
 }

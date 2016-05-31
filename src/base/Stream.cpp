@@ -37,7 +37,10 @@ bool Stream::readStart(std::function<void(const char *buf, ssize_t len)> callbac
                             Stream *thisPtr = static_cast<Stream *>(s->data);
                             std::unique_ptr<char[]> bufData(buf->base);
                             if (nread < 0) {
-                              Error err = nread;
+                              // TODO: implement error handlers.
+                              // Example:
+                              // https://github.com/nodejs/node/blob/7a8dd69e1c318f6b3d5ef0d2a2844333816b7193/test/parallel/test-http-destroyed-socket-write2.js#L5
+                              // Error err = nread;
                               // NNATIVE_INFO("Error " << nread << ", name: " << err.name() << ", str:" << err.str())
                               NNATIVE_ASSERT(nread == UV_EOF);
                               thisPtr->_readCb(nullptr, nread);

@@ -3,7 +3,7 @@
 
 using namespace native;
 
-TEST(ServerPlugin, CallbackData) {
+TEST(ServerPlugin, get) {
   auto loop = Loop::GetInstanceOrCreateDefault();
   std::weak_ptr<Loop> loopWeak = Loop::GetInstanceOrCreateDefault();
 
@@ -19,19 +19,21 @@ TEST(ServerPlugin, CallbackData) {
       res.setStatus(200);
       res.setHeader("Content-Type", "text/plain");
       res.end(bodyText);
-      NNATIVE_INFO("server response sent");
     });
 
     bool retVal = server->listen("0.0.0.0", 8080);
     EXPECT_EQ(true, retVal);
 
     // Send request
-    http::get(loopWeak.lock(), "http://127.0.0.1:8080" + uri).finally([serverWeak]() {
-      NNATIVE_INFO("closing server");
-      serverWeak.lock()->close();
-    });
-
-    NNATIVE_INFO("client request sending");
+    http::get(loopWeak.lock(), "http://127.0.0.1:8080" + uri)
+        .then(
+            [](std::shared_ptr<http::ClientResponse> res) { NNATIVE_INFO("response status:" << res->getStatusCode()); })
+        .error([](const FutureError &err) {
+          NNATIVE_INFO("error:" << err.message());
+          // an error is not expected
+          EXPECT_EQ(true, false);
+        })
+        .finally([serverWeak]() { serverWeak.lock()->close(); });
 
     loopWeak.lock()->run();
     return called;
@@ -40,7 +42,10 @@ TEST(ServerPlugin, CallbackData) {
   const bool expectTrue = true;
   const bool expectFalse = false;
 
+  EXPECT_EQ(expectTrue, cbCallGet("/", "", true));
+  EXPECT_EQ(expectTrue, cbCallGet("", "/", true));
   EXPECT_EQ(expectTrue, cbCallGet("/", "/", true));
   EXPECT_EQ(expectTrue, cbCallGet("/test", "/test", true));
+  EXPECT_EQ(expectTrue, cbCallGet("/test", "/test?a=true", true));
   EXPECT_EQ(expectFalse, cbCallGet("/test", "/tests", true));
 }

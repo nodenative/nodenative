@@ -13,12 +13,7 @@ Future<std::shared_ptr<ClientResponse>> request(std::shared_ptr<Loop> iLoop,
 }
 
 Future<std::shared_ptr<ClientResponse>> get(std::shared_ptr<Loop> iLoop, const std::string &uri) {
-  UrlObject urlObj;
-  urlObj.parse(uri);
-  const std::string host = urlObj.host();
-  const int port = urlObj.port();
-  const std::string path = urlObj.path();
-  std::shared_ptr<ClientRequest> req = ClientRequest::Create(iLoop, "GET", host, port, path);
+  std::shared_ptr<ClientRequest> req = ClientRequest::Create(iLoop, "GET", uri);
   return req->end();
 }
 

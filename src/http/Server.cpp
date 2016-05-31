@@ -52,6 +52,7 @@ bool Server::listen(const std::string &ip, int port, std::function<void(std::sha
         NNATIVE_DEBUG("start listen");
         if (e) {
           // TODO: handle client connection Error
+          NNATIVE_INFO("error: " << e.name() << ", str:" << e.str());
         } else {
           std::shared_ptr<Transaction> transaction = Transaction::Create(instanceWeak.lock());
           std::weak_ptr<Transaction> transactionWeak = transaction;
@@ -59,7 +60,7 @@ bool Server::listen(const std::string &ip, int port, std::function<void(std::sha
           transaction->parse()
               .then([transactionWeak, instanceWeak]() -> Future<void> {
                 if (transactionWeak.expired()) {
-                  NNATIVE_INFO("Transaction expired.");
+                  NNATIVE_DEBUG("Transaction expired.");
                   return Promise<void>::Resolve(instanceWeak.lock()->_loop);
                 }
 
@@ -71,10 +72,12 @@ bool Server::listen(const std::string &ip, int port, std::function<void(std::sha
                 }
 
                 if (transaction->getResponse().isSent()) {
+                  NNATIVE_DEBUG("response sent. skip ServerPlugin");
                   return Promise<void>::Resolve(instanceWeak.lock()->_loop);
                 }
 
                 const std::string urlPath = transaction->_request->url().path();
+                NNATIVE_DEBUG("execute path: " << urlPath);
 
                 return instance->execute(urlPath, transaction);
               })
