@@ -114,6 +114,8 @@ TEST(WorkerTest, ReturnValueRef) {
   EXPECT_EQ(called2, true);
 }
 
+// TODO: resolve the potential issue. To reproduce run:
+// out/Release/test -- --gtest_repeat=1000 --gtest_break_on_failure --gtest_filter="WorkerTest.ReturnFutureVoid"
 TEST(WorkerTest, ReturnFutureVoid) {
   bool called = false;
   bool called2 = false;
