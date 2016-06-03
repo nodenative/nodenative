@@ -73,7 +73,7 @@ void AsyncBase::decreaseInstance() {
     throw Exception("decreaseInstance too many times");
   }
 
-  if (--_instanceNum == 1) {
+  if (--_instanceNum == 0) {
     _instance.reset();
   }
 }
