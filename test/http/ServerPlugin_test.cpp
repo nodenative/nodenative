@@ -42,9 +42,9 @@ TEST(ServerPlugin, get) {
   const bool expectFalse = false;
 
   EXPECT_EQ(expectTrue, cbCallGet("/", "", true));
-  //EXPECT_EQ(expectTrue, cbCallGet("", "/", true));
-  //EXPECT_EQ(expectTrue, cbCallGet("/", "/", true));
-  //EXPECT_EQ(expectTrue, cbCallGet("/test", "/test", true));
-  //EXPECT_EQ(expectTrue, cbCallGet("/test", "/test?a=true", true));
-  //EXPECT_EQ(expectFalse, cbCallGet("/test", "/tests", true));
+  EXPECT_EQ(expectTrue, cbCallGet("", "/", true));
+  EXPECT_EQ(expectTrue, cbCallGet("/", "/", true));
+  EXPECT_EQ(expectTrue, cbCallGet("/test", "/test", true));
+  EXPECT_EQ(expectTrue, cbCallGet("/test", "/test?a=true", true));
+  EXPECT_EQ(expectFalse, cbCallGet("/test", "/tests", true));
 }
