@@ -27,13 +27,31 @@ TEST(AsyncTest, asyncDefaultLoop) {
   std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
   std::thread::id mainThreadId = std::this_thread::get_id();
   {
-    native::async(currLoop, [&called, &mainThreadId]() {
+    native::async([&called, &mainThreadId]() {
       called = true;
       std::thread::id currThreadId = std::this_thread::get_id();
       EXPECT_EQ(mainThreadId, currThreadId);
     });
   }
   EXPECT_EQ(called, false);
+
+  native::run();
+
+  EXPECT_EQ(called, true);
+}
+
+TEST(AsyncTest, asyncDefaultLoopInOtherThread) {
+  bool called = false;
+
+  std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
+  {
+    native::worker([&called]() {
+      called = true;
+      EXPECT_ANY_THROW(native::async([]() {}));
+    });
+  }
+
+  // At this point the worker may be called
 
   native::run();
 

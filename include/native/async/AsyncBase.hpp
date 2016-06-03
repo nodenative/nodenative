@@ -13,6 +13,7 @@ class AsyncBase : public std::enable_shared_from_this<AsyncBase> {
   std::shared_ptr<AsyncBase> _self;
   std::shared_ptr<Loop> _loop;
   std::shared_ptr<AsyncBase> _instance;
+  int _instanceNum;
 
   // This method will be called from uv
   static void Async(uv_async_t *);
@@ -34,6 +35,8 @@ public:
   virtual ~AsyncBase();
   std::shared_ptr<Loop> getLoop() { return _loop; }
   std::shared_ptr<AsyncBase> getInstance() { return this->shared_from_this(); }
+  void increaseInstance();
+  void decreaseInstance();
 };
 
 } /* namespace native */

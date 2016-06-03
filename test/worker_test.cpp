@@ -54,6 +54,24 @@ TEST(WorkerTest, DefaultLoop) {
   EXPECT_EQ(called2, true);
 }
 
+TEST(WorkerTest, DefaultLoopInOtherThread) {
+  bool called = false;
+
+  std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
+  {
+    native::worker([&called]() {
+      called = true;
+      EXPECT_ANY_THROW(native::worker([]() {}));
+    });
+  }
+
+  // At this point the worker may be called
+
+  native::run();
+
+  EXPECT_EQ(called, true);
+}
+
 TEST(WorkerTest, ReturnValue) {
   bool called = false;
   bool called2 = false;
@@ -114,19 +132,17 @@ TEST(WorkerTest, ReturnValueRef) {
   EXPECT_EQ(called2, true);
 }
 
-// TODO: resolve the potential issue. To reproduce run:
-// out/Release/test -- --gtest_repeat=1000 --gtest_break_on_failure --gtest_filter="WorkerTest.ReturnFutureVoid"
-TEST(DISABLED_WorkerTest, ReturnFutureVoid) {
+TEST(WorkerTest, ReturnFutureVoid) {
   bool called = false;
   bool called2 = false;
   bool called3 = false;
   std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
   std::thread::id mainThreadId = std::this_thread::get_id();
   {
-    native::worker(currLoop, [&called, &called3, &mainThreadId]() -> native::Future<void> {
-      std::cout << "!!! Inside the worker start\n";
+    native::worker(currLoop, [&called, &called3, &mainThreadId, currLoop]() -> native::Future<void> {
+      // std::cout << "!!! Inside the worker start\n";
       // TODO: fix the future for multithread
-      native::Future<void> future = native::async([&called, &called3, &mainThreadId]() {
+      native::Future<void> future = native::async(currLoop, [&called, &called3, &mainThreadId]() {
         called3 = true;
         std::thread::id currThreadId = std::this_thread::get_id();
         EXPECT_EQ(mainThreadId, currThreadId);
@@ -136,7 +152,7 @@ TEST(DISABLED_WorkerTest, ReturnFutureVoid) {
       called = true;
       std::thread::id currThreadId = std::this_thread::get_id();
       EXPECT_NE(mainThreadId, currThreadId);
-      std::cout << "!!! Inside the worker\n";
+      // std::cout << "!!! Inside the worker\n";
       return future;
     }).then([&called, &called2, &called3, &mainThreadId]() {
       std::cout << "!!! Inside the then\n";
@@ -157,7 +173,7 @@ TEST(DISABLED_WorkerTest, ReturnFutureVoid) {
   EXPECT_EQ(called3, true);
 }
 
-TEST(DISABLED_WorkerTest, ReturnFutureValue) {
+TEST(WorkerTest, ReturnFutureValue) {
   bool called = false;
   bool called2 = false;
   bool called3 = false;
@@ -165,11 +181,12 @@ TEST(DISABLED_WorkerTest, ReturnFutureValue) {
   std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
   std::thread::id mainThreadId = std::this_thread::get_id();
   {
-    native::worker(currLoop, [&called, &called3, &expectedValue, &mainThreadId]() -> native::Future<int> {
-      native::Future<int> future = native::async([&called, &called3, expectedValue, &mainThreadId]() -> int {
+    native::worker(currLoop, [&called, &called3, &expectedValue, &mainThreadId, currLoop]() -> native::Future<int> {
+      native::Future<int> future = native::async(currLoop, [&called, &called3, expectedValue, &mainThreadId]() -> int {
         called3 = true;
         std::thread::id currThreadId = std::this_thread::get_id();
         EXPECT_EQ(mainThreadId, currThreadId);
+        std::cout << "!!! Inside the async worker\n";
         return expectedValue;
       });
       called = true;
@@ -198,7 +215,7 @@ TEST(DISABLED_WorkerTest, ReturnFutureValue) {
   EXPECT_EQ(called3, true);
 }
 
-TEST(DISABLED_WorkerTest, ReturnFutureVoidError) {
+TEST(WorkerTest, ReturnFutureVoidError) {
   bool called = false;
   bool called2 = false;
   bool called3 = false;
@@ -209,16 +226,17 @@ TEST(DISABLED_WorkerTest, ReturnFutureVoidError) {
   std::thread::id mainThreadId = std::this_thread::get_id();
   {
     native::worker(currLoop,
-                   [&called, &called3, &mainThreadId, &expectedError]() -> native::Future<void> {
-                     native::Future<void> future = native::async([&called, &called3, &mainThreadId, &expectedError]() {
-                       std::chrono::milliseconds time(100);
-                       std::this_thread::sleep_for(time);
-                       called3 = true;
-                       std::thread::id currThreadId = std::this_thread::get_id();
-                       EXPECT_EQ(mainThreadId, currThreadId);
-                       // Error?
-                       throw expectedError;
-                     });
+                   [&called, &called3, &mainThreadId, &expectedError, currLoop]() -> native::Future<void> {
+                     native::Future<void> future =
+                         native::async(currLoop, [&called, &called3, &mainThreadId, &expectedError]() {
+                           std::chrono::milliseconds time(100);
+                           std::this_thread::sleep_for(time);
+                           called3 = true;
+                           std::thread::id currThreadId = std::this_thread::get_id();
+                           EXPECT_EQ(mainThreadId, currThreadId);
+                           // Error?
+                           throw expectedError;
+                         });
 
                      called = true;
                      std::thread::id currThreadId = std::this_thread::get_id();

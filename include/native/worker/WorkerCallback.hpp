@@ -52,6 +52,7 @@ public:
 
   std::shared_ptr<FutureShared<R>> getFuture();
   void executeWorkerAfter(int iStatus) override;
+  std::shared_ptr<WorkerCallback<R, Args...>> getInstance();
 };
 
 template <typename R, typename... Args> class WorkerCallback<Future<R>, Args...> : public WorkerCallbackBase {
@@ -75,6 +76,7 @@ public:
   Create(std::shared_ptr<Loop> iLoop, std::function<Future<R>(Args...)> f, Args &&... args);
 
   std::shared_ptr<FutureShared<R>> getFuture();
+  std::shared_ptr<WorkerCallback<Future<R>, Args...>> getInstance();
 };
 
 template <typename... Args> class WorkerCallback<Future<void>, Args...> : public WorkerCallbackBase {
@@ -98,6 +100,7 @@ public:
   Create(std::shared_ptr<Loop> iLoop, std::function<Future<void>(Args...)> f, Args &&... args);
 
   std::shared_ptr<FutureShared<void>> getFuture();
+  std::shared_ptr<WorkerCallback<Future<void>, Args...>> getInstance();
 };
 
 template <typename... Args> class WorkerCallback<void, Args...> : public WorkerCallbackBase {
@@ -121,6 +124,7 @@ public:
   Create(std::shared_ptr<Loop> iLoop, std::function<void(Args...)> f, Args &&... args);
 
   std::shared_ptr<FutureShared<void>> getFuture();
+  std::shared_ptr<WorkerCallback<void, Args...>> getInstance();
 };
 
 } /* namespace native */

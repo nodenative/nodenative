@@ -47,11 +47,11 @@ FutureShared<R>::then(F &&f, Args &&... args) {
   using return_type = typename std::result_of<F(R, Args...)>::type;
   std::shared_ptr<ActionCallbackP1<return_type, R, Args...>> action =
       ActionCallbackP1<return_type, R, Args...>::Create(_loop, std::forward<F>(f), std::forward<Args>(args)...);
-  auto currFuture = action->getFuture();
+  std::shared_ptr<
+      FutureShared<typename ActionCallbackP1<typename std::result_of<F(R, Args...)>::type, R, Args...>::ResultType>>
+      currFuture = action->getFuture();
 
-  if (!this->_loop->isNotOnEventLoopThread() && !this->_resolver) {
-    _actions.push_back(action);
-  } else {
+  if (!this->_loop->isOnEventLoopThread()) {
     // avoid race condition
     std::shared_ptr<FutureShared<R>> instance = this->shared_from_this();
     async(this->_loop, [instance, action]() {
@@ -61,6 +61,11 @@ FutureShared<R>::then(F &&f, Args &&... args) {
         instance->_resolver->resolve(action);
       }
     });
+  } else {
+    _actions.push_back(action);
+    if (_resolver) {
+      _resolver->resolve(action);
+    }
   }
 
   return currFuture;
@@ -74,9 +79,7 @@ FutureShared<void>::then(F &&f, Args &&... args) {
       ActionCallback<return_type, Args...>::Create(_loop, std::forward<F>(f), std::forward<Args>(args)...);
   auto currFuture = action->getFuture();
 
-  if (!this->_loop->isNotOnEventLoopThread() && !this->_resolver) {
-    _actions.push_back(action);
-  } else {
+  if (!this->_loop->isOnEventLoopThread()) {
     // avoid race condition
     std::shared_ptr<FutureShared<void>> instance = this->shared_from_this();
 
@@ -87,6 +90,11 @@ FutureShared<void>::then(F &&f, Args &&... args) {
         instance->_resolver->resolve(action);
       }
     });
+  } else {
+    _actions.push_back(action);
+    if (_resolver) {
+      _resolver->resolve(action);
+    }
   }
   return currFuture;
 }
@@ -101,9 +109,7 @@ FutureShared<R>::finally(F &&f, Args &&... args) {
       ActionCallbackFinallyP1<return_type, R, Args...>::Create(_loop, std::forward<F>(f), std::forward<Args>(args)...);
   auto currFuture = action->getFuture();
 
-  if (!this->_loop->isNotOnEventLoopThread() && !this->_resolver) {
-    _actions.push_back(action);
-  } else {
+  if (!this->_loop->isOnEventLoopThread()) {
     // avoid race condition
     std::shared_ptr<FutureShared<R>> instance = this->shared_from_this();
     async(this->_loop, [instance, action]() {
@@ -113,6 +119,11 @@ FutureShared<R>::finally(F &&f, Args &&... args) {
         instance->_resolver->resolve(action);
       }
     });
+  } else {
+    _actions.push_back(action);
+    if (_resolver) {
+      _resolver->resolve(action);
+    }
   }
 
   return currFuture;
@@ -127,9 +138,7 @@ FutureShared<void>::finally(F &&f, Args &&... args) {
       ActionCallbackFinally<return_type, Args...>::Create(_loop, std::forward<F>(f), std::forward<Args>(args)...);
   auto currFuture = action->getFuture();
 
-  if (!this->_loop->isNotOnEventLoopThread() && !this->_resolver) {
-    _actions.push_back(action);
-  } else {
+  if (!this->_loop->isOnEventLoopThread()) {
     // avoid race condition
     std::shared_ptr<FutureShared<void>> instance = this->shared_from_this();
 
@@ -140,6 +149,11 @@ FutureShared<void>::finally(F &&f, Args &&... args) {
         instance->_resolver->resolve(action);
       }
     });
+  } else {
+    _actions.push_back(action);
+    if (_resolver) {
+      _resolver->resolve(action);
+    }
   }
   return currFuture;
 }
@@ -151,9 +165,7 @@ std::shared_ptr<FutureShared<R>> FutureShared<R>::error(F &&f, Args &&... args) 
       ActionCallbackErrorP1<R, Args...>::Create(_loop, std::forward<F>(f), std::forward<Args>(args)...);
   std::shared_ptr<FutureShared<R>> currFuture = action->getFuture();
 
-  if (!this->_loop->isNotOnEventLoopThread() && !this->_resolver) {
-    _actions.push_back(action);
-  } else {
+  if (!this->_loop->isOnEventLoopThread()) {
     // avoid race condition
     std::shared_ptr<FutureShared<R>> instance = this->shared_from_this();
 
@@ -164,6 +176,11 @@ std::shared_ptr<FutureShared<R>> FutureShared<R>::error(F &&f, Args &&... args) 
         instance->_resolver->resolve(action);
       }
     });
+  } else {
+    _actions.push_back(action);
+    if (_resolver) {
+      _resolver->resolve(action);
+    }
   }
 
   return currFuture;
@@ -175,9 +192,7 @@ std::shared_ptr<FutureShared<void>> FutureShared<void>::error(F &&f, Args &&... 
       ActionCallbackError<Args...>::Create(_loop, std::forward<F>(f), std::forward<Args>(args)...);
   std::shared_ptr<FutureShared<void>> currFuture = action->getFuture();
 
-  if (!this->_loop->isNotOnEventLoopThread() && !this->_resolver) {
-    _actions.push_back(action);
-  } else {
+  if (!this->_loop->isOnEventLoopThread()) {
     // avoid race condition
     std::shared_ptr<FutureShared<void>> instance = this->shared_from_this();
     async(this->_loop, [instance, action]() {
@@ -187,6 +202,11 @@ std::shared_ptr<FutureShared<void>> FutureShared<void>::error(F &&f, Args &&... 
         instance->_resolver->resolve(action);
       }
     });
+  } else {
+    _actions.push_back(action);
+    if (_resolver) {
+      _resolver->resolve(action);
+    }
   }
 
   return currFuture;

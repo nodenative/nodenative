@@ -36,6 +36,12 @@ public:
    */
   Future(std::shared_ptr<FutureShared<R>> p) : _p(p) {}
 
+  /** Constructor from other Future object
+   */
+  Future(const Future<R> &other) : _p(other._p) {}
+
+  std::shared_ptr<FutureShared<R>> getFutureShared() const { return _p; }
+
   /** Add an waiter callback for value. It will be called if the Future is resolved with a value and it will be skipped
    * for error.
    *
@@ -99,6 +105,12 @@ public:
   Future() = delete;
   Future(std::shared_ptr<Loop> iLoop) : _p(FutureShared<void>::Create(iLoop)) {}
   Future(std::shared_ptr<FutureShared<void>> p) : _p(p) {}
+
+  std::shared_ptr<FutureShared<void>> getFutureShared() const { return _p; }
+
+  /** Constructor from other Future object
+   */
+  Future(const Future<void> &other) : _p(other._p) {}
 
   template <class F, typename... Args>
   Future<typename ActionCallback<typename std::result_of<F(Args...)>::type, Args...>::ResultType>

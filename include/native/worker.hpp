@@ -26,7 +26,7 @@ template <class F, class... Args>
 Future<typename WorkerCallback<typename std::result_of<F(Args...)>::type, Args...>::ResultType>
 worker(F &&f, Args &&... args) {
   NNATIVE_FCALL();
-  std::shared_ptr<Loop> iLoop = Loop::GetInstanceOrCreateDefault();
+  std::shared_ptr<Loop> iLoop = Loop::GetInstance();
   return worker<F, Args...>(iLoop, std::forward<F>(f), std::forward<Args>(args)...);
 }
 
@@ -49,9 +49,10 @@ worker(std::shared_ptr<Loop> iLoop, F &&f, Args &&... args) {
   using return_type = typename std::result_of<F(Args...)>::type;
   std::shared_ptr<WorkerCallback<return_type, Args...>> action =
       WorkerCallback<return_type, Args...>::Create(iLoop, std::forward<F>(f), std::forward<Args>(args)...);
-  action->resolve();
-  return Future<typename WorkerCallback<typename std::result_of<F(Args...)>::type, Args...>::ResultType>(
+  auto future = Future<typename WorkerCallback<typename std::result_of<F(Args...)>::type, Args...>::ResultType>(
       action->getFuture());
+  action->resolve();
+  return future;
 }
 
 } /* namespace native */

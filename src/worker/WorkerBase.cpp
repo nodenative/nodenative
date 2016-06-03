@@ -2,6 +2,13 @@
 #include "native/Error.hpp"
 #include "native/helper/trace.hpp"
 
+#include <mutex>
+
+namespace {
+// TODO find a way to remove mutex
+std::mutex mutexInProcess;
+}
+
 namespace native {
 
 WorkerBase::WorkerBase(std::shared_ptr<Loop> iLoop) : _loop(iLoop) {
@@ -18,12 +25,14 @@ WorkerBase::~WorkerBase() {
 
 void WorkerBase::enqueue() {
   NNATIVE_FCALL();
+  std::lock_guard<std::mutex> guard(mutexInProcess);
   NNATIVE_ASSERT(!_instance);
+  // Make sure that the worker is not in progress
   NNATIVE_ASSERT(this->_uvWork.data == nullptr);
   this->_uvWork.data = this;
   this->_instance = getInstance();
 
-  if (uv_queue_work(_loop->get(), &_uvWork, &WorkerBase::Worker, &WorkerBase::WorkerAfter) != 0) {
+  if (uv_queue_work(_loop->get(), &_uvWork, WorkerBase::Worker, WorkerBase::WorkerAfter) != 0) {
     NNATIVE_DEBUG("Error in uv_queue_work");
     _uvWork.data = nullptr;
     this->_instance.reset();
@@ -43,20 +52,24 @@ void WorkerBase::Worker(uv_work_t *iHandle) {
 
 void WorkerBase::WorkerAfter(uv_work_t *iHandle, int iStatus) {
   NNATIVE_FCALL();
-  NNATIVE_ASSERT(iHandle->data != nullptr);
-  NNATIVE_DEBUG("iStatus: " << iStatus);
+  std::shared_ptr<WorkerBase> currInst;
+  {
+    std::lock_guard<std::mutex> guard(mutexInProcess);
+    NNATIVE_ASSERT(iHandle->data != nullptr);
+    NNATIVE_DEBUG("iStatus: " << iStatus);
 
-  WorkerBase *currobj = static_cast<WorkerBase *>(iHandle->data);
-  iHandle->data = nullptr;
+    WorkerBase *currobj = static_cast<WorkerBase *>(iHandle->data);
+    iHandle->data = nullptr;
 
-  NNATIVE_ASSERT(currobj->_instance);
+    NNATIVE_ASSERT(currobj->_instance);
 
-  // Save a instance copy do not call the destructor
-  std::shared_ptr<WorkerBase> currInst = currobj->_instance;
-  currobj->_instance.reset();
+    // Save a instance copy do not call the destructor
+    currInst = currobj->_instance;
+    currInst->_instance.reset();
 
-  currobj->executeWorkerAfter(iStatus);
-  currobj->closeWorker();
+    currInst->executeWorkerAfter(iStatus);
+  }
+  currInst->closeWorker();
 }
 
 } /* namespace native */

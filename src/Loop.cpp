@@ -3,14 +3,40 @@
 
 #include <map>
 #include <memory>
+#include <mutex>
+#include <shared_mutex>
 #include <thread>
 
 namespace {
 
+// TODO: move to std::shared_mutex
+class RWLock {
+public:
+  RWLock() { uv_rwlock_init(&_lock); }
+  ~RWLock() { uv_rwlock_destroy(&_lock); }
+  RWLock(const RWLock &) = delete;
+  RWLock operator=(const RWLock &) = delete;
+
+  // RW
+  void lock() { uv_rwlock_wrlock(&_lock); }
+  bool try_lock() { return uv_rwlock_trywrlock(&_lock) == 0; }
+  void unlock() { uv_rwlock_wrunlock(&_lock); }
+
+  // R
+  void lock_shared() { uv_rwlock_rdlock(&_lock); }
+  bool try_lock_shared() { return uv_rwlock_tryrdlock(&_lock) == 0; }
+  void unlock_shared() { uv_rwlock_rdunlock(&_lock); }
+
+private:
+  uv_rwlock_t _lock;
+};
+
 typedef std::map<std::thread::id, std::weak_ptr<native::Loop>> LoopMapType;
 LoopMapType _loopMap;
+RWLock _mutexloopMap;
 
 bool deregisterLoop(native::Loop *iLoopPtr) {
+  std::unique_lock<RWLock> lock(_mutexloopMap);
   for (LoopMapType::iterator it = _loopMap.begin(); it != _loopMap.end(); ++it) {
     if (!it->second.expired() && it->second.lock().get() == iLoopPtr) {
       _loopMap.erase(it);
@@ -23,6 +49,7 @@ bool deregisterLoop(native::Loop *iLoopPtr) {
 
 void registerLoop(std::shared_ptr<native::Loop> iLoop) {
   deregisterLoop(iLoop.get());
+  std::unique_lock<RWLock> lock(_mutexloopMap);
   _loopMap[std::this_thread::get_id()] = iLoop;
 }
 
@@ -80,6 +107,7 @@ std::shared_ptr<Loop> Loop::GetInstanceOrCreateDefault() {
 
 std::shared_ptr<Loop> Loop::GetInstance(const std::thread::id &iThreadId) {
   NNATIVE_FCALL();
+  std::shared_lock<RWLock> lock(_mutexloopMap);
   LoopMapType::iterator it = _loopMap.find(iThreadId);
   if (it != _loopMap.end() && !it->second.expired()) {
     return it->second.lock();
@@ -87,8 +115,8 @@ std::shared_ptr<Loop> Loop::GetInstance(const std::thread::id &iThreadId) {
   return std::shared_ptr<Loop>();
 }
 
-bool Loop::isNotOnEventLoopThread() const {
-  return (this->started() && (this->getThreadId() != std::this_thread::get_id()));
+bool Loop::isOnEventLoopThread() const {
+  return (!this->started() || (this->getThreadId() == std::this_thread::get_id()));
 }
 
 Loop::Loop() : _started(false) {

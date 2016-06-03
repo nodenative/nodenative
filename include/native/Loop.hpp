@@ -66,7 +66,7 @@ public:
   /**
    * Returns true if the current thread is the same as event Loop thread;
    */
-  bool isNotOnEventLoopThread() const;
+  bool isOnEventLoopThread() const;
 
   bool started() const { return _started; }
 

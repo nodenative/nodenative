@@ -35,7 +35,7 @@
   }
 
 #define NNATIVE_CHECK_LOOP_THREAD(iLoop)                                                                               \
-  NNATIVE_ASSERT_MSG(iLoop && !iLoop->isNotOnEventLoopThread(), "Not on the event Loop thread")
+  NNATIVE_ASSERT_MSG(iLoop && iLoop->isOnEventLoopThread(), "Not on the event Loop thread")
 
 #else /* NNATIVE_NO_ASSERT */
 
