@@ -30,6 +30,8 @@
                 '../src/crypto/PBKDF2.cpp',
                 '../src/crypto.cpp',
                 '../src/fs.cpp',
+                '../src/helper/CallStack_gcc.cpp',
+                '../src/helper/CallStack_win.cpp',
                 '../src/http/ClientRequest.cpp',
                 '../src/http/ClientResponse.cpp',
                 '../src/http/HttpUtils.cpp',
