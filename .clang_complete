@@ -2,4 +2,5 @@
 -Ideps/libuv/include
 -Ideps/http-parser
 -Ideps/googletest/googlemock/include
+-Ideps/googletest/googletest/include
 -Ideps/openssl/openssl/include
