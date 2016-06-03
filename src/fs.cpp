@@ -158,7 +158,7 @@ Stats &Stats::operator=(const uv_stat_t *stats) {
   });
 
 #define UV_FS_DECL()                                                                                                   \
-  std::shared_ptr<Loop> loopInst = Loop::GetInstanceOrCreateDefault();                                                 \
+  std::shared_ptr<Loop> loopInst = Loop::GetInstanceSafe();                                                            \
   uv_fs_t req;                                                                                                         \
   Error err;
 
@@ -185,7 +185,7 @@ Future<file_handle> open(const std::string &path, const std::string &flags, cons
 }
 
 file_handle openSync(const std::string &path, const int flags, const int mode) {
-  std::shared_ptr<Loop> loopInst = Loop::GetInstanceOrCreateDefault();
+  std::shared_ptr<Loop> loopInst = Loop::GetInstanceSafe();
   uv_fs_t req;
   file_handle fd;
   if ((fd = uv_fs_open(loopInst->get(), &req, path.c_str(), flags, mode, nullptr)) < 0) {
@@ -208,7 +208,7 @@ Future<std::shared_ptr<std::string>> read(const file_handle fd, const size_t len
 }
 
 std::shared_ptr<std::string> readSync(const file_handle fd, const size_t len, const off_t offset) {
-  std::shared_ptr<Loop> loopInst = Loop::GetInstanceOrCreateDefault();
+  std::shared_ptr<Loop> loopInst = Loop::GetInstanceSafe();
   std::shared_ptr<std::string> bufInst(new std::string());
   bufInst->resize(len);
   const uv_buf_t iov = uv_buf_init(const_cast<char *>(bufInst->c_str()), len);
@@ -234,7 +234,7 @@ Future<int> write(const file_handle fd, const std::string &buf, const off_t offs
 }
 
 int writeSync(const file_handle fd, const char *buf, const size_t len, const off_t offset) {
-  std::shared_ptr<Loop> loopInst = Loop::GetInstanceOrCreateDefault();
+  std::shared_ptr<Loop> loopInst = Loop::GetInstanceSafe();
   // TODO: remove const_cast<> !!
   const uv_buf_t iov = uv_buf_init(const_cast<char *>(buf), len);
   uv_fs_t req;
@@ -399,7 +399,7 @@ Future<std::shared_ptr<std::string>> readFile(const file_handle fd, const int fl
 }
 
 std::shared_ptr<std::string> readFileSync(const file_handle fd, const int flags) {
-  std::shared_ptr<Loop> loopInst = Loop::GetInstanceOrCreateDefault();
+  std::shared_ptr<Loop> loopInst = Loop::GetInstanceSafe();
   std::shared_ptr<Stats> stats = fstatSync(fd);
 
   size_t len = 0;
@@ -491,7 +491,7 @@ Future<std::shared_ptr<std::vector<DirEnt>>> readdir(const std::string &path, in
 }
 
 std::shared_ptr<std::vector<DirEnt>> readdirSync(const std::string &path, int flags) {
-  std::shared_ptr<Loop> loopInst = Loop::GetInstanceOrCreateDefault();
+  std::shared_ptr<Loop> loopInst = Loop::GetInstanceSafe();
   uv_fs_t req;
 
   Error err;
@@ -543,7 +543,7 @@ Future<std::shared_ptr<Stats>> lstat(const std::string &path) {
 }
 
 #define CALL_UV_STAT(method, ...)                                                                                      \
-  std::shared_ptr<Loop> loopInst = Loop::GetInstanceOrCreateDefault();                                                 \
+  std::shared_ptr<Loop> loopInst = Loop::GetInstanceSafe();                                                            \
   std::shared_ptr<Stats> statInst(new Stats);                                                                          \
   uv_fs_t req;                                                                                                         \
   Error err;                                                                                                           \

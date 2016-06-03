@@ -7,7 +7,7 @@ TEST(AsyncTest, async) {
   bool called = false;
   std::thread::id mainThreadId = std::this_thread::get_id();
 
-  std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
+  std::shared_ptr<native::Loop> currLoop = native::Loop::Create();
   {
     native::async(currLoop, [&called, &mainThreadId]() {
       called = true;
@@ -24,7 +24,7 @@ TEST(AsyncTest, async) {
 
 TEST(AsyncTest, asyncDefaultLoop) {
   bool called = false;
-  std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
+  std::shared_ptr<native::Loop> currLoop = native::Loop::Create();
   std::thread::id mainThreadId = std::this_thread::get_id();
   {
     native::async([&called, &mainThreadId]() {
@@ -43,7 +43,7 @@ TEST(AsyncTest, asyncDefaultLoop) {
 TEST(AsyncTest, asyncDefaultLoopInOtherThread) {
   bool called = false;
 
-  std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
+  std::shared_ptr<native::Loop> currLoop = native::Loop::Create();
   {
     native::worker([&called]() {
       called = true;
@@ -61,7 +61,7 @@ TEST(AsyncTest, asyncDefaultLoopInOtherThread) {
 TEST(AsyncTest, asyncWithParamaterRef) {
   bool called = false;
   std::thread::id mainThreadId = std::this_thread::get_id();
-  std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
+  std::shared_ptr<native::Loop> currLoop = native::Loop::Create();
   {
     native::async(currLoop,
                   [&mainThreadId](bool &iCalled) {
@@ -81,7 +81,7 @@ TEST(AsyncTest, asyncWithParamaterRef) {
 TEST(AsyncTest, asyncWithParamaterValue) {
   bool called = false, asyncCalled = false;
   std::thread::id mainThreadId = std::this_thread::get_id();
-  std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
+  std::shared_ptr<native::Loop> currLoop = native::Loop::Create();
   {
     native::async(currLoop,
                   [&asyncCalled, &mainThreadId](bool iCalled) {
@@ -104,7 +104,7 @@ TEST(AsyncTest, asyncWithParamaterValue) {
 TEST(AsyncTest, asyncWithReturnRef) {
   bool called = false;
   std::thread::id mainThreadId = std::this_thread::get_id();
-  std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
+  std::shared_ptr<native::Loop> currLoop = native::Loop::Create();
   {
     native::async(currLoop, [&called, &mainThreadId]() -> bool & {
       return called;
@@ -126,7 +126,7 @@ TEST(AsyncTest, asyncWithReturnRef) {
 TEST(AsyncTest, asyncWithReturnValue) {
   bool called = false, asyncCalled = false;
   std::thread::id mainThreadId = std::this_thread::get_id();
-  std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
+  std::shared_ptr<native::Loop> currLoop = native::Loop::Create();
   {
     native::async(currLoop, [&called, &mainThreadId]() -> bool {
       std::thread::id currThreadId = std::this_thread::get_id();
@@ -152,7 +152,7 @@ TEST(AsyncTest, asyncMultipThenValueOrder) {
   std::string order;
   std::thread::id mainThreadId = std::this_thread::get_id();
 
-  std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
+  std::shared_ptr<native::Loop> currLoop = native::Loop::Create();
   {
     auto async1 = native::async(currLoop, [&order, &mainThreadId]() {
       order += "1";
@@ -199,7 +199,7 @@ TEST(AsyncTest, asyncError) {
   const std::string errorText("TestError");
   std::thread::id mainThreadId = std::this_thread::get_id();
 
-  std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
+  std::shared_ptr<native::Loop> currLoop = native::Loop::Create();
 
   {
     native::async(currLoop,
@@ -243,6 +243,7 @@ TEST(AsyncTest, ReturnFuture) {
   bool called_p1 = false;
   bool called_p2 = false;
   bool called_p1_after = false;
+  std::shared_ptr<native::Loop> currLoop = native::Loop::Create();
   std::thread::id mainThreadId = std::this_thread::get_id();
   {
     native::async([&called_p1, &called_p2, &mainThreadId]() -> native::Future<void> {
@@ -279,6 +280,7 @@ TEST(AsyncTest, ReturnFutureWithValue) {
   bool called_p1 = false;
   bool called_p2 = false;
   bool called_p1_after = false;
+  std::shared_ptr<native::Loop> currLoop = native::Loop::Create();
   std::thread::id mainThreadId = std::this_thread::get_id();
   {
     native::async([&called_p1, &called_p2, &mainThreadId]() -> native::Future<int> {

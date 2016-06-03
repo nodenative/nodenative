@@ -9,7 +9,7 @@
 using namespace native;
 
 TEST(TimerTests, Basic) {
-  std::shared_ptr<Loop> loop = Loop::GetInstanceOrCreateDefault();
+  std::shared_ptr<Loop> loop = Loop::Create();
   std::weak_ptr<Loop> loopWeak = loop;
   bool isTimeOut = false;
   const uint64_t startTime = loop->now();
@@ -36,7 +36,7 @@ TEST(TimerTests, Basic) {
 }
 
 TEST(TimerTests, EmptyCallback) {
-  std::shared_ptr<Loop> loop = Loop::GetInstanceOrCreateDefault();
+  std::shared_ptr<Loop> loop = Loop::Create();
   std::weak_ptr<Loop> loopWeak = loop;
   const uint64_t startTime = loop->now();
   uint64_t elapsedTime = 0U;
@@ -58,7 +58,7 @@ TEST(TimerTests, EmptyCallback) {
 }
 
 TEST(TimerTests, EmptyCallbackRepeat) {
-  std::shared_ptr<Loop> loop = Loop::GetInstanceOrCreateDefault();
+  std::shared_ptr<Loop> loop = Loop::Create();
   std::weak_ptr<Loop> loopWeak = loop;
   const uint64_t startTime = loop->now();
   uint64_t elapsedTime = 0U;
@@ -84,7 +84,7 @@ TEST(TimerTests, EmptyCallbackRepeat) {
 }
 
 TEST(TimerTests, Repeat3) {
-  std::shared_ptr<Loop> loop = Loop::GetInstanceOrCreateDefault();
+  std::shared_ptr<Loop> loop = Loop::Create();
   std::weak_ptr<Loop> loopWeak = loop;
   int timeouts = 0;
   const uint64_t startTime = loop->now();
@@ -116,7 +116,7 @@ TEST(TimerTests, Repeat3) {
 }
 
 TEST(TimerTests, Again) {
-  std::shared_ptr<Loop> loop = Loop::GetInstanceOrCreateDefault();
+  std::shared_ptr<Loop> loop = Loop::Create();
   std::weak_ptr<Loop> loopWeak = loop;
   int timeouts1 = 0;
   int timeouts2 = 0;

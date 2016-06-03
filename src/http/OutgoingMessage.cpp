@@ -29,7 +29,7 @@ std::string OutgoingMessage::getMessageHeaderRaw() const {
 
 Future<void> OutgoingMessage::writeData(const std::string &str) {
   NNATIVE_ASSERT(!_closed);
-  Future<void> future(Loop::GetInstanceOrCreateDefault());
+  Future<void> future(Loop::GetInstanceSafe());
 
   if (!_headerSent) {
     if (!str.empty() && _headers.find("Content-Length") == _headers.end()) {
@@ -45,7 +45,7 @@ Future<void> OutgoingMessage::writeData(const std::string &str) {
     std::string str = getMessageHeaderRaw();
     future = sendData(str);
   } else {
-    future = Promise<void>::Resolve(Loop::GetInstanceOrCreateDefault());
+    future = Promise<void>::Resolve(Loop::GetInstanceSafe());
   }
 
   if (!str.empty()) {

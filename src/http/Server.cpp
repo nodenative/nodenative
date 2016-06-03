@@ -5,7 +5,7 @@ namespace native {
 namespace http {
 
 std::shared_ptr<Server> Server::Create() {
-  std::shared_ptr<Loop> loop = Loop::GetInstanceOrCreateDefault();
+  std::shared_ptr<Loop> loop = Loop::GetInstanceSafe();
   std::shared_ptr<Server> instance(new Server(loop));
   instance->_instance = instance;
   return instance;

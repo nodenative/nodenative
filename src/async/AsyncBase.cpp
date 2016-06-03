@@ -5,6 +5,7 @@
 #include <mutex>
 
 namespace {
+// TODO: get rid of mutexes
 std::mutex mutexInProcess;
 std::mutex mutexInstanceChange;
 }

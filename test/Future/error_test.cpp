@@ -10,7 +10,7 @@ TEST(FutureErrorTest, basic) {
   bool calledFinallyThen2 = false;
   std::thread::id mainThreadId = std::this_thread::get_id();
 
-  std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
+  std::shared_ptr<native::Loop> currLoop = native::Loop::Create();
   {
     native::async(currLoop,
                   [&calledAsync, mainThreadId]() {
@@ -55,7 +55,7 @@ TEST(FutureErrorTest, rejectFromError) {
   bool calledFinallyThen2 = false;
   std::thread::id mainThreadId = std::this_thread::get_id();
 
-  std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
+  std::shared_ptr<native::Loop> currLoop = native::Loop::Create();
   {
     native::async(currLoop,
                   [&calledAsync, mainThreadId]() {

@@ -37,14 +37,13 @@ public:
    * @param iDefault True if the default loop should be used
    * @return A loop instance
    */
-  static std::shared_ptr<Loop> Create(const bool iDefault = false);
+  static std::shared_ptr<Loop> Create();
 
   /** Get current event loop from current thread if any.
    * @return The event loop instance from the current thread if exists.
    */
   static std::shared_ptr<Loop> GetInstance();
-
-  static std::shared_ptr<Loop> GetInstanceOrCreateDefault();
+  static std::shared_ptr<Loop> GetInstanceSafe();
 
   /** Get event loop instance from thread id.
    * @return The loop instance from the specified instance if exists.

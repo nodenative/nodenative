@@ -4,8 +4,8 @@
 using namespace native;
 
 TEST(ServerPlugin, get) {
-  auto loop = Loop::GetInstanceOrCreateDefault();
-  std::weak_ptr<Loop> loopWeak = Loop::GetInstanceOrCreateDefault();
+  auto loop = Loop::Create();
+  std::weak_ptr<Loop> loopWeak = Loop::GetInstanceSafe();
 
   auto cbCallGet = [loopWeak](const std::string &uriTemplate, const std::string &uri, const bool iFullMatch) -> bool {
     std::shared_ptr<http::Server> server = http::Server::Create();

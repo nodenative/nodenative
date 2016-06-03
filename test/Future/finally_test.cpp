@@ -9,7 +9,7 @@ TEST(FutureFinallyTest, FromAsyncResolved) {
   bool calledFinallyThen = false;
   std::thread::id mainThreadId = std::this_thread::get_id();
 
-  std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
+  std::shared_ptr<native::Loop> currLoop = native::Loop::Create();
   {
     native::async(currLoop,
                   [&calledAsync, &mainThreadId]() {
@@ -47,7 +47,7 @@ TEST(FutureFinallyTest, FromAsyncRejected) {
   bool calledFinallyThen = false;
   std::thread::id mainThreadId = std::this_thread::get_id();
 
-  std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
+  std::shared_ptr<native::Loop> currLoop = native::Loop::Create();
   {
     native::async(currLoop,
                   [&calledAsync, mainThreadId]() {
@@ -86,7 +86,7 @@ TEST(FutureFinallyTest, AvoidValueResolved) {
   bool calledFinallyThen = false;
   std::thread::id mainThreadId = std::this_thread::get_id();
 
-  std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
+  std::shared_ptr<native::Loop> currLoop = native::Loop::Create();
   {
     native::async(currLoop,
                   [&calledAsync, &mainThreadId]() -> int {
@@ -127,7 +127,7 @@ TEST(FutureFinallyTest, AvoidValueRejected) {
   bool calledFinallyThen = false;
   std::thread::id mainThreadId = std::this_thread::get_id();
 
-  std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
+  std::shared_ptr<native::Loop> currLoop = native::Loop::Create();
   {
     native::async(currLoop,
                   [&calledAsync, mainThreadId]() -> int {
@@ -168,7 +168,7 @@ TEST(FutureFinallyTest, AvoidFutureValueResolved) {
   bool calledFinallyThen = false;
   std::thread::id mainThreadId = std::this_thread::get_id();
 
-  std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
+  std::shared_ptr<native::Loop> currLoop = native::Loop::Create();
   {
     native::async(currLoop,
                   [&calledAsync, &mainThreadId]() -> native::Future<int> {
@@ -220,7 +220,7 @@ TEST(FutureFinallyTest, AvoidFutureValueRejected) {
   bool calledFinallyThen = false;
   std::thread::id mainThreadId = std::this_thread::get_id();
 
-  std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
+  std::shared_ptr<native::Loop> currLoop = native::Loop::Create();
   {
     native::async(currLoop,
                   [&calledAsync, mainThreadId]() -> native::Future<int> {
@@ -273,7 +273,7 @@ TEST(FutureFinallyTest, AvoidFutureVoidResolved) {
   bool calledFinallyThen = false;
   std::thread::id mainThreadId = std::this_thread::get_id();
 
-  std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
+  std::shared_ptr<native::Loop> currLoop = native::Loop::Create();
   {
     native::async(currLoop,
                   [&calledAsync, &mainThreadId]() -> native::Future<void> {
@@ -323,7 +323,7 @@ TEST(FutureFinallyTest, AvoidFutureVoidRejected) {
   bool calledFinallyThen = false;
   std::thread::id mainThreadId = std::this_thread::get_id();
 
-  std::shared_ptr<native::Loop> currLoop = native::Loop::Create(true);
+  std::shared_ptr<native::Loop> currLoop = native::Loop::Create();
   {
     native::async(currLoop,
                   [&calledAsync, mainThreadId]() -> native::Future<void> {

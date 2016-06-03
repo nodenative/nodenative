@@ -31,7 +31,7 @@ template <class F, class... Args>
 Future<typename ActionCallback<typename std::result_of<F(Args...)>::type, Args...>::ResultType> async(F &&f,
                                                                                                       Args &&... args) {
   NNATIVE_FCALL();
-  std::shared_ptr<Loop> currentLoop = Loop::GetInstance();
+  std::shared_ptr<Loop> currentLoop = Loop::GetInstanceSafe();
 
   return async<F, Args...>(currentLoop, std::forward<F>(f), std::forward<Args>(args)...);
 }

@@ -13,6 +13,7 @@ int getPort() { return 8080; }
 TEST(HttpServerTest, Basic)
 // void deactivated()
 {
+  std::shared_ptr<Loop> loop = Loop::Create();
   std::shared_ptr<http::Server> server = http::Server::Create();
   std::weak_ptr<http::Server> serverWeak = server;
   int port = getPort();

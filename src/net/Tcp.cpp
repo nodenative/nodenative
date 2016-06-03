@@ -8,7 +8,7 @@ namespace native {
 namespace net {
 
 std::shared_ptr<Tcp> Tcp::Create() {
-  std::shared_ptr<Tcp> instance(new Tcp(Loop::GetInstanceOrCreateDefault()));
+  std::shared_ptr<Tcp> instance(new Tcp(Loop::GetInstanceSafe()));
   instance->init();
   return instance;
 }

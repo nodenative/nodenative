@@ -36,7 +36,7 @@ LoopMapType _loopMap;
 RWLock _mutexloopMap;
 
 bool deregisterLoop(native::Loop *iLoopPtr) {
-  std::unique_lock<RWLock> lock(_mutexloopMap);
+  // std::unique_lock<RWLock> lock(_mutexloopMap);
   for (LoopMapType::iterator it = _loopMap.begin(); it != _loopMap.end(); ++it) {
     if (!it->second.expired() && it->second.lock().get() == iLoopPtr) {
       _loopMap.erase(it);
@@ -49,7 +49,7 @@ bool deregisterLoop(native::Loop *iLoopPtr) {
 
 void registerLoop(std::shared_ptr<native::Loop> iLoop) {
   deregisterLoop(iLoop.get());
-  std::unique_lock<RWLock> lock(_mutexloopMap);
+  // std::unique_lock<RWLock> lock(_mutexloopMap);
   _loopMap[std::this_thread::get_id()] = iLoop;
 }
 
@@ -69,19 +69,10 @@ void Loop::HandleDeleter::operator()(uv_loop_t *iLoop) {
   }
 }
 
-std::shared_ptr<Loop> Loop::Create(bool iDefault) {
+std::shared_ptr<Loop> Loop::Create() {
   NNATIVE_FCALL();
-  static std::weak_ptr<Loop> savedPtr;
-
-  if (iDefault && !savedPtr.expired()) {
-    return savedPtr.lock();
-  }
 
   std::shared_ptr<Loop> instance(new Loop());
-
-  if (iDefault) {
-    savedPtr = instance;
-  }
 
   // Register loop in the current thread
   registerLoop(instance);
@@ -94,20 +85,16 @@ std::shared_ptr<Loop> Loop::GetInstance() {
   return Loop::GetInstance(std::this_thread::get_id());
 }
 
-std::shared_ptr<Loop> Loop::GetInstanceOrCreateDefault() {
+std::shared_ptr<Loop> Loop::GetInstanceSafe() {
   NNATIVE_FCALL();
-  std::shared_ptr<Loop> currLoop = Loop::GetInstance(std::this_thread::get_id());
-
-  if (!currLoop) {
-    currLoop = Loop::Create(true);
-  }
-
-  return currLoop;
+  std::shared_ptr<Loop> instance = Loop::GetInstance(std::this_thread::get_id());
+  NNATIVE_ASSERT(instance);
+  return instance;
 }
 
 std::shared_ptr<Loop> Loop::GetInstance(const std::thread::id &iThreadId) {
   NNATIVE_FCALL();
-  std::shared_lock<RWLock> lock(_mutexloopMap);
+  // std::shared_lock<RWLock> lock(_mutexloopMap);
   LoopMapType::iterator it = _loopMap.find(iThreadId);
   if (it != _loopMap.end() && !it->second.expired()) {
     return it->second.lock();
@@ -169,10 +156,10 @@ void Loop::update_time() { uv_update_time(_uv_loop.get()); }
 
 uint64_t Loop::now() { return uv_now(_uv_loop.get()); }
 
-bool run() { return Loop::Create(true)->run(); }
+bool run() { return Loop::GetInstanceSafe()->run(); }
 
-bool run_once() { return Loop::Create(true)->run_once(); }
+bool run_once() { return Loop::GetInstanceSafe()->run_once(); }
 
-bool run_nowait() { return Loop::Create(true)->run_nowait(); }
+bool run_nowait() { return Loop::GetInstanceSafe()->run_nowait(); }
 
 } /* namespace native */
