@@ -56,7 +56,16 @@ bool Stream::readStart(std::function<void(const char *buf, ssize_t len)> callbac
   return res == 0;
 }
 
-bool Stream::readStop() { return uv_read_stop(get<uv_stream_t>()) == 0; }
+bool Stream::readStop() {
+  int res = uv_read_stop(get<uv_stream_t>());
+
+  if(res == 0) {
+    NNATIVE_DEBUG("Reset _readCb");
+    _readCb = std::function<void(const char *buf, ssize_t len)>();
+  }
+
+  return res == 0;
+}
 
 // TODO: implement read2_start()
 

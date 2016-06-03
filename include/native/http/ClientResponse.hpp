@@ -20,6 +20,7 @@ class ClientResponse : public IncomingMessage {
 
 public:
   ClientResponse() = delete;
+  ~ClientResponse();
 
 protected:
   void onMessageComplete() override;

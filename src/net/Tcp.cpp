@@ -22,9 +22,10 @@ std::shared_ptr<Tcp> Tcp::Create(std::shared_ptr<native::Loop> iLoop) {
 Tcp::Tcp(std::shared_ptr<native::Loop> iLoop)
     : base::Stream(iLoop), _uvTcpInstance(new uv_tcp_t), _connecting(false), _connected(false) {
   NNATIVE_FCALL();
+
 }
 
-Tcp::~Tcp() { NNATIVE_FCALL(); }
+Tcp::~Tcp() { }
 
 void Tcp::init() {
   init(reinterpret_cast<uv_handle_t *>(_uvTcpInstance.get()));

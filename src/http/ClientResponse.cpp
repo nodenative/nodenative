@@ -6,7 +6,9 @@ namespace native {
 namespace http {
 
 ClientResponse::ClientResponse(std::shared_ptr<ClientRequest> iReq)
-    : IncomingMessage(false /*iIsRequest*/), _socket(iReq->_socket) {}
+    : IncomingMessage(false /*iIsRequest*/) {}
+
+ClientResponse::~ClientResponse() {}
 
 void ClientResponse::onMessageComplete() {}
 

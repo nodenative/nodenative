@@ -11,9 +11,15 @@ ClientRequest::ClientRequest(std::shared_ptr<Loop> iLoop,
                              const int &port,
                              const std::string &path)
     : _method(method), _host(host), _port(port), _path(path), _loop(iLoop), _connected(false) {
-  _socket = net::Tcp::Create();
   if (_path.empty()) {
     _path = "/";
+  }
+}
+
+ClientRequest::~ClientRequest() {
+  if(_socket) {
+    NNATIVE_DEBUG("Close socket");
+    _socket->close();
   }
 }
 
@@ -57,8 +63,6 @@ Future<void> ClientRequest::sendData(const std::string &str) {
 }
 
 Future<void> ClientRequest::endData(const std::string &data) {
-  std::weak_ptr<ClientRequest> instanceWeak = _instance;
-
   return OutgoingMessage::endData(data);
 }
 
@@ -66,8 +70,9 @@ Future<std::shared_ptr<ClientResponse>> ClientRequest::end(const std::string &da
   // keep instance
   _instance = getInstance();
   _response.reset(new ClientResponse(_instance));
+  NNATIVE_ASSERT(!_socket);
+  _socket = net::Tcp::Create(_loop);
   std::weak_ptr<ClientRequest> instanceWeak = _instance;
-  std::shared_ptr<std::string> resData(new std::string());
 
   return endData(data).then([instanceWeak]() -> Future<std::shared_ptr<ClientResponse>> {
     auto instance = instanceWeak.lock();
@@ -76,11 +81,11 @@ Future<std::shared_ptr<ClientResponse>> ClientRequest::end(const std::string &da
     instance->_socket->readStart([promise, instanceWeak](const char *buf, ssize_t len) {
       NNATIVE_DEBUG("Received len: " << len << ", expired: " << instanceWeak.expired());
       auto instance = instanceWeak.lock();
+      auto nonConstPromise = promise;
+      NNATIVE_ASSERT(instance->_instance);
 
       if ((buf == nullptr) || (len < 0)) {
         auto nonConstPromise = promise;
-        instance->_instance.reset();
-        instance->_socket->readStop();
         if (len == UV_EOF && !instance->_response->isMessageComplete()) {
           NNATIVE_DEBUG("resolve client response because of EOF");
           nonConstPromise.resolve(instance->_response);
@@ -89,6 +94,12 @@ Future<std::shared_ptr<ClientResponse>> ClientRequest::end(const std::string &da
           NNATIVE_DEBUG("No response from socket: " << len << ", name: " << err.name() << ", str:" << err.str());
           nonConstPromise.reject("No response from socket");
         }
+        instance->_instance.reset();
+
+        instance->_socket->readStop();
+        // TODO: keep the connection and pass to future requests. Keep-alive
+        instance->_socket->close();
+        instance->_socket.reset();
         return;
       }
 
@@ -97,21 +108,23 @@ Future<std::shared_ptr<ClientResponse>> ClientRequest::end(const std::string &da
       if (!instance->_response->isUpgrade() && parsed != len) {
         // invalid request, close connection
         NNATIVE_DEBUG("HTTP parser error: " << instance->_response->getErrorName() << ". Close transaction");
-        auto nonConstPromise = promise;
         nonConstPromise.reject(instance->_response->getErrorName());
         instance->_instance.reset();
         instance->_socket->readStop();
-        instance->_socket->close().then(
-            [promise, instanceWeak](std::shared_ptr<base::Handle>) { instanceWeak.lock()->_connected = false; });
+        instanceWeak.lock()->_connected = false;
+        instance->_socket->close();
+        instance->_socket.reset();
         return;
       }
 
       if (instance->_response->isUpgrade() || instance->_response->isMessageComplete()) {
         NNATIVE_DEBUG("complete request");
-        instance->_instance.reset();
-        instance->_socket->readStop();
-        auto nonConstPromise = promise;
         nonConstPromise.resolve(instance->_response);
+        instance->_instance.reset();
+        instance->_response.reset();
+        instance->_socket->readStop();
+        instance->_socket->close();
+        instance->_socket.reset();
       }
     });
 

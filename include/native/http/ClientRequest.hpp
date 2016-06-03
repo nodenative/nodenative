@@ -31,6 +31,7 @@ protected:
 
 public:
   ClientRequest() = delete;
+  virtual ~ClientRequest();
   static std::shared_ptr<ClientRequest>
   Create(std::shared_ptr<Loop> iLoop, const std::string &method, const std::string &uri);
   static std::shared_ptr<ClientRequest> Create(std::shared_ptr<Loop> iLoop,
@@ -43,8 +44,7 @@ public:
     return std::static_pointer_cast<ClientRequest>(OutgoingMessage::getInstance());
   }
 
-  Future<std::shared_ptr<ClientResponse>> end() { return end(""); }
-  Future<std::shared_ptr<ClientResponse>> end(const std::string &data);
+  Future<std::shared_ptr<ClientResponse>> end(const std::string &data = "");
 
 private:
   std::string _method;

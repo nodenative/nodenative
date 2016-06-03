@@ -36,7 +36,7 @@ LoopMapType _loopMap;
 RWLock _mutexloopMap;
 
 bool deregisterLoop(native::Loop *iLoopPtr) {
-  // std::unique_lock<RWLock> lock(_mutexloopMap);
+  std::unique_lock<RWLock> lock(_mutexloopMap);
   for (LoopMapType::iterator it = _loopMap.begin(); it != _loopMap.end(); ++it) {
     if (!it->second.expired() && it->second.lock().get() == iLoopPtr) {
       _loopMap.erase(it);
@@ -49,7 +49,7 @@ bool deregisterLoop(native::Loop *iLoopPtr) {
 
 void registerLoop(std::shared_ptr<native::Loop> iLoop) {
   deregisterLoop(iLoop.get());
-  // std::unique_lock<RWLock> lock(_mutexloopMap);
+  std::unique_lock<RWLock> lock(_mutexloopMap);
   _loopMap[std::this_thread::get_id()] = iLoop;
 }
 
@@ -94,7 +94,7 @@ std::shared_ptr<Loop> Loop::GetInstanceSafe() {
 
 std::shared_ptr<Loop> Loop::GetInstance(const std::thread::id &iThreadId) {
   NNATIVE_FCALL();
-  // std::shared_lock<RWLock> lock(_mutexloopMap);
+  std::shared_lock<RWLock> lock(_mutexloopMap);
   LoopMapType::iterator it = _loopMap.find(iThreadId);
   if (it != _loopMap.end() && !it->second.expired()) {
     return it->second.lock();
@@ -116,10 +116,7 @@ Loop::Loop() : _started(false) {
   }
 }
 
-Loop::~Loop() {
-  NNATIVE_FCALL();
-  deregisterLoop(this);
-}
+Loop::~Loop() { deregisterLoop(this); }
 
 bool Loop::run() {
   NNATIVE_FCALL();
