@@ -69,7 +69,7 @@ int main() {
   const UriTemplate uriTemplate("someText/{someText:FormatName4}/longUri/{format1:formatName1}");
   const std::string uriText("someText/AC_1234/01JAN15/someText/ABC/longUri/AB");
   const int timesParse = 1000000;
-  int remained = timesParse;
+  int parsed = 0;
 
   double startTimeWall = getWallTime();
   double startTimeCPU = getCpuTime();
@@ -79,8 +79,10 @@ int main() {
     uriTemplate.extract(extractedValues, uriText);
   };
 
-  auto cbSync = [&remained, &startTimeWall, &startTimeCPU, &timesParse]() {
-    if (--remained == 0) {
+  auto loop = native::Loop::Create();
+
+  auto cbSync = [&parsed, &startTimeWall, &startTimeCPU, &timesParse]() {
+    if (parsed == timesParse) {
       const double elapcedWallTime = getWallTime() - startTimeWall;
       const double elapsedCpuTime = getCpuTime() - startTimeCPU;
       std::cout << native::getRegexLibName() << " UriTemplate::extract of " << timesParse
@@ -92,24 +94,28 @@ int main() {
 
   startTimeWall = getWallTime();
   startTimeCPU = getCpuTime();
-  remained = timesParse;
+  parsed = 0;
 
   for (int i = 0; i < timesParse; ++i) {
     cbWorker();
-    cbSync();
+    ++parsed;
   }
+  cbSync();
 
   std::cout << "std::worker...\n";
 
   startTimeWall = getWallTime();
   startTimeCPU = getCpuTime();
-  remained = timesParse;
+  parsed = 0;
 
-  async([cbWorker, cbSync]() {
-    for (int i = 0; i < timesParse; ++i) {
-      worker(cbWorker).then(cbSync);
+  for (int i = 0; i < timesParse-1; ++i) {
+    worker(cbWorker);
+    if(++parsed % 100 == 0) {
+      run_once();
     }
-  });
+  }
+  ++parsed;
+  worker(cbWorker).then(cbSync);
 
   run();
 
@@ -117,10 +123,11 @@ int main() {
 
   startTimeWall = getWallTime();
   startTimeCPU = getCpuTime();
-  remained = timesParse;
+  parsed = 0;
 
   for (int i = 0; i < timesParse; ++i) {
     cbWorker();
-    cbSync();
+    ++parsed;
   }
+  cbSync();
 }

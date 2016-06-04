@@ -5,7 +5,6 @@
 
 TEST(WorkerTest, simple) {
   bool called = false;
-  bool called2 = false;
   std::shared_ptr<native::Loop> currLoop = native::Loop::Create();
   std::thread::id mainThreadId = std::this_thread::get_id();
   {
@@ -13,20 +12,16 @@ TEST(WorkerTest, simple) {
       called = true;
       std::thread::id currThreadId = std::this_thread::get_id();
       EXPECT_NE(mainThreadId, currThreadId);
-    }).then([&called, &called2, &mainThreadId]() {
-      EXPECT_EQ(called, true);
-      called2 = true;
-      std::thread::id currThreadId = std::this_thread::get_id();
-      EXPECT_EQ(mainThreadId, currThreadId);
     });
   }
+
+  NNATIVE_INFO("Destructed");
 
   // At this point the worker callback may be called already
 
   currLoop->run();
 
   EXPECT_EQ(called, true);
-  EXPECT_EQ(called2, true);
 }
 
 TEST(WorkerTest, DefaultLoop) {

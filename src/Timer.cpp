@@ -12,7 +12,7 @@ std::shared_ptr<Timer> Timer::Create(std::shared_ptr<Loop> iLoop, std::function<
 Timer::Timer(std::shared_ptr<Loop> iLoop, std::function<void()> iCallback)
     : base::Handle(iLoop), _callback(iCallback) {}
 
-Timer::~Timer() { NNATIVE_ASSERT(_uvTimer.data == nullptr); }
+Timer::~Timer() {}
 
 void Timer::init() {
   init(reinterpret_cast<uv_handle_t *>(&_uvTimer));
