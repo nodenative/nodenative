@@ -54,7 +54,7 @@ int run_server() {
     }
   }
 
-  if (!server->listen("0.0.0.0", port, [server](std::shared_ptr<Transaction> iTransaction) {
+  if (!server->listen("0.0.0.0", port, [server](std::shared_ptr<ServerConnection> iTransaction) {
         static int n = 0;
         ++n;
         std::string body =

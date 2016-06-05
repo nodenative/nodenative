@@ -1,5 +1,5 @@
-#ifndef __NATIVE_HTTP_TRANSACTION_HPP__
-#define __NATIVE_HTTP_TRANSACTION_HPP__
+#ifndef __NATIVE_HTTP_SERVERCONNECTION_HPP__
+#define __NATIVE_HTTP_SERVERCONNECTION_HPP__
 
 #include "../net/Tcp.hpp"
 
@@ -14,24 +14,22 @@ class Server;
 class ServerRequest;
 class ServerResponse;
 
-class Transaction;
+class ServerConnection;
 
-typedef std::shared_ptr<Transaction> TransactionInstance;
-
-class Transaction : public std::enable_shared_from_this<Transaction> {
+class ServerConnection : public std::enable_shared_from_this<ServerConnection> {
   friend class ServerRequest;
   friend class ServerResponse;
   friend class Server;
   friend class ServerPlugin;
 
 protected:
-  Transaction(std::shared_ptr<Server> server);
+  ServerConnection(std::shared_ptr<Server> server);
 
 public:
-  static TransactionInstance Create(std::shared_ptr<Server> iServer);
-  ~Transaction();
+  static std::shared_ptr<ServerConnection> Create(std::shared_ptr<Server> iServer);
+  ~ServerConnection();
 
-  std::shared_ptr<Transaction> getInstance() { return this->shared_from_this(); }
+  std::shared_ptr<ServerConnection> getInstance() { return this->shared_from_this(); }
 
   ServerRequest &getRequest();
   ServerResponse &getResponse();
@@ -45,7 +43,7 @@ protected:
   virtual std::unique_ptr<ServerRequest> createRequest();
   virtual std::unique_ptr<ServerResponse> createResponse();
 
-  TransactionInstance _instance;
+  std::shared_ptr<ServerConnection> _instance;
   std::shared_ptr<Server> _server;
   std::shared_ptr<native::net::Tcp> _socket;
   std::unique_ptr<ServerRequest> _request;
@@ -55,4 +53,4 @@ protected:
 } /* namespace http */
 } /* namespace native */
 
-#endif /* __NATIVE_HTTP_TRANSACTION_HPP__ */
+#endif /* __NATIVE_HTTP_SERVERCONNECTION_HPP__ */

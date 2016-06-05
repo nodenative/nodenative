@@ -2,8 +2,8 @@
 #define __NATIVE_HTTP_SERVER_HPP__
 
 #include "../net.hpp"
+#include "ServerConnection.hpp"
 #include "ServerPlugin.hpp"
-#include "Transaction.hpp"
 
 namespace native {
 
@@ -13,7 +13,7 @@ namespace http {
  * @example webserver.cpp
  */
 class Server : public ServerPlugin {
-  friend class Transaction;
+  friend class ServerConnection;
   friend class ServerPlugin;
 
 protected:
@@ -25,7 +25,7 @@ public:
   virtual ~Server();
 
   bool listen(const std::string &ip, int port);
-  bool listen(const std::string &ip, int port, std::function<void(TransactionInstance)> callback);
+  bool listen(const std::string &ip, int port, std::function<void(std::shared_ptr<ServerConnection>)> callback);
   Future<std::shared_ptr<Server>> close();
 
   static std::shared_ptr<Server> Create();
@@ -36,7 +36,7 @@ protected:
   std::shared_ptr<Loop> _loop;
   std::shared_ptr<native::net::Tcp> _socket;
   std::shared_ptr<Server> _instance;
-  std::function<void(std::shared_ptr<Transaction>)> _callback;
+  std::function<void(std::shared_ptr<ServerConnection>)> _callback;
 };
 
 } // namespace http

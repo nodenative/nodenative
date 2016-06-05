@@ -4,7 +4,7 @@
 #include "../Regex.hpp"
 #include "../UriTemplate.hpp"
 #include "../async.hpp"
-#include "Transaction.hpp"
+#include "ServerConnection.hpp"
 
 #define NNATIVE_HTTP_METHODS(XX)                                                                                       \
   XX(deleteMethod, DELETE, "DELETE")                                                                                   \
@@ -59,7 +59,7 @@ struct CallbackDataBase {
   CallbackDataBase(const std::string &iUri, const bool iFullPathMatch)
       : uri(iUri), uriRegexMatchWholePath(iFullPathMatch){};
   virtual ~CallbackDataBase(){};
-  virtual Future<void> execute(const std::string &iUriPath, TransactionInstance) = 0;
+  virtual Future<void> execute(const std::string &iUriPath, std::shared_ptr<ServerConnection>) = 0;
   bool matchUri(const std::string &iRui, size_t &oLength);
 
   UriTemplate uri;
@@ -71,22 +71,22 @@ struct PluginData : public CallbackDataBase {
   PluginData(const std::string &Uri, std::shared_ptr<ServerPlugin> iPluginInstance)
       : CallbackDataBase(Uri, false /*iFullPathMatch*/), plugin(iPluginInstance) {}
 
-  Future<void> execute(const std::string &iUriPath, TransactionInstance iTransaction) override;
+  Future<void> execute(const std::string &iUriPath, std::shared_ptr<ServerConnection> iTransaction) override;
 
   std::shared_ptr<ServerPlugin> plugin;
 };
 
 struct CallbackData : public CallbackDataBase {
   CallbackData(const std::string &iUri,
-               std::function<Future<void>(TransactionInstance)> iCallback,
+               std::function<Future<void>(std::shared_ptr<ServerConnection>)> iCallback,
                const bool iFullPathMatch)
       : CallbackDataBase(iUri, iFullPathMatch), callback(iCallback) {}
 
-  Future<void> execute(const std::string &iUriPath, TransactionInstance iTransaction) override {
+  Future<void> execute(const std::string &iUriPath, std::shared_ptr<ServerConnection> iTransaction) override {
     return callback(iTransaction);
   }
 
-  std::function<Future<void>(TransactionInstance)> callback;
+  std::function<Future<void>(std::shared_ptr<ServerConnection>)> callback;
 };
 
 class ServerPlugin : public std::enable_shared_from_this<ServerPlugin> {
@@ -97,7 +97,7 @@ public:
 
   std::shared_ptr<ServerPlugin> getInstance();
 
-  Future<void> execute(const std::string &iUriPath, TransactionInstance);
+  Future<void> execute(const std::string &iUriPath, std::shared_ptr<ServerConnection>);
 
   /**
    * Registering a ServerPlugin instance
@@ -138,7 +138,7 @@ public:
    */
   std::shared_ptr<CallbackData> addMethodSync(const std::string &iMethod,
                                               const std::string &iUri,
-                                              std::function<void(TransactionInstance)> iCallback);
+                                              std::function<void(std::shared_ptr<ServerConnection>)> iCallback);
 
   /**
    * Register a syncronous method callback based on `iUri` template string.
@@ -151,7 +151,7 @@ public:
    */
   std::shared_ptr<CallbackData> addMethod(const std::string &iMethod,
                                           const std::string &iUri,
-                                          std::function<Future<void>(TransactionInstance)> iCallback);
+                                          std::function<Future<void>(std::shared_ptr<ServerConnection>)> iCallback);
 
   /**
    * Remove/deregister method callback
@@ -166,20 +166,20 @@ public:
  * For each method, exists the possibility to register a sync and async callback.
  */
 #define XX(methodIdLower, methodIdUpper, methodStr)                                                                    \
-  std::shared_ptr<CallbackData> methodIdLower##Sync(const std::string &iUri,                                           \
-                                                    std::function<void(TransactionInstance)> iCallback) {              \
+  std::shared_ptr<CallbackData> methodIdLower##Sync(                                                                   \
+      const std::string &iUri, std::function<void(std::shared_ptr<ServerConnection>)> iCallback) {                     \
     return addMethodSync(methodStr, iUri, iCallback);                                                                  \
   }                                                                                                                    \
-  std::shared_ptr<CallbackData> addMethod##methodIdUpper##Sync(const std::string &iUri,                                \
-                                                               std::function<void(TransactionInstance)> iCallback) {   \
+  std::shared_ptr<CallbackData> addMethod##methodIdUpper##Sync(                                                        \
+      const std::string &iUri, std::function<void(std::shared_ptr<ServerConnection>)> iCallback) {                     \
     return addMethodSync(methodStr, iUri, iCallback);                                                                  \
   }                                                                                                                    \
-  std::shared_ptr<CallbackData> methodIdLower(const std::string &iUri,                                                 \
-                                              std::function<Future<void>(TransactionInstance)> iCallback) {            \
+  std::shared_ptr<CallbackData> methodIdLower(                                                                         \
+      const std::string &iUri, std::function<Future<void>(std::shared_ptr<ServerConnection>)> iCallback) {             \
     return addMethod(methodStr, iUri, iCallback);                                                                      \
   }                                                                                                                    \
-  std::shared_ptr<CallbackData> addMethod##methodIdUpper(const std::string &iUri,                                      \
-                                                         std::function<Future<void>(TransactionInstance)> iCallback) { \
+  std::shared_ptr<CallbackData> addMethod##methodIdUpper(                                                              \
+      const std::string &iUri, std::function<Future<void>(std::shared_ptr<ServerConnection>)> iCallback) {             \
     return addMethod(methodStr, iUri, iCallback);                                                                      \
   }                                                                                                                    \
   bool removeMethod##methodIdUpper(std::shared_ptr<CallbackData> iCallbackInst) { return removeMethod(iCallbackInst); }

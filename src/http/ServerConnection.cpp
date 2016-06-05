@@ -1,4 +1,4 @@
-#include "native/http/Transaction.hpp"
+#include "native/http/ServerConnection.hpp"
 #include "native/http/Server.hpp"
 #include "native/http/ServerRequest.hpp"
 #include "native/http/ServerResponse.hpp"
@@ -6,13 +6,13 @@
 namespace native {
 namespace http {
 
-TransactionInstance Transaction::Create(std::shared_ptr<Server> iServer) {
-  TransactionInstance instance(new Transaction(iServer));
+std::shared_ptr<ServerConnection> ServerConnection::Create(std::shared_ptr<Server> iServer) {
+  std::shared_ptr<ServerConnection> instance(new ServerConnection(iServer));
   instance->_instance = instance;
   return instance;
 }
 
-Transaction::Transaction(std::shared_ptr<Server> iServer) : _server(iServer) {
+ServerConnection::ServerConnection(std::shared_ptr<Server> iServer) : _server(iServer) {
   NNATIVE_FCALL();
   NNATIVE_ASSERT(_server);
 
@@ -20,23 +20,23 @@ Transaction::Transaction(std::shared_ptr<Server> iServer) : _server(iServer) {
   NNATIVE_ASSERT(_server->_socket->accept(_socket));
 }
 
-Transaction::~Transaction() {
+ServerConnection::~ServerConnection() {
   NNATIVE_FCALL();
   if (_socket.use_count() == 1 && _socket->isActive()) {
-    NNATIVE_DEBUG("close transaction socket from destructor");
+    NNATIVE_DEBUG("close connection socket from destructor");
     _socket->close();
   }
 }
 
-std::unique_ptr<ServerRequest> Transaction::createRequest() {
+std::unique_ptr<ServerRequest> ServerConnection::createRequest() {
   return std::unique_ptr<ServerRequest>(new ServerRequest(getInstance()));
 }
 
-std::unique_ptr<ServerResponse> Transaction::createResponse() {
+std::unique_ptr<ServerResponse> ServerConnection::createResponse() {
   return std::unique_ptr<ServerResponse>(new ServerResponse(getInstance()));
 }
 
-ServerRequest &Transaction::getRequest() {
+ServerRequest &ServerConnection::getRequest() {
   if (!_request) {
     _request = createRequest();
   }
@@ -44,7 +44,7 @@ ServerRequest &Transaction::getRequest() {
   return *_request;
 }
 
-ServerResponse &Transaction::getResponse() {
+ServerResponse &ServerConnection::getResponse() {
   if (!_response) {
     _response = createResponse();
   }
@@ -52,26 +52,26 @@ ServerResponse &Transaction::getResponse() {
   return *_response;
 }
 
-Future<void> Transaction::close() {
-  std::weak_ptr<Transaction> transactionWeak = this->getInstance();
+Future<void> ServerConnection::close() {
+  std::weak_ptr<ServerConnection> transactionWeak = this->getInstance();
   return this->_socket->close().then([transactionWeak](std::shared_ptr<base::Handle>) {
-    std::shared_ptr<Transaction> instance = transactionWeak.lock();
+    std::shared_ptr<ServerConnection> instance = transactionWeak.lock();
     instance->_instance.reset();
   });
 }
 
-Future<void> Transaction::parse() {
+Future<void> ServerConnection::parse() {
   NNATIVE_FCALL();
   // Create request and response if it is not yet created
   getRequest();
   getResponse();
 
   Promise<void> promise(_socket->getLoop());
-  std::weak_ptr<Transaction> instanceWeak = getInstance();
+  std::weak_ptr<ServerConnection> instanceWeak = getInstance();
 
   _socket->readStart([instanceWeak, promise](const char *buf, int len) {
     NNATIVE_ASSERT(!instanceWeak.expired());
-    std::shared_ptr<Transaction> instance = instanceWeak.lock();
+    std::shared_ptr<ServerConnection> instance = instanceWeak.lock();
     // NNATIVE_DEBUG("buff [" << buf << "], len: " << len);
     if ((buf == nullptr) || (len < 0)) {
       NNATIVE_INFO("received an negative length: " << len);
@@ -87,7 +87,7 @@ Future<void> Transaction::parse() {
     int parsed = instance->_request->parse(buf, len);
     if (!instance->_request->isUpgrade() && parsed != len) {
       // invalid request, close connection
-      NNATIVE_INFO("HTTP parser error: " << instance->_request->getErrorName() << ". Close transaction");
+      NNATIVE_INFO("HTTP parser error: " << instance->_request->getErrorName() << ". Close connection");
       instance->close()
           .then([promise]() {
             Promise<void> nonConstPromise = promise;

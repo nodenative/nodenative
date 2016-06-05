@@ -24,7 +24,7 @@ bool CallbackDataBase::matchUri(const std::string &iUri, size_t &oLength) {
   return false;
 }
 
-Future<void> PluginData::execute(const std::string &iUriPath, TransactionInstance iTransaction) {
+Future<void> PluginData::execute(const std::string &iUriPath, std::shared_ptr<ServerConnection> iTransaction) {
   return plugin->execute(iUriPath, iTransaction);
 }
 
@@ -53,7 +53,7 @@ bool ServerPlugin::getCallbacksByMethod(const std::string &iMethod,
   return found;
 }
 
-Future<void> ServerPlugin::execute(const std::string &iUriPath, TransactionInstance iTransaction) {
+Future<void> ServerPlugin::execute(const std::string &iUriPath, std::shared_ptr<ServerConnection> iTransaction) {
   using CallbacksIntType = std::list<std::shared_ptr<CallbackDataBase>>;
   using CallbacksMapIntType = std::map<size_t, CallbacksIntType>;
   CallbacksMapIntType callbacksMap;
@@ -130,19 +130,22 @@ bool ServerPlugin::removePlugin(std::shared_ptr<ServerPlugin> iPlugin) {
   return removed;
 }
 
-std::shared_ptr<CallbackData> ServerPlugin::addMethodSync(const std::string &iMethod,
-                                                          const std::string &iUri,
-                                                          std::function<void(TransactionInstance)> iCallback) {
+std::shared_ptr<CallbackData>
+ServerPlugin::addMethodSync(const std::string &iMethod,
+                            const std::string &iUri,
+                            std::function<void(std::shared_ptr<ServerConnection>)> iCallback) {
   std::weak_ptr<Loop> loopInstWeak = _loop;
-  return addMethod(iMethod, iUri, [iCallback, loopInstWeak](TransactionInstance iTransaction) -> Future<void> {
-    iCallback(iTransaction);
-    return Promise<void>::Resolve(loopInstWeak.lock());
-  });
+  return addMethod(iMethod, iUri,
+                   [iCallback, loopInstWeak](std::shared_ptr<ServerConnection> iTransaction) -> Future<void> {
+                     iCallback(iTransaction);
+                     return Promise<void>::Resolve(loopInstWeak.lock());
+                   });
 }
 
-std::shared_ptr<CallbackData> ServerPlugin::addMethod(const std::string &iMethod,
-                                                      const std::string &iUri,
-                                                      std::function<Future<void>(TransactionInstance)> iCallback) {
+std::shared_ptr<CallbackData>
+ServerPlugin::addMethod(const std::string &iMethod,
+                        const std::string &iUri,
+                        std::function<Future<void>(std::shared_ptr<ServerConnection>)> iCallback) {
   std::string path = iUri;
   if (path.empty()) {
     path = "/";

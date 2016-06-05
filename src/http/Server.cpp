@@ -33,10 +33,10 @@ std::shared_ptr<Server> Server::getInstance() { return std::static_pointer_cast<
 
 bool Server::listen(const std::string &ip, int port) {
   NNATIVE_FCALL();
-  return listen(ip, port, std::function<void(std::shared_ptr<Transaction>)>());
+  return listen(ip, port, std::function<void(std::shared_ptr<ServerConnection>)>());
 }
 
-bool Server::listen(const std::string &ip, int port, std::function<void(std::shared_ptr<Transaction>)> callback) {
+bool Server::listen(const std::string &ip, int port, std::function<void(std::shared_ptr<ServerConnection>)> callback) {
   NNATIVE_FCALL();
   if (!_socket->bind(ip, port)) {
     NNATIVE_DEBUG("failed to bind to ip " << ip << " port " << port);
@@ -54,32 +54,32 @@ bool Server::listen(const std::string &ip, int port, std::function<void(std::sha
           // TODO: handle client connection Error
           NNATIVE_INFO("error: " << e.name() << ", str:" << e.str());
         } else {
-          std::shared_ptr<Transaction> transaction = Transaction::Create(instanceWeak.lock());
-          std::weak_ptr<Transaction> transactionWeak = transaction;
+          std::shared_ptr<ServerConnection> connection = ServerConnection::Create(instanceWeak.lock());
+          std::weak_ptr<ServerConnection> transactionWeak = connection;
 
-          transaction->parse()
+          connection->parse()
               .then([transactionWeak, instanceWeak]() -> Future<void> {
                 if (transactionWeak.expired()) {
-                  NNATIVE_DEBUG("Transaction expired.");
+                  NNATIVE_DEBUG("ServerConnection expired.");
                   return Promise<void>::Resolve(instanceWeak.lock()->_loop);
                 }
 
-                std::shared_ptr<Transaction> transaction = transactionWeak.lock();
+                std::shared_ptr<ServerConnection> connection = transactionWeak.lock();
                 std::shared_ptr<Server> instance = instanceWeak.lock();
 
                 if (instance->_callback) {
-                  instance->_callback(transaction);
+                  instance->_callback(connection);
                 }
 
-                if (transaction->getResponse().isSent()) {
+                if (connection->getResponse().isSent()) {
                   NNATIVE_DEBUG("response sent. skip ServerPlugin");
                   return Promise<void>::Resolve(instanceWeak.lock()->_loop);
                 }
 
-                const std::string urlPath = transaction->_request->url().path();
+                const std::string urlPath = connection->_request->url().path();
                 NNATIVE_DEBUG("execute path: " << urlPath);
 
-                return instance->execute(urlPath, transaction);
+                return instance->execute(urlPath, connection);
               })
               .then([transactionWeak]() {
                 if (!transactionWeak.expired() && !transactionWeak.lock()->getResponse().isSent()) {
@@ -90,22 +90,22 @@ bool Server::listen(const std::string &ip, int port, std::function<void(std::sha
                 }
               })
               .error([transactionWeak](const FutureError &err) {
-                NNATIVE_INFO("Transaction error: " << err.message());
+                NNATIVE_INFO("ServerConnection error: " << err.message());
                 if (transactionWeak.expired()) {
-                  NNATIVE_INFO("Transaction expired.");
+                  NNATIVE_INFO("ServerConnection expired.");
                   return;
                 }
 
-                std::shared_ptr<Transaction> transaction = transactionWeak.lock();
+                std::shared_ptr<ServerConnection> connection = transactionWeak.lock();
 
-                if (transaction->getResponse().isSent()) {
+                if (connection->getResponse().isSent()) {
                   return;
                 }
 
                 NNATIVE_INFO("Trying to send 500 to client");
 
                 // send a 500 status
-                http::ServerResponse &res = transaction->getResponse();
+                http::ServerResponse &res = connection->getResponse();
                 res.setStatus(500);
                 res.end(err.message());
               });

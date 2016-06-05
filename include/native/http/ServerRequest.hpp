@@ -11,13 +11,13 @@
 namespace native {
 namespace http {
 
-class Transaction;
+class ServerConnection;
 
 class ServerRequest : public IncomingMessage {
-  friend class Transaction;
+  friend class ServerConnection;
 
 private:
-  ServerRequest(std::shared_ptr<Transaction> iTransaction);
+  ServerRequest(std::shared_ptr<ServerConnection> iTransaction);
 
 public:
   ServerRequest() = delete;
@@ -28,7 +28,7 @@ public:
 protected:
   void onMessageComplete() override;
 
-  std::weak_ptr<Transaction> _transaction;
+  std::weak_ptr<ServerConnection> _connection;
   bool _complete;
 };
 

@@ -12,13 +12,13 @@ namespace native {
 
 namespace http {
 
-class Transaction;
+class ServerConnection;
 
 class ServerResponse : public OutgoingMessage {
-  friend class Transaction;
+  friend class ServerConnection;
 
 protected:
-  ServerResponse(std::shared_ptr<Transaction> iTransaction);
+  ServerResponse(std::shared_ptr<ServerConnection> iTransaction);
   void setHeaderFirstLine(std::stringstream &ioMessageRaw) const override;
   virtual Future<void> sendData(const std::string &data) override;
   Future<void> endData(const std::string &data) override;
@@ -34,7 +34,7 @@ public:
 
 protected:
   int _statusCode;
-  std::weak_ptr<Transaction> _transaction;
+  std::weak_ptr<ServerConnection> _connection;
 };
 
 } /* namespace http */

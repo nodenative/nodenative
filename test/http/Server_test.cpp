@@ -22,8 +22,8 @@ TEST(HttpServerTest, Basic)
   bool requestSent = false;
 
   bool retVal = server->listen(
-      "0.0.0.0", port, [bodyText, &serverClosed, &requestSent](std::shared_ptr<http::Transaction> iTransaction) {
-        http::ServerResponse &res = iTransaction->getResponse();
+      "0.0.0.0", port, [bodyText, &serverClosed, &requestSent](std::shared_ptr<http::ServerConnection> connection) {
+        http::ServerResponse &res = connection->getResponse();
         res.setStatus(200);
         res.setHeader("Content-Type", "text/plain");
         res.end(bodyText);

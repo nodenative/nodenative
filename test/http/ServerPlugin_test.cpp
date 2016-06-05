@@ -11,9 +11,9 @@ bool cbCallGet(const std::string &uriTemplate, const std::string &uri, const boo
   bool called = false;
   std::string bodyText("TestData body");
 
-  server->getSync(uriTemplate, [&called, loopWeak, bodyText](http::TransactionInstance iTransaction) {
+  server->getSync(uriTemplate, [&called, loopWeak, bodyText](std::shared_ptr<http::ServerConnection> connection) {
     called = true;
-    http::ServerResponse &res = iTransaction->getResponse();
+    http::ServerResponse &res = connection->getResponse();
     res.setStatus(200);
     res.setHeader("Content-Type", "text/plain");
     res.end(bodyText);

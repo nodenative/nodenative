@@ -38,7 +38,7 @@
                 '../src/http/MessageBase.cpp',
                 '../src/http/IncomingMessage.cpp',
                 '../src/http/OutgoingMessage.cpp',
-                '../src/http/Transaction.cpp',
+                '../src/http/ServerConnection.cpp',
                 '../src/http/Server.cpp',
                 '../src/http/ServerPlugin.cpp',
                 '../src/http/ServerRequest.cpp',

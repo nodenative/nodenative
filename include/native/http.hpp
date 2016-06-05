@@ -5,10 +5,10 @@
 #include "http/ClientResponse.hpp"
 #include "http/HttpUtils.hpp"
 #include "http/Server.hpp"
+#include "http/ServerConnection.hpp"
 #include "http/ServerPlugin.hpp"
 #include "http/ServerRequest.hpp"
 #include "http/ServerResponse.hpp"
-#include "http/Transaction.hpp"
 #include "http/UrlObject.hpp"
 
 namespace native {

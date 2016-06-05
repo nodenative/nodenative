@@ -39,8 +39,8 @@ using namespace native::http;
 
 int main() {
     Server server;
-    if(!server.listen("0.0.0.0", 8080, [](http::shared_ptr<Transaction> iTransaction) {
-        ServerResponse& res = iTransaction->getResponse();
+    if(!server.listen("0.0.0.0", 8080, [](http::shared_ptr<ServerConnection> connection) {
+        ServerResponse& res = connection->getResponse();
         res.setStatus(200);
         res.setHeader("Content-Type", "text/plain");
         res.end("C++ FTW\n");
