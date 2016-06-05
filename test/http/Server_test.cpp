@@ -21,15 +21,16 @@ TEST(HttpServerTest, Basic)
   bool serverClosed = false;
   bool requestSent = false;
 
-  bool retVal = server->listen(
-      "0.0.0.0", port, [bodyText, &serverClosed, &requestSent](std::shared_ptr<http::ServerConnection> connection) {
-        http::ServerResponse &res = connection->getResponse();
-        res.setStatus(200);
-        res.setHeader("Content-Type", "text/plain");
-        res.end(bodyText);
-        EXPECT_EQ(requestSent, true);
-        std::cout << "server response sent\n";
-      });
+  server->getSync("/", [bodyText, &serverClosed, &requestSent](std::shared_ptr<http::ServerConnection> connection) {
+    http::ServerResponse &res = connection->getResponse();
+    res.setStatus(200);
+    res.setHeader("Content-Type", "text/plain");
+    res.end(bodyText);
+    EXPECT_EQ(requestSent, true);
+    std::cout << "server response sent\n";
+  });
+
+  bool retVal = server->listen("0.0.0.0", port);
 
   EXPECT_EQ(retVal, true);
 
