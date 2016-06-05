@@ -77,6 +77,7 @@ int run_server() {
 }
 
 int main(int argc, const char **argv, const char **envptr) {
+  std::shared_ptr<native::Loop> loop = native::Loop::Create();
   parseArgsAndEnvs(argc, argv, envptr);
   int err = run_server();
   if (err != 0) {

@@ -7,6 +7,7 @@
 using namespace native;
 
 int main() {
+  std::shared_ptr<Loop> loop = Loop::Create();
   std::shared_ptr<net::Tcp> client = net::Tcp::Create();
   std::weak_ptr<net::Tcp> clientWeak = client;
   client->connect("127.0.0.1", 8080).then([clientWeak]() {
