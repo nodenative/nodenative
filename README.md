@@ -56,7 +56,7 @@ int main() {
              std::this_thread::sleep_for(time);
            })
         .then([]() {
-          // and work on the main thread to sync data and avoid race condition
+          // and some work on the main thread to sync data and avoid race condition
           std::chrono::milliseconds time(100);
           std::this_thread::sleep_for(time);
         })
