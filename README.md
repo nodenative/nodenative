@@ -33,7 +33,7 @@ Please note that nodenative project is <em>under heavy development</em>.
 
 ## Sample code
 
-Simplest web-server example using nodenative.
+An web-server example using asynchronous callback.
 ```cpp
 #include <iostream>
 #include <native/native.hpp>
