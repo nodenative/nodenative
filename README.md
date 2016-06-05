@@ -83,6 +83,11 @@ int main() {
 
 <em>nodenative</em> requires [libuv](https://github.com/libuv/libuv) and [http-parser](https://github.com/joyent/http-parser) lib to use.
 
+### Documentation
+* Doxygen comments from [include](samples) folder
+* [samples](samples)
+* [unit-tests](test)
+
 ### Build code
 
 To compile included sample application(webserver.cpp) first run the following command in the project directory:
