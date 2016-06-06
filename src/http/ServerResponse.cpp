@@ -14,7 +14,7 @@ ServerResponse::ServerResponse(std::shared_ptr<ServerConnection> connection)
 ServerResponse::~ServerResponse() {}
 
 void ServerResponse::setHeaderFirstLine(std::stringstream &ioMessageRaw) const {
-  ioMessageRaw << getHttpVersionString() << _statusCode << " " << GetStatusText(_statusCode) << "\r\n";
+  ioMessageRaw << getHttpVersionString() << " " << _statusCode << " " << GetStatusText(_statusCode) << "\r\n";
 }
 
 void ServerResponse::setStatus(int status_code) { _statusCode = status_code; }
