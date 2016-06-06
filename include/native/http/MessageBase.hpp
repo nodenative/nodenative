@@ -81,6 +81,7 @@ class ClientResponse;
 class MessageBase : public std::enable_shared_from_this<MessageBase> {
 protected:
   MessageBase();
+  MessageBase(const MessageBase &other);
   virtual ~MessageBase() {}
 
 public:

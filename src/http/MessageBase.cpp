@@ -8,6 +8,8 @@ namespace http {
 // HTTP/1.1
 MessageBase::MessageBase() : _httpMajor(1), _httpMinor(1) {}
 
+MessageBase::MessageBase(const MessageBase &other) : _httpMajor(other._httpMajor), _httpMinor(other._httpMinor) {}
+
 std::string MessageBase::getHttpVersionString() const {
   std::stringstream res;
   res << "HTTP/" << _httpMajor;

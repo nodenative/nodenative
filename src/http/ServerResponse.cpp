@@ -1,19 +1,20 @@
 #include "native/http/ServerResponse.hpp"
 #include "native/http/HttpUtils.hpp"
 #include "native/http/ServerConnection.hpp"
+#include "native/http/ServerRequest.hpp"
 
 namespace native {
 namespace http {
 
 ServerResponse::ServerResponse(std::shared_ptr<ServerConnection> connection)
-    : OutgoingMessage(), _statusCode(200), _connection(connection) {
+    : OutgoingMessage(connection->getRequest()), _statusCode(200), _connection(connection) {
   _headers["Content-Type"] = "text/html";
 }
 
 ServerResponse::~ServerResponse() {}
 
 void ServerResponse::setHeaderFirstLine(std::stringstream &ioMessageRaw) const {
-  ioMessageRaw << "HTTP/1.1 " << _statusCode << " " << GetStatusText(_statusCode) << "\r\n";
+  ioMessageRaw << getHttpVersionString() << _statusCode << " " << GetStatusText(_statusCode) << "\r\n";
 }
 
 void ServerResponse::setStatus(int status_code) { _statusCode = status_code; }

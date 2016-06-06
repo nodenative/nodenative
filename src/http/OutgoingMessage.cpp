@@ -1,11 +1,19 @@
 #include "native/http/OutgoingMessage.hpp"
 #include "native/http/HttpUtils.hpp"
+#include "native/http/IncomingMessage.hpp"
 
 namespace native {
 namespace http {
 
 OutgoingMessage::OutgoingMessage()
     : _headerSent(false), _closed(false), _sent(false), _last(false), _chunkedEncoding(false),
+      _useChunkedEncodingByDefault(false), _sendDate(false), _shouldKeepAlive(true), _contentLength(-1),
+      _hasBody(false) {
+  _headers["Content-Type"] = "text/html";
+}
+
+OutgoingMessage::OutgoingMessage(const IncomingMessage &incomming)
+    : MessageBase(incomming), _headerSent(false), _closed(false), _sent(false), _last(false), _chunkedEncoding(false),
       _useChunkedEncodingByDefault(false), _sendDate(false), _shouldKeepAlive(true), _contentLength(-1),
       _hasBody(false) {
   _headers["Content-Type"] = "text/html";

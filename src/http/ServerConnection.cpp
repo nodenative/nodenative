@@ -64,7 +64,6 @@ void ServerConnection::parse() {
   NNATIVE_FCALL();
   // Create request and response if it is not yet created
   getRequest();
-  getResponse();
 
   Promise<void> promise(_socket->getLoop());
   std::weak_ptr<ServerConnection> connectionWeak = getInstance();
@@ -74,11 +73,12 @@ void ServerConnection::parse() {
     std::shared_ptr<ServerConnection> connection = connectionWeak.lock();
     // NNATIVE_DEBUG("buff [" << buf << "], len: " << len);
     if ((buf == nullptr) || (len < 0)) {
-      NNATIVE_INFO("received an negative length: " << len);
-      if (!connection->_response->isSent()) {
-        connection->_response->setStatus(500);
-        connection->_response->end("Invalid request format.");
-        NNATIVE_INFO("Invalid request sent");
+      NNATIVE_DEBUG("received an negative length: " << len);
+      ServerResponse &response = connection->getResponse();
+      if (!response.isSent()) {
+        response.setStatus(500);
+        response.end("Invalid request format.");
+        NNATIVE_DEBUG("Invalid request sent");
       }
       return;
     }
@@ -87,7 +87,7 @@ void ServerConnection::parse() {
     int parsed = connection->_request->parse(buf, len);
     if (!connection->_request->isUpgrade() && parsed != len) {
       // invalid request, close connection
-      NNATIVE_INFO("HTTP parser error: " << connection->_request->getErrorName() << ". Close connection");
+      NNATIVE_DEBUG("HTTP parser error: " << connection->_request->getErrorName() << ". Close connection");
       connection->close()
           .then([promise]() {
             Promise<void> nonConstPromise = promise;
@@ -114,7 +114,7 @@ void ServerConnection::parse() {
         std::shared_ptr<ServerConnection> connection = connectionWeak.lock();
 
         const std::string urlPath = connection->_request->url().path();
-        NNATIVE_INFO("execute path: " << urlPath);
+        NNATIVE_DEBUG("execute path: " << urlPath);
 
         return connection->_server->execute(urlPath, connection);
       })
@@ -127,9 +127,9 @@ void ServerConnection::parse() {
         }
       })
       .error([connectionWeak](const FutureError &err) {
-        NNATIVE_INFO("ServerConnection error: " << err.message());
+        NNATIVE_DEBUG("ServerConnection error: " << err.message());
         if (connectionWeak.expired()) {
-          NNATIVE_INFO("ServerConnection expired.");
+          NNATIVE_DEBUG("ServerConnection expired.");
           return;
         }
 
@@ -139,7 +139,7 @@ void ServerConnection::parse() {
           return;
         }
 
-        NNATIVE_INFO("Trying to send 500 to client");
+        NNATIVE_DEBUG("Trying to send 500 to client");
 
         // send a 500 status
         http::ServerResponse &res = connection->getResponse();

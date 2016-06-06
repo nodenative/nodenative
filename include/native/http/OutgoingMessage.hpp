@@ -12,9 +12,12 @@ namespace native {
 
 namespace http {
 
+class IncomingMessage;
+
 class OutgoingMessage : public MessageBase {
 protected:
   OutgoingMessage();
+  OutgoingMessage(const IncomingMessage &incomming);
   virtual void setHeaderFirstLine(std::stringstream &ioMessageRaw) const = 0;
   virtual Future<void> sendData(const std::string &data) = 0;
 
