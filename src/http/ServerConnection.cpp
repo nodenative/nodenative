@@ -60,35 +60,35 @@ Future<void> ServerConnection::close() {
   });
 }
 
-Future<void> ServerConnection::parse() {
+void ServerConnection::parse() {
   NNATIVE_FCALL();
   // Create request and response if it is not yet created
   getRequest();
   getResponse();
 
   Promise<void> promise(_socket->getLoop());
-  std::weak_ptr<ServerConnection> instanceWeak = getInstance();
+  std::weak_ptr<ServerConnection> connectionWeak = getInstance();
 
-  _socket->readStart([instanceWeak, promise](const char *buf, int len) {
-    NNATIVE_ASSERT(!instanceWeak.expired());
-    std::shared_ptr<ServerConnection> instance = instanceWeak.lock();
+  _socket->readStart([connectionWeak, promise](const char *buf, int len) {
+    NNATIVE_ASSERT(!connectionWeak.expired());
+    std::shared_ptr<ServerConnection> connection = connectionWeak.lock();
     // NNATIVE_DEBUG("buff [" << buf << "], len: " << len);
     if ((buf == nullptr) || (len < 0)) {
       NNATIVE_INFO("received an negative length: " << len);
-      if (!instance->_response->isSent()) {
-        instance->_response->setStatus(500);
-        instance->_response->end("Invalid request format.");
+      if (!connection->_response->isSent()) {
+        connection->_response->setStatus(500);
+        connection->_response->end("Invalid request format.");
         NNATIVE_INFO("Invalid request sent");
       }
       return;
     }
 
     NNATIVE_DEBUG("start http_parser_execute");
-    int parsed = instance->_request->parse(buf, len);
-    if (!instance->_request->isUpgrade() && parsed != len) {
+    int parsed = connection->_request->parse(buf, len);
+    if (!connection->_request->isUpgrade() && parsed != len) {
       // invalid request, close connection
-      NNATIVE_INFO("HTTP parser error: " << instance->_request->getErrorName() << ". Close connection");
-      instance->close()
+      NNATIVE_INFO("HTTP parser error: " << connection->_request->getErrorName() << ". Close connection");
+      connection->close()
           .then([promise]() {
             Promise<void> nonConstPromise = promise;
             nonConstPromise.resolve();
@@ -99,17 +99,53 @@ Future<void> ServerConnection::parse() {
           });
     }
 
-    if (instance->_request->isUpgrade() || instance->_request->isMessageComplete()) {
+    if (connection->_request->isUpgrade() || connection->_request->isMessageComplete()) {
       NNATIVE_DEBUG("complete request");
       Promise<void> nonConstPromise = promise;
       nonConstPromise.resolve();
     }
 
     NNATIVE_DEBUG("end http_parser_execute");
-    // instance.reset();
   });
 
-  return promise.getFuture();
+  promise.getFuture()
+      .then([connectionWeak]() -> Future<void> {
+        NNATIVE_ASSERT(!connectionWeak.expired());
+        std::shared_ptr<ServerConnection> connection = connectionWeak.lock();
+
+        const std::string urlPath = connection->_request->url().path();
+        NNATIVE_INFO("execute path: " << urlPath);
+
+        return connection->_server->execute(urlPath, connection);
+      })
+      .then([connectionWeak]() {
+        if (!connectionWeak.expired() && !connectionWeak.lock()->getResponse().isSent()) {
+          // send a 404 status
+          http::ServerResponse &res = connectionWeak.lock()->getResponse();
+          res.setStatus(404);
+          res.end();
+        }
+      })
+      .error([connectionWeak](const FutureError &err) {
+        NNATIVE_INFO("ServerConnection error: " << err.message());
+        if (connectionWeak.expired()) {
+          NNATIVE_INFO("ServerConnection expired.");
+          return;
+        }
+
+        std::shared_ptr<ServerConnection> connection = connectionWeak.lock();
+
+        if (connection->getResponse().isSent()) {
+          return;
+        }
+
+        NNATIVE_INFO("Trying to send 500 to client");
+
+        // send a 500 status
+        http::ServerResponse &res = connection->getResponse();
+        res.setStatus(500);
+        res.end(err.message());
+      });
 }
 
 } /* namespace http */

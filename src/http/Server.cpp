@@ -42,6 +42,25 @@ void Server::error(const native::Error &e) {
   }
 }
 
+void Server::onCreateConnection(
+    std::function<std::shared_ptr<ServerConnection>(std::shared_ptr<Server>)> createConnectionCb) {
+  _createConnectionCb = createConnectionCb;
+}
+
+std::shared_ptr<ServerConnection> Server::createConnection() {
+  std::shared_ptr<ServerConnection> connection;
+  if (_createConnectionCb) {
+    connection = _createConnectionCb(getInstance());
+  }
+
+  // If callback refuze to create connection, then create a default connection
+  if (!connection) {
+    connection = ServerConnection::Create(getInstance());
+  }
+
+  return connection;
+}
+
 bool Server::listen(const std::string &ip, int port) {
   NNATIVE_FCALL();
   if (!_socket->bind(ip, port)) {
@@ -61,52 +80,8 @@ bool Server::listen(const std::string &ip, int port) {
           instance->error(e);
           return;
         }
-        std::shared_ptr<ServerConnection> connection = ServerConnection::Create(instanceWeak.lock());
-        std::weak_ptr<ServerConnection> connectionWeak = connection;
 
-        connection->parse()
-            .then([connectionWeak, instanceWeak]() -> Future<void> {
-              if (connectionWeak.expired()) {
-                NNATIVE_DEBUG("ServerConnection expired.");
-                return Promise<void>::Resolve(instanceWeak.lock()->_loop);
-              }
-
-              std::shared_ptr<ServerConnection> connection = connectionWeak.lock();
-              std::shared_ptr<Server> instance = instanceWeak.lock();
-
-              const std::string urlPath = connection->_request->url().path();
-              NNATIVE_INFO("execute path: " << urlPath);
-
-              return instance->execute(urlPath, connection);
-            })
-            .then([connectionWeak]() {
-              if (!connectionWeak.expired() && !connectionWeak.lock()->getResponse().isSent()) {
-                // send a 404 status
-                http::ServerResponse &res = connectionWeak.lock()->getResponse();
-                res.setStatus(404);
-                res.end();
-              }
-            })
-            .error([connectionWeak](const FutureError &err) {
-              NNATIVE_INFO("ServerConnection error: " << err.message());
-              if (connectionWeak.expired()) {
-                NNATIVE_INFO("ServerConnection expired.");
-                return;
-              }
-
-              std::shared_ptr<ServerConnection> connection = connectionWeak.lock();
-
-              if (connection->getResponse().isSent()) {
-                return;
-              }
-
-              NNATIVE_INFO("Trying to send 500 to client");
-
-              // send a 500 status
-              http::ServerResponse &res = connection->getResponse();
-              res.setStatus(500);
-              res.end(err.message());
-            });
+        instance->createConnection()->parse();
       })) {
     NNATIVE_DEBUG("failed to listen socket");
     return false;

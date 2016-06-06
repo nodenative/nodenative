@@ -37,7 +37,7 @@ public:
   Future<void> close();
 
 private:
-  Future<void> parse();
+  void parse();
 
 protected:
   virtual std::unique_ptr<ServerRequest> createRequest();

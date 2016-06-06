@@ -30,6 +30,7 @@ public:
   static std::shared_ptr<Server> Create();
   static std::shared_ptr<Server> Create(std::shared_ptr<Loop> iLoop);
   std::shared_ptr<Server> getInstance();
+  std::shared_ptr<Loop> getLoop() { return _loop; }
 
   /**
    * Add error callback, `errorCb`.
@@ -44,11 +45,28 @@ public:
    */
   void error(const native::Error &error);
 
+  /**
+   * Add create connection callback.
+   *
+   * if callback refuze to create connection, then a default connection will be created.
+   *
+   * @param createConnectionCb create connection callback
+   */
+  void onCreateConnection(std::function<std::shared_ptr<ServerConnection>(std::shared_ptr<Server>)> createConnectionCb);
+
+  /**
+   * Create connection method. This method usually is called when a new connection is created.
+   *
+   * @return new connection
+   */
+  std::shared_ptr<ServerConnection> createConnection();
+
 protected:
   std::shared_ptr<Loop> _loop;
   std::shared_ptr<native::net::Tcp> _socket;
   std::shared_ptr<Server> _instance;
   std::function<void(const native::Error &)> _errorCb;
+  std::function<std::shared_ptr<ServerConnection>(std::shared_ptr<Server>)> _createConnectionCb;
 };
 
 } // namespace http
