@@ -21,6 +21,24 @@ std::string MessageBase::getHttpVersionString() const {
   return res.str();
 }
 
+const std::string &MessageBase::getHeader(const std::string &key) const {
+  auto it = _headers.find(key);
+  if (it != _headers.end())
+    return it->second;
+
+  static std::string emptyString;
+  return emptyString;
+}
+
+bool MessageBase::getHeader(const std::string &key, std::string &value) const {
+  auto it = _headers.find(key);
+  if (it != _headers.end()) {
+    value = it->second;
+    return true;
+  }
+  return false;
+}
+
 std::string MessageBase::GetStatusText(int status) {
 #define XX(id, str)                                                                                                    \
   case id:                                                                                                             \

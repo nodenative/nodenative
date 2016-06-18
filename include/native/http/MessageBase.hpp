@@ -90,11 +90,16 @@ public:
   std::string getHttpVersionString() const;
   unsigned short getHttpMajor() const { return _httpMajor; }
   unsigned short getHttpMinor() const { return _httpMinor; }
+
+  const std::string &getHeader(const std::string &key) const;
+  bool getHeader(const std::string &key, std::string &value) const;
+
   static std::string GetStatusText(int status);
 
 protected:
   unsigned short _httpMajor;
   unsigned short _httpMinor;
+  std::map<std::string, std::string, native::text::ci_less> _headers;
 };
 
 } /* namespace http */

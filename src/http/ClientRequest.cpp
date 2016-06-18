@@ -11,13 +11,14 @@ ClientRequest::ClientRequest(std::shared_ptr<Loop> iLoop,
                              const int &port,
                              const std::string &path)
     : _method(method), _host(host), _port(port), _path(path), _loop(iLoop), _connected(false) {
+  _shouldKeepAlive = true;
   if (_path.empty()) {
     _path = "/";
   }
 }
 
 ClientRequest::~ClientRequest() {
-  if(_socket) {
+  if (_socket) {
     NNATIVE_DEBUG("Close socket");
     _socket->close();
   }
@@ -62,9 +63,7 @@ Future<void> ClientRequest::sendData(const std::string &str) {
   return _socket->connect(_host, _port).then([str, instanceWeak]() { instanceWeak.lock()->_socket->write(str); });
 }
 
-Future<void> ClientRequest::endData(const std::string &data) {
-  return OutgoingMessage::endData(data);
-}
+Future<void> ClientRequest::endData(const std::string &data) { return OutgoingMessage::endData(data); }
 
 Future<std::shared_ptr<ClientResponse>> ClientRequest::end(const std::string &data) {
   // keep instance

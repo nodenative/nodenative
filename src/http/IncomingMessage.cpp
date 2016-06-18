@@ -9,22 +9,6 @@ IncomingMessage::IncomingMessage(const bool iIsRequest)
 
 IncomingMessage::~IncomingMessage() {}
 
-const std::string &IncomingMessage::getHeader(const std::string &key) const {
-  auto it = _headers.find(key);
-  if (it != _headers.end())
-    return it->second;
-  return _defaultValue;
-}
-
-bool IncomingMessage::getHeader(const std::string &key, std::string &value) const {
-  auto it = _headers.find(key);
-  if (it != _headers.end()) {
-    value = it->second;
-    return true;
-  }
-  return false;
-}
-
 std::string IncomingMessage::getMethodStr() const {
 #define XX(num, name, desc)                                                                                            \
   case num:                                                                                                            \

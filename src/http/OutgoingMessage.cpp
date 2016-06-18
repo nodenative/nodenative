@@ -6,7 +6,7 @@ namespace native {
 namespace http {
 
 OutgoingMessage::OutgoingMessage()
-    : _headerSent(false), _closed(false), _sent(false), _last(false), _chunkedEncoding(false),
+    : _headerSent(false), _closed(false), _sent(false), _last(false), _chunkedEncoding(true),
       _useChunkedEncodingByDefault(false), _sendDate(false), _shouldKeepAlive(true), _contentLength(-1),
       _hasBody(false) {
   _headers["Content-Type"] = "text/html";
@@ -40,13 +40,30 @@ Future<void> OutgoingMessage::writeData(const std::string &str) {
   Future<void> future(Loop::GetInstanceSafe());
 
   if (!_headerSent) {
-    if (!str.empty() && _headers.find("Content-Length") == _headers.end()) {
+    // If the body is sent in 1 go, then deactivate chunked enkoding.
+    if (_last) {
+      _chunkedEncoding = false;
+    }
+
+    if (!_chunkedEncoding && !str.empty() && _headers.find("Content-Length") == _headers.end()) {
       std::stringstream ss;
       ss << str.length();
       _headers["Content-Length"] = ss.str();
       // mark as closed because content length is reached
       _closed = true;
       _sent = true;
+    }
+
+    if (_shouldKeepAlive) {
+      _headers["Connection"] = "keep-alive";
+    } else {
+      _headers["Connection"] = "close";
+    }
+
+    if (_chunkedEncoding) {
+      _headers["Transfer-Encoding"] = "chunked";
+    } else {
+      // remove chunk encoding if exists
     }
 
     _headerSent = true;
@@ -58,7 +75,6 @@ Future<void> OutgoingMessage::writeData(const std::string &str) {
 
   if (!str.empty()) {
     OutgoingMessage *messagePtr = this;
-
     future = future.then([messagePtr, str]() { return messagePtr->sendData(str); });
   }
 
@@ -66,7 +82,15 @@ Future<void> OutgoingMessage::writeData(const std::string &str) {
 }
 
 Future<void> OutgoingMessage::endData(const std::string &str) {
+  if (!_last) {
+    NNATIVE_DEBUG("cannon be sent")
+  }
+
   NNATIVE_ASSERT(!_closed);
+  NNATIVE_ASSERT(!_last);
+
+  _last = true;
+
   Future<void> future = writeData(str);
   _closed = true;
   _sent = true;

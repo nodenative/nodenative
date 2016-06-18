@@ -28,8 +28,6 @@ public:
 
   bool isUpgrade() const { return _upgrade; }
   const UrlObject &url() const { return _url; }
-  const std::string &getHeader(const std::string &key) const;
-  bool getHeader(const std::string &key, std::string &value) const;
   const std::string &getBody(void) const { return _body; }
 
   /// Method of the request message
@@ -71,9 +69,7 @@ private:
   unsigned int _statusCode;
   std::string _responseStatusString;
   UrlObject _url;
-  std::map<std::string, std::string, native::text::ci_less> _headers;
   std::string _body;
-  std::string _defaultValue;
 
   http_parser _parser;
   http_parser_settings _parserSettings;

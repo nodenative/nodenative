@@ -21,14 +21,13 @@ protected:
   virtual void setHeaderFirstLine(std::stringstream &ioMessageRaw) const = 0;
   virtual Future<void> sendData(const std::string &data) = 0;
 
-  Future<void> writeData(const std::string &str);
+  virtual Future<void> writeData(const std::string &str);
   virtual Future<void> endData(const std::string &body);
 
 public:
   virtual ~OutgoingMessage();
 
   void setHeader(const std::string &key, const std::string &value);
-  bool getHeader(const std::string &key, std::string &value);
   bool removeHeader(const std::string &key);
 
   std::string getMessageHeaderRaw() const;
@@ -36,7 +35,6 @@ public:
   bool isSent() { return _sent; }
 
 protected:
-  std::map<std::string, std::string, native::text::ci_less> _headers;
   bool _headerSent;
   bool _closed;
   bool _sent;
