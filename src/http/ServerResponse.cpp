@@ -43,15 +43,15 @@ Future<void> ServerResponse::endData(const std::string &data) {
   return OutgoingMessage::endData(data).then([transactionWeak]() {
     NNATIVE_DEBUG("close connection socket");
     auto transaction = transactionWeak.lock();
-    Promise<void> promise(transaction->getLoop());
+    // Promise<void> promise(transaction->getLoop());
 
-    if (transaction->_response->_shouldKeepAlive) {
-      transaction->_request.reset();
-      transaction->_response.reset();
-      return
-    } else {
-      return transaction->close();
-    }
+    // if (transaction->_response->_shouldKeepAlive) {
+    //  transaction->_request.reset();
+    //  transaction->_response.reset();
+    //  return
+    //} else {
+    return transaction->close();
+    //}
   });
 }
 

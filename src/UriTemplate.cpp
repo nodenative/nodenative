@@ -7,26 +7,74 @@
 #include <set>
 
 namespace {
+const native::UriTemplateFormat simpleFormat("simpleFormat", "[^/]+");
+std::unique_ptr<native::Regex> reParamStart; // e.g.: {...} or :...
+std::unique_ptr<native::Regex> reParamSimpleEnd;
+std::unique_ptr<native::Regex> reParamEnd;
+std::unique_ptr<native::Regex> reParamNameEnd;
 
 bool getNextParameter(std::string::const_iterator &iBegin,
                       std::string::const_iterator iEnd,
                       std::string &iText,
-                      std::string &Name,
+                      std::string &iName,
                       std::string &iFormat) {
-  // regex is compiled only at the first call
-  static const std::unique_ptr<native::Regex> re =
-      native::Regex::Create("\\{([a-zA-Z][a-zA-Z0-9]*):([a-zA-Z][a-zA-Z0-9]*)\\}"); // e.g.: {param:formatName}
+  if (!reParamStart) {
+    // TODO:resolve the issue of create a Regex at runtime
+    reParamStart = native::Regex::Create("([\\{\\:])"); // e.g.: {...} or :...
+    reParamSimpleEnd = native::Regex::Create("^([a-zA-Z_][^/]*)");
+    reParamEnd = native::Regex::Create("^([a-zA-Z_][^\\}]*)\\}");
+    reParamNameEnd = native::Regex::Create("([^\\:]+)\\:");
+  }
+  static const std::string excludedFirstChars = "0123456789";
   std::unique_ptr<native::Smatch> results;
+  std::string::const_iterator currBegin = iBegin;
+  bool found = false;
+  iText = "";
 
-  if (!re->match(iBegin, iEnd, results, native::Regex::UNANCHORED)) {
-    return false;
+  while (!found) {
+    if (!reParamStart->match(currBegin, iEnd, results, native::Regex::UNANCHORED)) {
+      return false;
+    }
+
+    iText.append(currBegin, currBegin + results->position());
+    currBegin += results->position();
+
+    if (results->str(1) == ":") {
+      if (results->position() == 0 || *(currBegin - 1) == '/') { // exclude regex. e.g. (?:...)
+        found = true;
+        iFormat = "";
+        currBegin += results->length();
+        if (!reParamSimpleEnd->match(currBegin, iEnd, results, native::Regex::UNANCHORED)) {
+          return false;
+        }
+        iName = results->str(1);
+      }
+    } else {
+      std::unique_ptr<native::Smatch> results2;
+      if (reParamEnd->match(currBegin + results->length(), iEnd, results2, native::Regex::UNANCHORED)) {
+        found = true;
+        currBegin += results->length();
+        results = std::move(results2);
+        // TODO: consider to add inline format. e.g.: {<key>:/<regexText>/<flags>}
+        std::string nameAndFormat = results->str(1);
+
+        if (reParamNameEnd->match(nameAndFormat.begin(), nameAndFormat.end(), results2, native::Regex::UNANCHORED)) {
+          iName = results2->str(1);
+          iFormat.assign(nameAndFormat.begin() + results2->position() + results2->length(), nameAndFormat.end());
+        } else {
+          iName = nameAndFormat;
+          iFormat = "";
+        }
+      }
+    }
+
+    if (!found) {
+      iText.append(currBegin, currBegin + results->length());
+    }
+    currBegin += results->length();
   }
 
-  iText.assign(iBegin, iBegin + results->position());
-  Name = results->str(1);
-  iFormat = results->str(2);
-
-  iBegin += results->position() + results->length();
+  iBegin = currBegin;
 
   return true;
 }
@@ -50,7 +98,8 @@ void saveValues(native::UriTemplateValue &ioParsedValues,
     const std::string &name = iParams[i];
     const std::string &formatName = iFormatNames[i];
     native::UriTemplateValue &childValue = ioParsedValues.addChild(name, value);
-    const native::UriTemplateFormat &format = native::UriTemplateFormat::GetGlobalFormat(formatName);
+    const native::UriTemplateFormat &format =
+        (formatName.empty() ? simpleFormat : native::UriTemplateFormat::GetGlobalFormat(formatName));
 
     if (format.isRegExOnly()) {
       continue;
@@ -139,7 +188,6 @@ void UriTemplate::parse() {
 
   while (getNextParameter(begin, end, textStr, paramName, formatName)) {
     NNATIVE_DEBUG("paramName:" << paramName << ", formatName:" << formatName);
-    const UriTemplateFormat &globalFormat = UriTemplateFormat::GetGlobalFormat(formatName);
 
     // Check if parameter name duplicate. e.g: "/path{sameParamName:anyFormatName}/other/{sameParamName:anyFormatName}"
     if (!uniqParams.insert(paramName).second) {
@@ -150,6 +198,8 @@ void UriTemplate::parse() {
     _params.push_back(paramName);
     _formatNames.push_back(formatName);
 
+    const UriTemplateFormat &globalFormat =
+        (formatName.empty() ? simpleFormat : UriTemplateFormat::GetGlobalFormat(formatName));
     _matchPattern += textStr + globalFormat.getPattern();
     _extractPattern += textStr + globalFormat.getPattern(true);
   }

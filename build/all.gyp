@@ -44,6 +44,7 @@
                 '../test/worker_test.cpp',
                 '../test/UriTemplate_test.cpp',
                 '../test/UriTemplateFormat_test.cpp',
+                '../test/UriTemplateSimple_test.cpp',
             ]
         },
         #bechUriTemplate
