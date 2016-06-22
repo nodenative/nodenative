@@ -8,7 +8,6 @@ namespace http {
 
 std::shared_ptr<ServerConnection> ServerConnection::Create(std::shared_ptr<Server> iServer) {
   std::shared_ptr<ServerConnection> instance(new ServerConnection(iServer));
-  instance->_instance = instance;
   return instance;
 }
 
@@ -16,7 +15,7 @@ ServerConnection::ServerConnection(std::shared_ptr<Server> iServer) : _server(iS
   NNATIVE_FCALL();
   NNATIVE_ASSERT(_server);
 
-  _socket = native::net::Tcp::Create();
+  _socket = native::net::Tcp::Create(_server->getLoop());
   NNATIVE_ASSERT(_server->_socket->accept(_socket));
 }
 
@@ -53,10 +52,13 @@ ServerResponse &ServerConnection::getResponse() {
 }
 
 Future<void> ServerConnection::close() {
-  std::weak_ptr<ServerConnection> transactionWeak = this->getInstance();
-  return this->_socket->close().then([transactionWeak](std::shared_ptr<base::Handle>) {
-    std::shared_ptr<ServerConnection> instance = transactionWeak.lock();
-    instance->_instance.reset();
+  std::weak_ptr<ServerConnection> connectionWeak = getInstance();
+
+  return this->_socket->close().then([connectionWeak](std::shared_ptr<base::Handle>) {
+    std::shared_ptr<ServerConnection> connection = connectionWeak.lock();
+    for (std::function<void()> &cb : connection->_closeCbs) {
+      cb();
+    }
   });
 }
 
@@ -65,10 +67,9 @@ void ServerConnection::parse() {
   // Create request and response if it is not yet created
   getRequest();
 
-  Promise<void> promise(_socket->getLoop());
   std::weak_ptr<ServerConnection> connectionWeak = getInstance();
 
-  _socket->readStart([connectionWeak, promise](const char *buf, int len) {
+  _socket->readStart([connectionWeak](const char *buf, int len) {
     NNATIVE_ASSERT(!connectionWeak.expired());
     std::shared_ptr<ServerConnection> connection = connectionWeak.lock();
     // NNATIVE_DEBUG("buff [" << buf << "], len: " << len);
@@ -84,42 +85,31 @@ void ServerConnection::parse() {
     }
 
     NNATIVE_DEBUG("start http_parser_execute");
-    int parsed = connection->_request->parse(buf, len);
-    if (!connection->_request->isUpgrade() && parsed != len) {
+    int parsed = connection->getRequest().parse(buf, len);
+    if (!connection->getRequest().isUpgrade() && parsed != len) {
       // invalid request, close connection
-      NNATIVE_DEBUG("HTTP parser error: " << connection->_request->getErrorName() << ". Close connection");
-      connection->close()
-          .then([promise]() {
-            Promise<void> nonConstPromise = promise;
-            nonConstPromise.resolve();
-          })
-          .error([promise](const FutureError &err) {
-            Promise<void> nonConstPromise = promise;
-            nonConstPromise.resolve();
-          });
+      NNATIVE_DEBUG("HTTP parser error: " << connection->getRequest().getErrorName() << ". Close connection");
+      connection->close();
     }
 
-    if (connection->_request->isUpgrade() || connection->_request->isMessageComplete()) {
+    if (connection->getRequest().isUpgrade() || connection->getRequest().isMessageComplete()) {
       NNATIVE_DEBUG("complete request");
-      Promise<void> nonConstPromise = promise;
-      nonConstPromise.resolve();
+      connection->processRequest();
     }
 
     NNATIVE_DEBUG("end http_parser_execute");
   });
+}
 
-  promise.getFuture()
-      .then([connectionWeak]() -> Future<void> {
-        NNATIVE_ASSERT(!connectionWeak.expired());
-        std::shared_ptr<ServerConnection> connection = connectionWeak.lock();
+void ServerConnection::processRequest() {
+  std::weak_ptr<ServerConnection> connectionWeak = getInstance();
+  const std::string urlPath = getRequest().url().path();
+  NNATIVE_DEBUG("execute path: " << urlPath);
 
-        const std::string urlPath = connection->_request->url().path();
-        NNATIVE_DEBUG("execute path: " << urlPath);
-
-        return connection->_server->execute(urlPath, connection);
-      })
+  _server->execute(urlPath, getInstance())
       .then([connectionWeak]() {
         if (!connectionWeak.expired() && !connectionWeak.lock()->getResponse().isSent()) {
+          NNATIVE_DEBUG("send 404");
           // send a 404 status
           http::ServerResponse &res = connectionWeak.lock()->getResponse();
           res.setStatus(404);

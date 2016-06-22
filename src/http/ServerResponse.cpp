@@ -1,5 +1,6 @@
 #include "native/http/ServerResponse.hpp"
 #include "native/http/HttpUtils.hpp"
+#include "native/http/Server.hpp"
 #include "native/http/ServerConnection.hpp"
 #include "native/http/ServerRequest.hpp"
 
@@ -38,20 +39,21 @@ Future<void> ServerResponse::writeData(const std::string &data) {
 }
 
 Future<void> ServerResponse::endData(const std::string &data) {
-  std::weak_ptr<ServerConnection> transactionWeak = _connection;
+  NNATIVE_DEBUG("send last chank");
+  std::weak_ptr<ServerConnection> connectionWeak = _connection;
 
-  return OutgoingMessage::endData(data).then([transactionWeak]() {
-    NNATIVE_DEBUG("close connection socket");
-    auto transaction = transactionWeak.lock();
-    // Promise<void> promise(transaction->getLoop());
+  return OutgoingMessage::endData(data).then([connectionWeak]() {
+    auto connection = connectionWeak.lock();
 
-    // if (transaction->_response->_shouldKeepAlive) {
-    //  transaction->_request.reset();
-    //  transaction->_response.reset();
-    //  return
-    //} else {
-    return transaction->close();
-    //}
+    if (connection->_response->_shouldKeepAlive) {
+      NNATIVE_DEBUG("send response but keep connection");
+      connection->_request.reset();
+      connection->_response.reset();
+      return Promise<void>::Resolve(connection->_server->getLoop());
+    } else {
+      NNATIVE_DEBUG("close connection socket");
+      return connection->close();
+    }
   });
 }
 

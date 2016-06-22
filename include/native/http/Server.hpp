@@ -66,6 +66,7 @@ protected:
   std::shared_ptr<native::net::Tcp> _socket;
   std::shared_ptr<Server> _instance;
   std::function<void(const native::Error &)> _errorCb;
+  std::list<std::shared_ptr<ServerConnection>> _connections;
   std::function<std::shared_ptr<ServerConnection>(std::shared_ptr<Server>)> _createConnectionCb;
 };
 

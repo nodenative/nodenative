@@ -19,14 +19,12 @@ TEST(HttpServerTest, Basic)
   int port = getPort();
   std::string bodyText("TestData body");
   bool serverClosed = false;
-  bool requestSent = false;
 
-  server->getSync("/", [bodyText, &serverClosed, &requestSent](std::shared_ptr<http::ServerConnection> connection) {
+  server->getSync("/", [bodyText, &serverClosed](std::shared_ptr<http::ServerConnection> connection) {
     http::ServerResponse &res = connection->getResponse();
     res.setStatus(200);
     res.setHeader("Content-Type", "text/plain");
     res.end(bodyText);
-    EXPECT_EQ(requestSent, true);
     std::cout << "server response sent\n";
   });
 
@@ -36,49 +34,15 @@ TEST(HttpServerTest, Basic)
 
   EXPECT_EQ(serverClosed, false);
 
-  std::shared_ptr<net::Tcp> client = net::Tcp::Create();
-  std::weak_ptr<net::Tcp> clientWeak = client;
-  client->connect("127.0.0.1", port)
-      .then([clientWeak, serverWeak, bodyText, &requestSent, &serverClosed]() {
-        std::shared_ptr<std::string> response(new std::string);
-        requestSent = true;
-        clientWeak.lock()
-            ->write("GET / HTTP/1.1\r\n\r\n")
-            .then([clientWeak, serverWeak, response, bodyText, &serverClosed]() {
-              std::cout << "server request sent\n";
-              clientWeak.lock()->readStart([clientWeak, serverWeak, response, bodyText, &serverClosed](const char *buf,
-                                                                                                       ssize_t len) {
-                std::cout << "server response received " << len << "\n";
-                if (len < 0) {
-                  // End buffer
-                  std::cout << "close connection\n";
-                  clientWeak.lock()
-                      ->shutdown()
-                      .then([clientWeak]() -> Future<void> {
-                        std::cout << "client shotdown\n";
-                        return clientWeak.lock()->close().then([](std::shared_ptr<base::Handle>) {});
-                      })
-                      .then([]() { std::cout << "client closed\n"; })
-                      .error([](const FutureError &e) { std::cout << "client close error " << e.message() << "\n"; });
-                  serverWeak.lock()
-                      ->close()
-                      .then([&serverClosed, serverWeak](std::shared_ptr<http::Server>) {
-                        std::cout << "server closed " << serverWeak.use_count() << "\n";
-                        serverClosed = true;
-                        // server->close();
-                      })
-                      .error([](const FutureError &e) { std::cout << "server close error " << e.message() << "\n"; });
-                  // TODO: finish
-                  // EXPECT_EQ(*response, bodyText);
-                } else {
-                  response->append(std::string(buf, len));
-                }
-              });
-            });
+  http::get(loop, "http://127.0.0.1:8080")
+      .then([](std::shared_ptr<http::ClientResponse> res) { NNATIVE_INFO("response status:" << res->getStatusCode()); })
+      .error([](const FutureError &err) {
+        NNATIVE_INFO("error:" << err.message());
+        // an error is not expected
+        EXPECT_EQ(true, false);
       })
-      .error([](const FutureError &e) {
-        std::cout << "error: " << e.message();
-        EXPECT_EQ(0, 1);
+      .finally([serverWeak, &serverClosed]() {
+        serverWeak.lock()->close().then([&serverClosed](std::shared_ptr<http::Server> server) { serverClosed = true; });
       });
 
   NNATIVE_DEBUG("start loop");

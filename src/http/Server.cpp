@@ -58,6 +58,18 @@ std::shared_ptr<ServerConnection> Server::createConnection() {
     connection = ServerConnection::Create(getInstance());
   }
 
+  std::weak_ptr<ServerConnection> connectionWeak = connection;
+  std::weak_ptr<Server> instanceWeak = getInstance();
+
+  _connections.push_back(connection);
+  NNATIVE_DEBUG("++connections: " << _connections.size());
+  connection->onClose([connectionWeak, instanceWeak]() {
+    std::shared_ptr<Server> instance = instanceWeak.lock();
+    std::shared_ptr<ServerConnection> connection = connectionWeak.lock();
+    instance->_connections.remove(connection);
+    NNATIVE_DEBUG("--connections: " << instance->_connections.size());
+  });
+
   return connection;
 }
 
@@ -76,7 +88,7 @@ bool Server::listen(const std::string &ip, int port) {
         NNATIVE_DEBUG("new connection");
 
         if (e) {
-          NNATIVE_INFO("error: " << e.name() << ", str:" << e.str());
+          NNATIVE_DEBUG("error: " << e.name() << ", str:" << e.str());
           instance->error(e);
           return;
         }
@@ -91,7 +103,13 @@ bool Server::listen(const std::string &ip, int port) {
 }
 
 Future<std::shared_ptr<Server>> Server::close() {
-  std::weak_ptr<Server> instanceWeak = getInstance();
+  NNATIVE_DEBUG("Close server...");
+  std::shared_ptr<Server> instance = getInstance();
+  std::weak_ptr<Server> instanceWeak = instance;
+  NNATIVE_DEBUG("closing connections:" << _connections.size());
+  for (std::shared_ptr<ServerConnection> connection : _connections) {
+    connection->close();
+  }
 
   return _socket->close().then([instanceWeak](std::shared_ptr<base::Handle>) -> std::shared_ptr<Server> {
     std::shared_ptr<Server> instance = instanceWeak.lock();

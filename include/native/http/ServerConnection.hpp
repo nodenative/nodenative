@@ -35,19 +35,21 @@ public:
   ServerResponse &getResponse();
 
   Future<void> close();
+  void onClose(std::function<void()> cb) { _closeCbs.push_back(cb); };
 
 private:
   void parse();
+  void processRequest();
 
 protected:
   virtual std::unique_ptr<ServerRequest> createRequest();
   virtual std::unique_ptr<ServerResponse> createResponse();
 
-  std::shared_ptr<ServerConnection> _instance;
   std::shared_ptr<Server> _server;
   std::shared_ptr<native::net::Tcp> _socket;
   std::unique_ptr<ServerRequest> _request;
   std::unique_ptr<ServerResponse> _response;
+  std::list<std::function<void()>> _closeCbs;
 };
 
 } /* namespace http */

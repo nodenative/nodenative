@@ -37,7 +37,7 @@ std::string OutgoingMessage::getMessageHeaderRaw() const {
 
 Future<void> OutgoingMessage::writeData(const std::string &str) {
   NNATIVE_ASSERT(!_closed);
-  Future<void> future(Loop::GetInstanceSafe());
+  std::string data;
 
   if (!_headerSent) {
     // If the body is sent in 1 go, then deactivate chunked enkoding.
@@ -45,7 +45,7 @@ Future<void> OutgoingMessage::writeData(const std::string &str) {
       _chunkedEncoding = false;
     }
 
-    if (!_chunkedEncoding && !str.empty() && _headers.find("Content-Length") == _headers.end()) {
+    if (!_chunkedEncoding && _headers.find("Content-Length") == _headers.end()) {
       std::stringstream ss;
       ss << str.length();
       _headers["Content-Length"] = ss.str();
@@ -67,25 +67,18 @@ Future<void> OutgoingMessage::writeData(const std::string &str) {
     }
 
     _headerSent = true;
-    std::string str = getMessageHeaderRaw();
-    future = sendData(str);
-  } else {
-    future = Promise<void>::Resolve(Loop::GetInstanceSafe());
+    data = getMessageHeaderRaw();
+    NNATIVE_DEBUG("send header " << data.size());
   }
 
   if (!str.empty()) {
-    OutgoingMessage *messagePtr = this;
-    future = future.then([messagePtr, str]() { return messagePtr->sendData(str); });
+    data += str;
   }
 
-  return future;
+  return sendData(data);
 }
 
 Future<void> OutgoingMessage::endData(const std::string &str) {
-  if (!_last) {
-    NNATIVE_DEBUG("cannon be sent")
-  }
-
   NNATIVE_ASSERT(!_closed);
   NNATIVE_ASSERT(!_last);
 
