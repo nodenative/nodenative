@@ -1,5 +1,125 @@
 #include "native/Loop.hpp"
+#include "native/Timer.hpp"
 #include "native/http.hpp"
+
+namespace {
+
+struct TimeoutEntry {
+  std::weak_ptr<native::http::ServerConnection> _connectionWeak;
+  uint64_t _endTime;
+
+  TimeoutEntry() : _endTime(0) {}
+  void setTime(std::shared_ptr<native::http::Server> server, bool isIdle) {
+    _endTime = server->getLoop()->now() +
+               (isIdle ? server->getIdleConnectionTimeoutSeconds() : server->getResponseTimeoutSeconds()) * 1000;
+  }
+};
+
+struct LoopTimeoutEntries;
+
+struct LoopTimeoutEntries {
+  std::shared_ptr<native::Loop> _loop;
+  std::shared_ptr<native::Timer> _timer;
+  std::list<TimeoutEntry> _connectionEntries;
+  static std::list<std::shared_ptr<LoopTimeoutEntries>> _loopConnectionEntries;
+  bool expired() { return true; }
+
+  void insertConnection(const TimeoutEntry &entry) {
+    std::list<TimeoutEntry>::iterator it = _connectionEntries.begin();
+    for (; it != _connectionEntries.end() && entry._endTime < it->_endTime; ++it) {
+    }
+    _connectionEntries.insert(it, entry);
+  }
+
+  static void AddConnection(std::shared_ptr<native::http::ServerConnection> connection, bool isIdle = false) {
+    std::shared_ptr<native::http::Server> server = connection->getServer();
+    std::shared_ptr<native::Loop> loop = server->getLoop();
+    std::shared_ptr<LoopTimeoutEntries> loopEntry = FindOrCreateEntry(loop);
+    TimeoutEntry entry;
+    entry._connectionWeak = connection;
+    entry.setTime(server, isIdle);
+  }
+
+  static void RestartTime(std::shared_ptr<native::http::ServerConnection> connection, bool isIdle = false) {
+    std::shared_ptr<native::http::Server> server = connection->getServer();
+    std::shared_ptr<native::Loop> loop = server->getLoop();
+    std::shared_ptr<LoopTimeoutEntries> loopEntry = FindOrCreateEntry(loop);
+
+    for (std::list<TimeoutEntry>::iterator it = loopEntry->_connectionEntries.begin();
+         it != loopEntry->_connectionEntries.end(); ++it) {
+      if (!it->_connectionWeak.expired() && it->_connectionWeak.lock() == connection) {
+        it->setTime(server, isIdle);
+        loopEntry->insertConnection(*it);
+        loopEntry->_connectionEntries.erase(it);
+        return;
+      }
+    }
+  }
+
+  static void RemoveConnection(std::shared_ptr<native::http::ServerConnection> connection) {
+    std::shared_ptr<LoopTimeoutEntries> loopEntry = FindOrCreateEntry(connection->getServer()->getLoop());
+    loopEntry->_connectionEntries.remove_if([connection](const TimeoutEntry &entry) {
+      return entry._connectionWeak.expired() || entry._connectionWeak.lock() == connection;
+    });
+
+    if (loopEntry->_connectionEntries.size() == 0) {
+      loopEntry->_timer->stop();
+      _loopConnectionEntries.remove(loopEntry);
+      NNATIVE_DEBUG("--_loopConnectionEntries:" << _loopConnectionEntries.size());
+    }
+  }
+
+  static std::shared_ptr<LoopTimeoutEntries> FindOrCreateEntry(std::shared_ptr<native::Loop> loop);
+};
+
+std::list<std::shared_ptr<LoopTimeoutEntries>> LoopTimeoutEntries::_loopConnectionEntries;
+
+std::shared_ptr<LoopTimeoutEntries> LoopTimeoutEntries::FindOrCreateEntry(std::shared_ptr<native::Loop> loop) {
+  NNATIVE_ASSERT(loop);
+  for (std::shared_ptr<LoopTimeoutEntries> loopEntry : _loopConnectionEntries) {
+    if (loopEntry->_loop == loop) {
+      return loopEntry;
+    }
+  }
+
+  // Create a new one
+  std::shared_ptr<LoopTimeoutEntries> newLoopEntry(new LoopTimeoutEntries);
+  newLoopEntry->_loop = loop;
+
+  std::weak_ptr<LoopTimeoutEntries> loopEntryWeak = newLoopEntry;
+
+  newLoopEntry->_timer = native::Timer::Create(loop, [loopEntryWeak]() {
+    if (loopEntryWeak.expired()) {
+      return;
+    }
+    std::shared_ptr<LoopTimeoutEntries> loopEntry = loopEntryWeak.lock();
+    const uint64_t timeNow = loopEntry->_loop->now();
+    loopEntry->_connectionEntries.remove_if([&timeNow](const TimeoutEntry &entry) {
+      if (entry._connectionWeak.expired()) {
+        return true;
+      } else if (timeNow >= entry._endTime) {
+        std::shared_ptr<native::http::ServerConnection> connection = entry._connectionWeak.lock();
+        connection->close();
+        return true;
+      }
+
+      return false;
+    });
+
+    if (loopEntry->_connectionEntries.size() == 0) {
+      loopEntry->_timer->stop();
+      _loopConnectionEntries.remove(loopEntry);
+      NNATIVE_DEBUG("--_loopConnectionEntries:" << _loopConnectionEntries.size());
+    }
+  });
+  // repeat each second (1000ms)
+  _loopConnectionEntries.push_back(newLoopEntry);
+  newLoopEntry->_timer->start(1000, 1000);
+  NNATIVE_DEBUG("++_loopConnectionEntries:" << _loopConnectionEntries.size());
+  return newLoopEntry;
+}
+
+} /* namespace */
 
 namespace native {
 namespace http {
@@ -20,6 +140,8 @@ std::shared_ptr<Server> Server::Create(std::shared_ptr<Loop> iLoop) {
 Server::Server(std::shared_ptr<Loop> iLoop)
     : ServerPlugin::ServerPlugin(iLoop), _loop(iLoop), _socket(native::net::Tcp::Create(iLoop)) {
   NNATIVE_FCALL();
+  setIdleConnectionTimeout();
+  setResponseTimeout();
 }
 
 Server::~Server() {
@@ -68,7 +190,19 @@ std::shared_ptr<ServerConnection> Server::createConnection() {
     std::shared_ptr<ServerConnection> connection = connectionWeak.lock();
     instance->_connections.remove(connection);
     NNATIVE_DEBUG("--connections: " << instance->_connections.size());
+    LoopTimeoutEntries::RemoveConnection(connection);
   });
+
+  connection->onRequestReceived([connectionWeak]() {
+    std::shared_ptr<ServerConnection> connection = connectionWeak.lock();
+    LoopTimeoutEntries::RestartTime(connection, false /*idle*/);
+  });
+
+  connection->onResponseSent([connectionWeak]() {
+    std::shared_ptr<ServerConnection> connection = connectionWeak.lock();
+    LoopTimeoutEntries::RestartTime(connection, true /*idle*/);
+  });
+  LoopTimeoutEntries::AddConnection(connection, true /*idle*/);
 
   return connection;
 }

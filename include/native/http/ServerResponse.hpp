@@ -24,6 +24,7 @@ protected:
 
   virtual Future<void> writeData(const std::string &str) override;
   virtual Future<void> endData(const std::string &data) override;
+  void onEnd(std::function<void()> cb) { _endCbs.push_back(cb); };
 
 public:
   ServerResponse() = delete;
@@ -36,6 +37,7 @@ public:
 protected:
   int _statusCode;
   std::weak_ptr<ServerConnection> _connection;
+  std::list<std::function<void()>> _endCbs;
 };
 
 } /* namespace http */

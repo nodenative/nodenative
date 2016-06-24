@@ -44,6 +44,9 @@ Future<void> ServerResponse::endData(const std::string &data) {
 
   return OutgoingMessage::endData(data).then([connectionWeak]() {
     auto connection = connectionWeak.lock();
+    for (std::function<void()> &cb : connection->_response->_endCbs) {
+      cb();
+    }
 
     if (connection->_response->_shouldKeepAlive) {
       NNATIVE_DEBUG("send response but keep connection");

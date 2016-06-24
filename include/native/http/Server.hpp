@@ -61,6 +61,34 @@ public:
    */
   std::shared_ptr<ServerConnection> createConnection();
 
+  /**
+   * Set the idle timeout.
+   * Idle timeout is the time between the connection is created and the request is received for the first request,
+   * or the time between a sent response and the next received request.
+   * The new timeout will take efect only for new connections.
+   *
+   * If the timeout is reached, the connection is closed.
+   *
+   * @param seconds timeout in seconds. Default value is 30 seconds
+   */
+  void setIdleConnectionTimeout(const uint64_t &seconds = 30) {
+    NNATIVE_ASSERT(seconds > 0);
+    _idleConnectionTimeoutSeconds = seconds;
+  }
+
+  const uint64_t &getIdleConnectionTimeoutSeconds() const { return _idleConnectionTimeoutSeconds; }
+
+  /**
+   * Set response timeout in seconds.
+   * If the timeout is reached, the connection is closed.
+   * @param seconds timeout value in seconds. Default value is 60 seconds
+   */
+  void setResponseTimeout(const uint64_t &seconds = 60) {
+    NNATIVE_ASSERT(seconds > 0);
+    _responseTimeoutSeconds = seconds;
+  }
+  const uint64_t &getResponseTimeoutSeconds() const { return _responseTimeoutSeconds; }
+
 protected:
   std::shared_ptr<Loop> _loop;
   std::shared_ptr<native::net::Tcp> _socket;
@@ -68,6 +96,8 @@ protected:
   std::function<void(const native::Error &)> _errorCb;
   std::list<std::shared_ptr<ServerConnection>> _connections;
   std::function<std::shared_ptr<ServerConnection>(std::shared_ptr<Server>)> _createConnectionCb;
+  uint64_t _idleConnectionTimeoutSeconds;
+  uint64_t _responseTimeoutSeconds;
 };
 
 } // namespace http

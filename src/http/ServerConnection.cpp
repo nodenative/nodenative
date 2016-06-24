@@ -46,6 +46,13 @@ ServerRequest &ServerConnection::getRequest() {
 ServerResponse &ServerConnection::getResponse() {
   if (!_response) {
     _response = createResponse();
+    std::weak_ptr<ServerConnection> connectionWeak = getInstance();
+    _response->onEnd([connectionWeak]() {
+      std::shared_ptr<ServerConnection> connection = connectionWeak.lock();
+      for (std::function<void()> &cb : connection->_responseSentCbs) {
+        cb();
+      }
+    });
   }
 
   return *_response;
@@ -102,6 +109,9 @@ void ServerConnection::parse() {
 }
 
 void ServerConnection::processRequest() {
+  for (std::function<void()> &cb : _requestReceivedCbs) {
+    cb();
+  }
   std::weak_ptr<ServerConnection> connectionWeak = getInstance();
   const std::string urlPath = getRequest().url().path();
   NNATIVE_DEBUG("execute path: " << urlPath);
