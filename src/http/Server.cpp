@@ -26,7 +26,14 @@ struct LoopTimeoutEntries {
 
   void insertConnection(const TimeoutEntry &entry) {
     std::list<TimeoutEntry>::iterator it = _connectionEntries.begin();
-    for (; it != _connectionEntries.end() && entry._endTime < it->_endTime; ++it) {
+    for (; it != _connectionEntries.end() && entry._endTime > it->_endTime; ++it) {
+    }
+
+    // Restart time because
+    if (!_connectionEntries.empty() && it == _connectionEntries.begin()) {
+      const uint64_t timeNow = _loop->now();
+      _timer->stop();
+      _timer->start((timeNow < entry._endTime ? entry._endTime - timeNow : 1000), 1000);
     }
     _connectionEntries.insert(it, entry);
   }
@@ -38,6 +45,7 @@ struct LoopTimeoutEntries {
     TimeoutEntry entry;
     entry._connectionWeak = connection;
     entry.setTime(server, isIdle);
+    loopEntry->insertConnection(entry);
   }
 
   static void RestartTime(std::shared_ptr<native::http::ServerConnection> connection, bool isIdle = false) {
@@ -63,7 +71,7 @@ struct LoopTimeoutEntries {
     });
 
     if (loopEntry->_connectionEntries.size() == 0) {
-      loopEntry->_timer->stop();
+      loopEntry->_timer->close();
       _loopConnectionEntries.remove(loopEntry);
       NNATIVE_DEBUG("--_loopConnectionEntries:" << _loopConnectionEntries.size());
     }
@@ -94,27 +102,27 @@ std::shared_ptr<LoopTimeoutEntries> LoopTimeoutEntries::FindOrCreateEntry(std::s
     }
     std::shared_ptr<LoopTimeoutEntries> loopEntry = loopEntryWeak.lock();
     const uint64_t timeNow = loopEntry->_loop->now();
-    loopEntry->_connectionEntries.remove_if([&timeNow](const TimeoutEntry &entry) {
-      if (entry._connectionWeak.expired()) {
-        return true;
-      } else if (timeNow >= entry._endTime) {
-        std::shared_ptr<native::http::ServerConnection> connection = entry._connectionWeak.lock();
-        connection->close();
-        return true;
-      }
-
-      return false;
-    });
+    std::list<TimeoutEntry>::iterator it = loopEntry->_connectionEntries.begin();
+    while (it != loopEntry->_connectionEntries.end() && (it->_connectionWeak.expired() || timeNow >= it->_endTime)) {
+      std::list<TimeoutEntry>::iterator itRemove = it;
+      ++it;
+      loopEntry->_connectionEntries.erase(itRemove);
+    }
 
     if (loopEntry->_connectionEntries.size() == 0) {
-      loopEntry->_timer->stop();
+      loopEntry->_timer->close();
       _loopConnectionEntries.remove(loopEntry);
       NNATIVE_DEBUG("--_loopConnectionEntries:" << _loopConnectionEntries.size());
+    } else {
+      const TimeoutEntry &entry = *loopEntry->_connectionEntries.begin();
+      loopEntry->_timer->setRepeat((timeNow < entry._endTime ? entry._endTime - timeNow : 1000));
     }
   });
+
+  // Start after insert
+  newLoopEntry->_timer->start(0, 1000);
   // repeat each second (1000ms)
   _loopConnectionEntries.push_back(newLoopEntry);
-  newLoopEntry->_timer->start(1000, 1000);
   NNATIVE_DEBUG("++_loopConnectionEntries:" << _loopConnectionEntries.size());
   return newLoopEntry;
 }

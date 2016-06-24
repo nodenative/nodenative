@@ -21,7 +21,7 @@ TEST(TimerTests, Basic) {
       elapsedTime = loopWeak.lock()->now() - startTime;
     });
 
-    timer->start(100U, 0U);
+    timer->start(100U);
   }
 
   EXPECT_EQ(isTimeOut, false);
@@ -44,7 +44,7 @@ TEST(TimerTests, EmptyCallback) {
   {
     std::shared_ptr<Timer> timer = Timer::Create(loop, {});
 
-    timer->start(100U, 0U);
+    timer->start(100U);
   }
 
   EXPECT_EQ(elapsedTime, 0U);

@@ -38,7 +38,7 @@ public:
    * @param iRepeat if it is non-zero, the callback fires first after `iTimeout` milliseconds and then repeatedly after
    * `iRepeat` milliseconds.
    */
-  Error start(const uint64_t iTimeout, const uint64_t iRepeat);
+  Error start(const uint64_t iTimeout, const uint64_t iRepeat = 0U);
 
   /**
    * Stop the timer, the callback will not be called anymore.
