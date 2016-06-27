@@ -36,6 +36,8 @@
                 '../test/fs_test.cpp',
                 '../test/http/Server_test.cpp',
                 '../test/http/ServerPlugin_test.cpp',
+                '../test/http/encodeUrl_test.cpp',
+                '../test/http/decodeUrl_test.cpp',
                 '../test/timer_test.cpp',
                 '../test/async_test.cpp',
                 '../test/Future/then_test.cpp',

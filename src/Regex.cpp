@@ -93,6 +93,15 @@ public:
     return match(text, iResult, iAnchor);
   }
 
+  bool replace(std::string &str, const std::string &rewrite, ReplaceType type) const override {
+    re2::StringPiece rewirePiece(rewrite);
+    if (type == REPLACE_FIRST) {
+      return (re2::RE2::Replace(&str, _regex, rewirePiece) ? true : false);
+    }
+
+    return (re2::RE2::GlobalReplace(&str, _regex, rewirePiece) > 0 ? true : false);
+  }
+
 private:
   re2::RE2 _regex;
 };
@@ -151,6 +160,13 @@ public:
     return match(iText.begin(), iText.end(), iResult, iAnchor);
   }
 
+  bool replace(std::string &str, const std::string &rewrite, ReplaceType type) const override {
+    std::string before = str;
+    str = std::regex_replace(str, _regex, rewrite, (type == REPLACE_FIRST ? std::regex_constants::match_continuous
+                                                                          : std::regex_constants::match_default));
+    return !(before == str);
+  }
+
 private:
   std::regex _regex;
 };
@@ -207,6 +223,13 @@ public:
              std::unique_ptr<native::Smatch> &iResult,
              native::Regex::Anchor iAnchor) const override {
     return match(iText.begin(), iText.end(), iResult, iAnchor);
+  }
+
+  bool replace(std::string &str, const std::string &rewrite, ReplaceType) const override {
+    std::string before = str;
+    str = boost::regex_replace(str, _regex, rewrite, (type == REPLACE_FIRST ? boost::regex_constants::match_continuous
+                                                                            : boost::regex_constants::match_default));
+    return !(before == str);
   }
 
 private:

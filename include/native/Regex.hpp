@@ -36,10 +36,12 @@ public:
  * - RE2
  * - std::regex
  * - boost::regex
+ * It uses ECMAScript rules
  */
 class Regex {
 public:
   enum Anchor { ANCHOR_BOTH, ANCHOR_START, UNANCHORED };
+  enum ReplaceType { REPLACE_FIRST, REPLACE_ANY };
 
   /**
    * create the default wrapper regex.
@@ -54,12 +56,13 @@ public:
   /**
    * Match methods
    */
-  virtual bool
-  match(const std::string &iText, std::unique_ptr<Smatch> &iResult, Anchor iAnchor = ANCHOR_BOTH) const = 0;
-  virtual bool match(std::string::const_iterator iBegin,
-                     std::string::const_iterator iEnd,
-                     std::unique_ptr<Smatch> &iMatch,
-                     Anchor iAnchor = ANCHOR_BOTH) const = 0;
+  virtual bool match(const std::string &str, std::unique_ptr<Smatch> &result, Anchor anchor = ANCHOR_BOTH) const = 0;
+  virtual bool match(std::string::const_iterator start,
+                     std::string::const_iterator end,
+                     std::unique_ptr<Smatch> &smatch,
+                     Anchor anchor = ANCHOR_BOTH) const = 0;
+
+  virtual bool replace(std::string &str, const std::string &rewrite, ReplaceType type = REPLACE_FIRST) const = 0;
 };
 
 } /* namespace native */

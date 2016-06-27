@@ -14,6 +14,23 @@
 namespace native {
 namespace http {
 
+/**
+ * Encode a URL to a percent-encoded form.
+ * @param  url URL to encode
+ * @param allowedChars allowed chars. This value can be change if it is required to encode a parameter value
+ * @return     encoded URL
+ */
+std::string encodeUrl(const std::string &url,
+                      const std::string &allowedChars = "/?=&#",
+                      const std::string &valueAllowedShars = "-_.:[]~!$()'*,;@");
+
+/**
+ * Decode a URL from a percent-encoded form.
+ * @param  url URL to decode
+ * @return     decoded URL
+ */
+std::string decodeUrl(const std::string &url, const bool spaceAsPlus = true);
+
 Future<std::shared_ptr<ClientResponse>> request(std::shared_ptr<Loop> iLoop,
                                                 const std::string &method,
                                                 const std::string &host,
