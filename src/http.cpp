@@ -38,24 +38,35 @@ int hexPairValue(const char c1, const char c2) {
 namespace native {
 namespace http {
 
-std::string encodeUrl(const std::string &url, const std::string &allowedChars, const std::string &valueAllowedChars) {
+std::string encodeUrl(const std::string &url,
+                      const bool skipPercentSequence /*=false*/,
+                      const std::string &allowedChars,
+                      const std::string &valueAllowedChars) {
   // A good example of encode/decode URL is
   // https://chromium.googlesource.com/external/libjingle/chrome-sandbox/+/master/talk/base/urlencode.cc
   std::ostringstream escaped;
   escaped.fill('0');
   escaped << std::hex;
-  for (const char c : url) {
+  unsigned int i = 0, n = url.size();
+  while (i < n) {
     // Keep alphanumeric and other accepted characters intact
+    std::string::value_type c = url[i];
     if (std::isalnum(c) || valueAllowedChars.find(c) != std::string::npos ||
         allowedChars.find(c) != std::string::npos) {
       escaped << c;
-      continue;
+    } else if (skipPercentSequence && c == '%' && i + 2 < n) {
+      int value = hexPairValue(url[i + 1], url[i + 2]);
+      if (value >= 0) {
+        escaped << c << url[i + 1] << url[i + 2];
+        i += 2;
+      }
+    } else {
+      // Any other characters are percent-encoded
+      escaped << std::uppercase;
+      escaped << '%' << std::setw(2) << int((unsigned char)c);
+      escaped << std::nouppercase;
     }
-
-    // Any other characters are percent-encoded
-    escaped << std::uppercase;
-    escaped << '%' << std::setw(2) << int((unsigned char)c);
-    escaped << std::nouppercase;
+    ++i;
   }
 
   return escaped.str();

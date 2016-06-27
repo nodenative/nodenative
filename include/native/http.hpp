@@ -17,12 +17,14 @@ namespace http {
 /**
  * Encode a URL to a percent-encoded form.
  * @param  url URL to encode
+ * @param skipPercentSequence Skip percente sequence. It will check valid percent Sequense between %00 and %FF
  * @param allowedChars allowed chars. This value can be change if it is required to encode a parameter value
  * @return     encoded URL
  */
 std::string encodeUrl(const std::string &url,
+                      const bool skipPercentSequence = false,
                       const std::string &allowedChars = "/?=&#",
-                      const std::string &valueAllowedShars = "-_.:[]~!$()'*,;@");
+                      const std::string &valueAllowedChars = "-_.:[]~!$()'*,;@");
 
 /**
  * Decode a URL from a percent-encoded form.

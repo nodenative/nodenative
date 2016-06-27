@@ -14,6 +14,23 @@ TEST(encodeUrl, doNotChangeIPv6) {
   EXPECT_EQ(encodeUrl(url), url);
 }
 
+TEST(encodeUrl, doNotSkipPercentSequence) {
+  const std::string url("http://localhost/%20snow.html");
+  const std::string urlExpected("http://localhost/%2520snow.html");
+  EXPECT_EQ(encodeUrl(url), urlExpected);
+}
+
+TEST(encodeUrl, skipPercentSequence) {
+  const std::string url("http://localhost/%20snow.html", true);
+  EXPECT_EQ(encodeUrl(url), url);
+}
+
+TEST(encodeUrl, doNotSkipWrongPercentSequence) {
+  const std::string url("http://localhost/%ZFsnow.html");
+  const std::string urlExpected("http://localhost/%25ZFsnow.html");
+  EXPECT_EQ(encodeUrl(url), urlExpected);
+}
+
 TEST(encodeUrl, shouldEncodeLF) {
   const std::string url("http://localhost/\nsnow.html");
   const std::string urlExpect("http://localhost/%0Asnow.html");
