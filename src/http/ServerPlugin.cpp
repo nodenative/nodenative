@@ -28,6 +28,10 @@ Future<void> PluginData::execute(const std::string &iUriPath, std::shared_ptr<Se
   return plugin->execute(iUriPath, iTransaction);
 }
 
+Future<void> CallbackData::execute(const std::string &iUriPath, std::shared_ptr<ServerConnection> iTransaction) {
+  return callback(iTransaction);
+}
+
 ServerPlugin::ServerPlugin(std::shared_ptr<Loop> iLoop) : _loop(iLoop) {}
 
 std::shared_ptr<ServerPlugin> ServerPlugin::getInstance() { return shared_from_this(); }
@@ -80,6 +84,8 @@ Future<void> ServerPlugin::execute(const std::string &iUriPath, std::shared_ptr<
       if (!callback) {
         continue;
       }
+
+      callback->uri.extract(iTransaction->getRequest().getUriTemplateValues(), iUriPath, false);
 
       if (!isFirst) {
         result = result.then([callbackWeak, iTransaction, newUriPath]() -> Future<void> {

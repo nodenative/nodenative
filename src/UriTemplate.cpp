@@ -134,7 +134,6 @@ bool extractAndSaveValues(native::UriTemplateValue &oValues,
 
   int position = 0;
   // No name to the first parsed value
-  oValues.clear();
   oValues.getString() = matchResults->str(position++);
   // save child values
   saveValues(oValues, position, matchResults, iParams, iFormatNames);

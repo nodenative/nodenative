@@ -28,6 +28,8 @@ public:
    * @param iValue value string
    */
   UriTemplateValue(const std::string &iName, const std::string &iValue);
+  UriTemplateValue(const UriTemplateValue &other);
+  UriTemplateValue(UriTemplateValue &&other);
 
   /// Returns value name
   std::string &getName() { return _name; }
@@ -67,10 +69,30 @@ public:
    *
    * @param iName child value name
    * @param iValue child value string
+   * @param replaceIfExists replace the current value if exists
    *
    * @return the new created child value reference
    */
-  UriTemplateValue &addChild(const std::string &iName, const std::string &iValue);
+  UriTemplateValue &addChild(const std::string &iName, const std::string &iValue, const bool replaceIfExists = false);
+
+  /**
+   * Rename child
+   * @param oldName old name
+   * @param newName new Name
+   *
+   *
+   * @return true if the rename was done. False otherwise
+   */
+  bool renameChild(const std::string &oldName, const std::string &newName);
+
+  /**
+   * Remove child
+   * @param name child name
+   *
+   *
+   * @return true if the remove was done. False otherwise
+   */
+  bool removeChild(const std::string &name);
 
   /**
    * @brief Return child values

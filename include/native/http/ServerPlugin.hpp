@@ -82,9 +82,7 @@ struct CallbackData : public CallbackDataBase {
                const bool iFullPathMatch)
       : CallbackDataBase(iUri, iFullPathMatch), callback(iCallback) {}
 
-  Future<void> execute(const std::string &iUriPath, std::shared_ptr<ServerConnection> iTransaction) override {
-    return callback(iTransaction);
-  }
+  Future<void> execute(const std::string &iUriPath, std::shared_ptr<ServerConnection> iTransaction) override;
 
   std::function<Future<void>(std::shared_ptr<ServerConnection>)> callback;
 };

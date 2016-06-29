@@ -1,6 +1,7 @@
 #ifndef __NATIVE_HTTP_SERVERREQUEST_HPP__
 #define __NATIVE_HTTP_SERVERREQUEST_HPP__
 
+#include "../UriTemplateValue.hpp"
 #include "../text.hpp"
 #include "IncomingMessage.hpp"
 #include "UrlObject.hpp"
@@ -24,11 +25,14 @@ public:
   ~ServerRequest();
 
   bool isComplete() { return _complete; }
+  const UriTemplateValue &getUriTemplateValues() const { return _uriTemplateValues; }
+  UriTemplateValue &getUriTemplateValues() { return _uriTemplateValues; }
 
 protected:
   void onMessageComplete() override;
 
   std::weak_ptr<ServerConnection> _connection;
+  UriTemplateValue _uriTemplateValues;
   bool _complete;
 };
 
