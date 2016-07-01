@@ -10,6 +10,9 @@ public:
   FutureError(const std::string &iError) : Exception(iError) {}
   FutureError(const std::string &iError, const std::string &iFile, const int iLine, const std::string &iFunction)
       : Exception(iError, iFile, iLine, iFunction) {}
+  FutureError(const int &errorNo) : Exception(""), error(errorNo) {}
+
+  Error error;
 };
 
 class PromiseAlreadySatisfied : public FutureError {

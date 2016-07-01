@@ -42,7 +42,6 @@ bool Stream::readStart(std::function<void(const char *buf, ssize_t len)> callbac
                               // https://github.com/nodejs/node/blob/7a8dd69e1c318f6b3d5ef0d2a2844333816b7193/test/parallel/test-http-destroyed-socket-write2.js#L5
                               // Error err = nread;
                               // NNATIVE_INFO("Error " << nread << ", name: " << err.name() << ", str:" << err.str())
-                              NNATIVE_ASSERT_MSG(nread == UV_EOF, "error nread: " << nread);
                               thisPtr->_readCb(nullptr, nread);
                             } else if (nread >= 0) {
                               thisPtr->_readCb(bufData.get(), nread);
@@ -59,7 +58,7 @@ bool Stream::readStart(std::function<void(const char *buf, ssize_t len)> callbac
 bool Stream::readStop() {
   int res = uv_read_stop(get<uv_stream_t>());
 
-  if(res == 0) {
+  if (res == 0) {
     NNATIVE_DEBUG("Reset _readCb");
     _readCb = std::function<void(const char *buf, ssize_t len)>();
   }

@@ -82,12 +82,25 @@ void ServerConnection::parse() {
     // NNATIVE_DEBUG("buff [" << buf << "], len: " << len);
     if ((buf == nullptr) || (len < 0)) {
       NNATIVE_DEBUG("received an negative length: " << len);
-      ServerResponse &response = connection->getResponse();
-      if (!response.isSent()) {
-        response.setStatus(500);
-        response.end("Invalid request format.");
-        NNATIVE_DEBUG("Invalid request sent");
+
+      if (len == UV_EOF) {
+        // TODO: check if required to process the pending request
+      } else if (len == UV_ECONNRESET) {
+        NNATIVE_DEBUG("ECONNRESET");
+        connection->close();
+      } else {
+        Error err = len;
+        ServerResponse &response = connection->getResponse();
+        if (!response.isSent()) {
+          response.setStatus(500);
+          std::string responseText("Invalid request format.");
+          responseText += "Name: ";
+          responseText += err.name();
+          response.end(responseText);
+          NNATIVE_DEBUG("Invalid request sent");
+        }
       }
+
       return;
     }
 
