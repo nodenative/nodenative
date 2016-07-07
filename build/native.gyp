@@ -47,6 +47,7 @@
                 '../src/http.cpp',
                 '../src/Loop.cpp',
                 '../src/net/net_utils.cpp',
+                '../src/net/Pipe.cpp',
                 '../src/net/Tcp.cpp',
                 '../src/Regex.cpp',
                 '../src/Timer.cpp',
