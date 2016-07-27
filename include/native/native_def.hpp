@@ -3,6 +3,8 @@
 
 #include "Error.hpp"
 #include "Loop.hpp"
+#include "Pipe.hpp"
+#include "Process.hpp"
 #include "Regex.hpp"
 #include "Timer.hpp"
 #include "UriTemplate.hpp"

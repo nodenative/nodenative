@@ -1,11 +1,10 @@
-#include "native/net/Pipe.hpp"
+#include "native/Pipe.hpp"
 #include "native/async.hpp"
 #include "native/async.ipp"
 #include "native/async/RequestPromise.hpp"
 #include "native/net/net_utils.hpp"
 
 namespace native {
-namespace net {
 
 std::shared_ptr<Pipe> Pipe::Create(const bool ipc) {
   std::shared_ptr<Pipe> instance(new Pipe(Loop::GetInstanceSafe(), ipc));
@@ -115,4 +114,3 @@ bool Pipe::setPendingInstances(int instances) {
 }
 
 } /* namespace native */
-} /* namespace net */

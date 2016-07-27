@@ -47,6 +47,16 @@ bool deregisterLoop(native::Loop *iLoopPtr) {
   return false;
 }
 
+void initUv() {
+  static bool initialized = false;
+
+  if (!initialized) {
+    initialized = true;
+    // Make inherited handles noninheritable.
+    uv_disable_stdio_inheritance();
+  }
+}
+
 void registerLoop(std::shared_ptr<native::Loop> iLoop) {
   deregisterLoop(iLoop.get());
   std::unique_lock<RWLock> lock(_mutexloopMap);
@@ -71,6 +81,7 @@ void Loop::HandleDeleter::operator()(uv_loop_t *iLoop) {
 
 std::shared_ptr<Loop> Loop::Create() {
   NNATIVE_FCALL();
+  initUv();
 
   std::shared_ptr<Loop> instance(new Loop());
 

@@ -1,12 +1,11 @@
 #ifndef __NATIVE_NET_PIPE_HPP__
 #define __NATIVE_NET_PIPE_HPP__
 
-#include "../Loop.hpp"
-#include "../base.hpp"
-#include "net_utils.hpp"
+#include "Loop.hpp"
+#include "base.hpp"
+#include "net/net_utils.hpp"
 
 namespace native {
-namespace net {
 
 class Pipe : public native::base::Stream {
 public:
@@ -84,7 +83,6 @@ private:
   bool _connected;
 };
 
-} /* namespace net */
 } /* namespace native */
 
 #endif /* __NATIVE_NET_TCP_HPP__ */
