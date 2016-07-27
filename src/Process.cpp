@@ -4,6 +4,8 @@
 #include "native/async/RequestPromise.hpp"
 #include "native/net/net_utils.hpp"
 
+#include <cstring>
+
 namespace native {
 
 std::shared_ptr<Process> Process::Create() {
