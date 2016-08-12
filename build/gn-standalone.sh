@@ -6,6 +6,7 @@ set -v
 # Get the sources
 #rm -fr gn-standalone
 if [ ! -d "gn-standalone" ]; then
+  mkdir gn-standalone
   cd gn-standalone
   mkdir tools
   cd tools
