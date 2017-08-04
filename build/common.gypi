@@ -281,6 +281,7 @@
        'ldflags': [
          '-fsanitize=address',
          '-lasan',
+         '-fuse-ld=gold'
        ]
      }],
      ['asan==1 and OS=="mac" and clang!=0', {
