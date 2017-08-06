@@ -95,8 +95,8 @@ void saveValues(native::UriTemplateValue &ioParsedValues,
   NNATIVE_ASSERT(iMatchResults->size() - ioPosition >= static_cast<int>(iParams.size()));
   for (std::vector<std::string>::size_type i = 0; i < iParams.size(); ++i) {
     const std::string value = iMatchResults->str(ioPosition++);
-    const std::string &name = iParams[i];
-    const std::string &formatName = iFormatNames[i];
+    const std::string name = iParams[i];
+    const std::string formatName = iFormatNames[i];
     native::UriTemplateValue &childValue = ioParsedValues.addChild(name, value);
     const native::UriTemplateFormat &format =
         (formatName.empty() ? simpleFormat : native::UriTemplateFormat::GetGlobalFormat(formatName));
