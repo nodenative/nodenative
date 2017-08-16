@@ -9,7 +9,7 @@ declare_args() {
   visual_studio_path = ""
 
   # Version of Visual Studio pointed to by the visual_studio_path.
-  # Use "2013" for Visual Studio 2013, or "2013e" for the Express version.
+  # Currently always "2015".
   visual_studio_version = ""
 
   # Directory of the Windows driver kit. If visual_studio_path is empty, this
@@ -20,8 +20,6 @@ declare_args() {
   # This value is the default location, override if you have a different
   # installation location.
   windows_sdk_path = "C:\Program Files (x86)\Windows Kits\10"
-
-  is_win_fastlink = false
 }
 
 if (visual_studio_path == "") {

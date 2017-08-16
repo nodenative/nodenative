@@ -16,18 +16,16 @@ config("find_bad_constructs") {
         "-Xclang",
         "-load",
         "-Xclang",
-        rebase_path(
-            "//third_party/llvm-build/Release+Asserts/lib/libFindBadConstructs.dylib",
-            root_build_dir),
+        rebase_path("${clang_base_path}/lib/libFindBadConstructs.dylib",
+                    root_build_dir),
       ]
-    } else if (is_linux) {
+    } else if (is_linux || is_android) {
       cflags += [
         "-Xclang",
         "-load",
         "-Xclang",
-        rebase_path(
-            "//third_party/llvm-build/Release+Asserts/lib/libFindBadConstructs.so",
-            root_build_dir),
+        rebase_path("${clang_base_path}/lib/libFindBadConstructs.so",
+                    root_build_dir),
       ]
     }
 
@@ -39,8 +37,17 @@ config("find_bad_constructs") {
       "-Xclang",
       "-plugin-arg-find-bad-constructs",
       "-Xclang",
-      "check-templates",
+      "check-auto-raw-pointer",
     ]
+
+    if (is_linux || is_android) {
+      cflags += [
+        "-Xclang",
+        "-plugin-arg-find-bad-constructs",
+        "-Xclang",
+        "check-ipc",
+      ]
+    }
   }
 }
 
@@ -52,5 +59,7 @@ config("extra_warnings") {
 
     # Warns when a const char[] is converted to bool.
     "-Wstring-conversion",
+
+    "-Wtautological-overlap-compare",
   ]
 }

@@ -3,10 +3,20 @@
 # found in the LICENSE file.
 
 import("//build/config/allocator.gni")
+import("//build/config/c++/c++.gni")
 import("//build/config/chrome_build.gni")
 import("//build/config/chromecast_build.gni")
 import("//build/config/crypto.gni")
+import("//build/config/dcheck_always_on.gni")
 import("//build/config/features.gni")
+
+# Subprojects need to override arguments in mac_sdk_overrides.gni in their .gn
+# config, but those arguments are only used on macOS. Including
+# mac_sdk_overrides.gni insures that this doesn't trigger an unused argument
+# warning.
+import("//build/config/mac/mac_sdk_overrides.gni")
+
+import("//build/config/pch.gni")
 import("//build/config/sanitizers/sanitizers.gni")
 import("//build/config/ui.gni")
 import("//build/toolchain/goma.gni")
@@ -22,87 +32,38 @@ declare_args() {
   # of the current object. For iterator- and thread-heavy code, this can
   # significantly slow execution.
   enable_iterator_debugging = true
-
-  # Set to true to not store any build metadata, e.g. ifdef out all __DATE__
-  # and __TIME__. Set to 0 to reenable the use of these macros in the code
-  # base. See http://crbug.com/314403.
-  #
-  # Continue to embed build meta data in Official builds, basically the
-  # time it was built.
-  # TODO(maruel): This decision should be revisited because having an
-  # official deterministic build has high value too but MSVC toolset can't
-  # generate anything deterministic with WPO enabled AFAIK.
-  dont_embed_build_metadata = !is_official_build
-
-  # Set to true to enable dcheck in Release builds.
-  dcheck_always_on = false
 }
 
-# TODO(brettw) Most of these should be removed. Instead of global feature
-# flags, we should have more modular flags that apply only to a target and its
-# dependents. For example, depending on the "x11" meta-target should define
-# USE_X11 for all dependents so that everything that could use X11 gets the
-# define, but anything that doesn't depend on X11 doesn't see it.
+# ==============================================
+#   PLEASE DO NOT ADD MORE THINGS TO THIS LIST
+# ==============================================
 #
-# For now we define these globally to match the current GYP build.
+# Legacy feature defines applied to all targets.
+#
+# These are applied to every single compile in the build and most of them are
+# only relevant to a few files. This bloats command lines and causes
+# unnecessary recompiles when flags are flipped.
+#
+# To pass defines to source code from the build, use the buildflag system which
+# will write headers containing the defines you need. This isolates the define
+# and means its definition can participate in the build graph, only recompiling
+# things when it actually changes.
+#
+# See //build/buildflag_header.gni for inntructions on generating headers.
+#
+# This will also allow you to scope your build flag to a BUILD.gn file (or a
+# .gni file if you need it from more than one place) rather than making global
+# flags. See //build/config/BUILDCONFIG.gn for advice on where to define
+# build flags.
 config("feature_flags") {
-  # TODO(brettw) this probably needs to be parameterized.
-  defines = [
-    "V8_DEPRECATION_WARNINGS",  # Don't use deprecated V8 APIs anywhere.
-    "CLD_VERSION=$cld_version",
-  ]
-  if (enable_mdns) {
-    defines += [ "ENABLE_MDNS=1" ]
-  }
-  if (enable_notifications) {
-    defines += [ "ENABLE_NOTIFICATIONS" ]
-  }
-  if (enable_pepper_cdms) {
-    # TODO(brettw) should probably be "=1"
-    defines += [ "ENABLE_PEPPER_CDMS" ]
-  }
-  if (enable_browser_cdms) {
-    # TODO(brettw) should probably be "=1"
-    defines += [ "ENABLE_BROWSER_CDMS" ]
-  }
-  if (enable_plugins) {
-    defines += [ "ENABLE_PLUGINS=1" ]
-  }
-  if (enable_pdf) {
-    defines += [ "ENABLE_PDF=1" ]
-  }
-  if (enable_basic_printing || enable_print_preview) {
-    # Convenience define for ENABLE_BASIC_PRINTING || ENABLE_PRINT_PREVIEW.
-    defines += [ "ENABLE_PRINTING=1" ]
-    if (enable_basic_printing) {
-      # Enable basic printing support and UI.
-      defines += [ "ENABLE_BASIC_PRINTING=1" ]
-    }
-    if (enable_print_preview) {
-      # Enable printing with print preview.
-      # Can be defined without ENABLE_BASIC_PRINTING.
-      defines += [ "ENABLE_PRINT_PREVIEW=1" ]
-    }
-  }
-  if (enable_spellcheck) {
-    defines += [ "ENABLE_SPELLCHECK=1" ]
-  }
-  if (use_browser_spellchecker) {
-    defines += [ "USE_BROWSER_SPELLCHECKER=1" ]
-  }
-  if (dont_embed_build_metadata) {
-    defines += [ "DONT_EMBED_BUILD_METADATA" ]
-  }
+  # Don't use deprecated V8 APIs anywhere.
+  defines = [ "V8_DEPRECATION_WARNINGS" ]
   if (dcheck_always_on) {
     defines += [ "DCHECK_ALWAYS_ON=1" ]
   }
   if (use_udev) {
     # TODO(brettw) should probably be "=1".
     defines += [ "USE_UDEV" ]
-  }
-  if (ui_compositor_image_transport) {
-    # TODO(brettw) should probably be "=1".
-    defines += [ "UI_COMPOSITOR_IMAGE_TRANSPORT" ]
   }
   if (use_ash) {
     defines += [ "USE_ASH=1" ]
@@ -116,17 +77,8 @@ config("feature_flags") {
   if (use_cairo) {
     defines += [ "USE_CAIRO=1" ]
   }
-  if (use_clipboard_aurax11) {
-    defines += [ "USE_CLIPBOARD_AURAX11=1" ]
-  }
-  if (use_default_render_theme) {
-    defines += [ "USE_DEFAULT_RENDER_THEME=1" ]
-  }
   if (use_glib) {
     defines += [ "USE_GLIB=1" ]
-  }
-  if (use_openssl) {
-    defines += [ "USE_OPENSSL=1" ]
   }
   if (use_openssl_certs) {
     defines += [ "USE_OPENSSL_CERTS=1" ]
@@ -153,10 +105,7 @@ config("feature_flags") {
     defines += [ "ADDRESS_SANITIZER" ]
   }
   if (is_lsan) {
-    defines += [
-      "LEAK_SANITIZER",
-      "WTF_USE_LEAK_SANITIZER=1",
-    ]
+    defines += [ "LEAK_SANITIZER" ]
   }
   if (is_tsan) {
     defines += [
@@ -168,80 +117,11 @@ config("feature_flags") {
   if (is_msan) {
     defines += [ "MEMORY_SANITIZER" ]
   }
-  if (is_ubsan || is_ubsan_vptr) {
+  if (is_ubsan || is_ubsan_null || is_ubsan_vptr || is_ubsan_security) {
     defines += [ "UNDEFINED_SANITIZER" ]
   }
-  if (enable_webrtc) {
-    defines += [ "ENABLE_WEBRTC=1" ]
-  }
-  if (enable_extensions) {
-    defines += [ "ENABLE_EXTENSIONS=1" ]
-  }
-  if (enable_configuration_policy) {
-    defines += [ "ENABLE_CONFIGURATION_POLICY" ]
-  }
-  if (enable_task_manager) {
-    defines += [ "ENABLE_TASK_MANAGER=1" ]
-  }
-  if (enable_themes) {
-    defines += [ "ENABLE_THEMES=1" ]
-  }
-  if (enable_captive_portal_detection) {
-    defines += [ "ENABLE_CAPTIVE_PORTAL_DETECTION=1" ]
-  }
-  if (enable_session_service) {
-    defines += [ "ENABLE_SESSION_SERVICE=1" ]
-  }
-  if (enable_rlz) {
-    defines += [ "ENABLE_RLZ" ]
-  }
-  if (enable_plugin_installation) {
-    defines += [ "ENABLE_PLUGIN_INSTALLATION=1" ]
-  }
-  if (enable_app_list) {
-    defines += [ "ENABLE_APP_LIST=1" ]
-  }
-  if (enable_settings_app) {
-    defines += [ "ENABLE_SETTINGS_APP=1" ]
-  }
-  if (enable_supervised_users) {
-    defines += [ "ENABLE_SUPERVISED_USERS=1" ]
-  }
-  if (enable_service_discovery) {
-    defines += [ "ENABLE_SERVICE_DISCOVERY=1" ]
-  }
-  if (enable_autofill_dialog) {
-    defines += [ "ENABLE_AUTOFILL_DIALOG=1" ]
-  }
-  if (enable_image_loader_extension) {
-    defines += [ "IMAGE_LOADER_EXTENSION=1" ]
-  }
-  if (enable_one_click_signin) {
-    defines += [ "ENABLE_ONE_CLICK_SIGNIN" ]
-  }
-  if (enable_hidpi) {
-    defines += [ "ENABLE_HIDPI=1" ]
-  }
-  if (enable_topchrome_md) {
-    defines += [ "ENABLE_TOPCHROME_MD=1" ]
-  }
-  if (enable_wayland_server) {
-    defines += [ "ENABLE_WAYLAND_SERVER=1" ]
-  }
-  if (enable_wifi_display) {
-    defines += [ "ENABLE_WIFI_DISPLAY=1" ]
-  }
-  if (proprietary_codecs) {
-    defines += [ "USE_PROPRIETARY_CODECS" ]
-  }
-  if (enable_hangout_services_extension) {
-    defines += [ "ENABLE_HANGOUT_SERVICES_EXTENSION=1" ]
-  }
-  if (enable_background) {
-    defines += [ "ENABLE_BACKGROUND=1" ]
-  }
-  if (enable_video_hole) {
-    defines += [ "VIDEO_HOLE=1" ]
+  if (!enable_nacl) {
+    defines += [ "DISABLE_NACL" ]
   }
   if (safe_browsing_mode == 1) {
     defines += [ "FULL_SAFE_BROWSING" ]
@@ -258,22 +138,21 @@ config("feature_flags") {
   } else {
     defines += [ "CHROMIUM_BUILD" ]
   }
-  if (enable_media_router) {
-    defines += [ "ENABLE_MEDIA_ROUTER=1" ]
-  }
-  if (enable_webvr) {
-    defines += [ "ENABLE_WEBVR" ]
-  }
   if (is_syzyasan) {
     defines += [
       "SYZYASAN",
-      "MEMORY_TOOL_REPLACES_ALLOCATOR",
       "MEMORY_SANITIZER_INITIAL_SIZE",
     ]
   }
   if (!fieldtrial_testing_like_official_build && !is_chrome_branded) {
     defines += [ "FIELDTRIAL_TESTING_ENABLED" ]
   }
+
+  # ==============================================
+  #   PLEASE DO NOT ADD MORE THINGS TO THIS LIST
+  # ==============================================
+  #
+  # See the comment at the top.
 }
 
 # Debug/release ----------------------------------------------------------------
@@ -284,6 +163,10 @@ config("debug") {
     "DYNAMIC_ANNOTATIONS_ENABLED=1",
     "WTF_USE_DYNAMIC_ANNOTATIONS=1",
   ]
+
+  if (is_nacl) {
+    defines += [ "DYNAMIC_ANNOTATIONS_PREFIX=NACL_" ]
+  }
 
   if (is_win) {
     if (!enable_iterator_debugging) {
@@ -303,8 +186,6 @@ config("release") {
   defines = [ "NDEBUG" ]
 
   # Sanitizers.
-  # TODO(GYP) The GYP build has "release_valgrind_build == 0" for this
-  # condition. When Valgrind is set up, we need to do the same here.
   if (is_tsan) {
     defines += [
       "DYNAMIC_ANNOTATIONS_ENABLED=1",
@@ -312,6 +193,17 @@ config("release") {
     ]
   } else {
     defines += [ "NVALGRIND" ]
+    if (!is_nacl) {
+      # NaCl always enables dynamic annotations. Currently this value is set to
+      # 1 for all .nexes.
+      defines += [ "DYNAMIC_ANNOTATIONS_ENABLED=0" ]
+    }
+  }
+
+  if (is_ios) {
+    # Disable NSAssert and GTMDevAssert (from Google Toolbox for Mac). This
+    # follows XCode's default behavior for Release builds.
+    defines += [ "NS_BLOCK_ASSERTIONS=1" ]
   }
 }
 
@@ -359,16 +251,9 @@ config("default_libs") {
       "m",
     ]
   } else if (is_mac) {
-    libs = [
-      "AppKit.framework",
-      "ApplicationServices.framework",
-      "Carbon.framework",
-      "CoreFoundation.framework",
-      "Foundation.framework",
-      "IOKit.framework",
-      "OpenGL.framework",
-      "Security.framework",
-    ]
+    # Targets should choose to explicitly link frameworks they require. Since
+    # linking can have run-time side effects, nothing should be listed here.
+    libs = []
   } else if (is_ios) {
     # The libraries listed here will be specified for both the target and the
     # host. Only the common ones should be listed here.
@@ -381,8 +266,23 @@ config("default_libs") {
   } else if (is_linux) {
     libs = [
       "dl",
+      "pthread",
       "rt",
     ]
+  }
+}
+
+# Dependencies that all executables and shared libraries should have.
+group("exe_and_shlib_deps") {
+  public_deps = []
+  if (using_sanitizer) {
+    public_deps += [ "//build/config/sanitizers:deps" ]
+  }
+  if (use_custom_libcxx) {
+    public_deps += [ "//buildtools/third_party/libc++" ]
+  }
+  if (use_afl) {
+    public_deps += [ "//third_party/afl" ]
   }
 }
 
@@ -402,12 +302,20 @@ config("executable_config") {
 
   if (is_win) {
     configs += _windows_linker_configs
+
+    # Currently only turn on linker CFI for executables.
+    configs += [ "//build/config/win:cfi_linker" ]
   } else if (is_mac) {
     configs += [
       "//build/config/mac:mac_dynamic_flags",
       "//build/config/mac:mac_executable_flags",
     ]
-  } else if (is_linux || is_android) {
+  } else if (is_ios) {
+    configs += [
+      "//build/config/ios:ios_dynamic_flags",
+      "//build/config/ios:ios_executable_flags",
+    ]
+  } else if (is_linux || is_android || current_os == "aix") {
     configs += [ "//build/config/gcc:executable_ldconfig" ]
     if (is_android) {
       configs += [ "//build/config/android:executable_config" ]
@@ -415,6 +323,16 @@ config("executable_config") {
       configs += [ "//build/config/chromecast:executable_config" ]
     }
   }
+
+  # If we're using the prebuilt instrumented libraries with the sanitizers, we
+  # need to add ldflags to every binary to make sure they are picked up.
+  if (prebuilt_instrumented_libraries_available) {
+    configs += [ "//third_party/instrumented_libraries:prebuilt_ldflags" ]
+  }
+  if (use_locally_built_instrumented_libraries) {
+    configs += [ "//third_party/instrumented_libraries:locally_built_ldflags" ]
+  }
+  configs += [ "//build/config/sanitizers:link_executable" ]
 }
 
 # Shared library configs -------------------------------------------------------
@@ -427,9 +345,21 @@ config("shared_library_config") {
     configs += _windows_linker_configs
   } else if (is_mac) {
     configs += [ "//build/config/mac:mac_dynamic_flags" ]
+  } else if (is_ios) {
+    configs += [ "//build/config/ios:ios_dynamic_flags" ]
   } else if (is_chromecast) {
     configs += [ "//build/config/chromecast:shared_library_config" ]
   }
+
+  # If we're using the prebuilt instrumented libraries with the sanitizers, we
+  # need to add ldflags to every binary to make sure they are picked up.
+  if (prebuilt_instrumented_libraries_available) {
+    configs += [ "//third_party/instrumented_libraries:prebuilt_ldflags" ]
+  }
+  if (use_locally_built_instrumented_libraries) {
+    configs += [ "//third_party/instrumented_libraries:locally_built_ldflags" ]
+  }
+  configs += [ "//build/config/sanitizers:link_shared_library" ]
 }
 
 # Add this config to your target to enable precompiled headers.
@@ -441,32 +371,22 @@ config("shared_library_config") {
 #
 # Recommend precompiled headers for targets with more than 50 .cc files.
 config("precompiled_headers") {
-  if (is_win && !is_official_build && !use_goma) {
-    # This is a string rather than a file GN knows about. It has to match
-    # exactly what's in the /FI flag below, and what might appear in the source
-    # code in quotes for an #include directive.
-    precompiled_header = "build/precompile.h"
+  if (enable_precompiled_headers) {
+    if (is_win) {
+      # This is a string rather than a file GN knows about. It has to match
+      # exactly what's in the /FI flag below, and what might appear in the
+      # source code in quotes for an #include directive.
+      precompiled_header = "build/precompile.h"
 
-    # This is a file that GN will compile with the above header. It will be
-    # implicitly added to the sources (potentially multiple times, with one
-    # variant for each language used in the target).
-    precompiled_source = "//build/precompile.cc"
+      # This is a file that GN will compile with the above header. It will be
+      # implicitly added to the sources (potentially multiple times, with one
+      # variant for each language used in the target).
+      precompiled_source = "//build/precompile.cc"
 
-    # Force include the header.
-    cflags = [ "/FI$precompiled_header" ]
-
-    # Disable warning for "this file was empty after preprocessing". This
-    # error is generated only in C mode for ANSI compatibility. It conflicts
-    # with precompiled headers since the source file that's "compiled" for
-    # making the precompiled header is empty.
-    #
-    # This error doesn't happen every time. In VS2013, it seems if the .pch
-    # file doesn't exist, no error will be generated (probably MS tested this
-    # case but forgot the other one?). To reproduce this error, do a build,
-    # then delete the precompile.c.obj file, then build again.
-    cflags_c = [ "/wd4206" ]
-  } else if (is_mac && !is_official_build && !use_goma) {
-    precompiled_header = "build/precompile.h"
-    precompiled_source = "//build/precompile.h"
+      # Force include the header.
+      cflags = [ "/FI$precompiled_header" ]
+    } else if (is_mac) {
+      precompiled_source = "//build/precompile.h"
+    }
   }
 }

@@ -1,0 +1,11 @@
+executable("webserver") {
+  sources = [
+    "webserver.cpp",
+  ]
+}
+
+executable("webclient.cpp") {
+  sources = [
+    "webclient.cpp",
+  ]
+}

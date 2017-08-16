@@ -16,20 +16,7 @@ import os
 import subprocess
 import sys
 
-
-# When running on a Windows host and using a toolchain whose tools are
-# actually wrapper scripts (i.e. .bat files on Windows) rather than binary
-# executables, the "command" to run has to be prefixed with this magic.
-# The GN toolchain definitions take care of that for when GN/Ninja is
-# running the tool directly.  When that command is passed in to this
-# script, it appears as a unitary string but needs to be split up so that
-# just 'cmd' is the actual command given to Python's subprocess module.
-BAT_PREFIX = 'cmd /c call '
-
-def CommandToRun(command):
-  if command[0].startswith(BAT_PREFIX):
-    command = command[0].split(None, 3) + command[1:]
-  return command
+import wrapper_utils
 
 
 def main():
@@ -44,13 +31,33 @@ def main():
                       metavar='ARCHIVE')
   parser.add_argument('--plugin',
                       help='Load plugin')
+  parser.add_argument('--resource-whitelist',
+                      help='Merge all resource whitelists into a single file.',
+                      metavar='PATH')
   parser.add_argument('operation',
                       help='Operation on the archive')
   parser.add_argument('inputs', nargs='+',
                       help='Input files')
   args = parser.parse_args()
 
-  command = [args.ar, args.operation]
+  # Specifies the type of object file ar should examine.
+  # The ar on linux ignores this option.
+  object_mode = []
+  if sys.platform.startswith('aix'):
+    # The @file feature is not available on ar for AIX.
+    # For linux (and other posix like systems), the @file_name
+    # option reads the contents of file_name as command line arguments.
+    # For AIX we must parse these (rsp files) manually.
+    # Read rspfile.
+    args.inputs  = wrapper_utils.ResolveRspLinks(args.inputs)
+    object_mode = ['-X64']
+  else:
+    if args.resource_whitelist:
+      whitelist_candidates = wrapper_utils.ResolveRspLinks(args.inputs)
+      wrapper_utils.CombineResourceWhitelists(
+          whitelist_candidates, args.resource_whitelist)
+
+  command = [args.ar] + object_mode + [args.operation]
   if args.plugin is not None:
     command += ['--plugin', args.plugin]
   command.append(args.output)
@@ -64,7 +71,7 @@ def main():
       raise
 
   # Now just run the ar command.
-  return subprocess.call(CommandToRun(command))
+  return subprocess.call(wrapper_utils.CommandToRun(command))
 
 
 if __name__ == "__main__":
