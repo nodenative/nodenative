@@ -17,7 +17,7 @@ namespace native {
 // TODO: implement functions that accept Loop pointer as extra argument.
 namespace fs {
 
-typedef uv_file file_handle;
+typedef uv_os_fd_t file_handle;
 typedef uv_dirent_t DirEnt;
 
 struct Stats {
