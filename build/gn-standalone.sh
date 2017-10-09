@@ -47,7 +47,9 @@ git_checkout_commit()
   if [ ! -z "$git_patch" ]; then
     echo "applying patch $git_patch to $git_dir..."
     cd $git_dir
-    git am --signoff < $git_patch
+    git apply < $git_patch
+# commit
+#    git am --signoff < $git_patch
     cd $curr_dir
   fi;
 }
@@ -65,7 +67,7 @@ git_clone()
   mkdir -p $req_path
   cd $req_path
   git clone $git_url $git_dir
-  git_checkout_commit $git_dir $git_hash $git_patch
+  git_checkout_commit "$git_dir" "$git_hash" "$git_patch"
   cd $curr_path
 }
 
@@ -73,11 +75,11 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 CURR_DIR=`pwd`
 
 RELEASE_TYPE="$1"
-GIT_TESTED_COMMIT_GN="f833e90aef5f06797ec3c78d06160243b1804417"
-GIT_TESTED_COMMIT_BASE="0653801eec165b748faa2d92ad84f836b701559e"
-GIT_TESTED_COMMIT_BUILD="6a89d4e8a66028f07711aa4046acac97ef427a80"
-GIT_TESTED_COMMIT_BUILD_CONFIG="78e1407d8c6e1d16dce58c4bbc4e20f2a535b157"
-GIT_TESTED_COMMIT_TESTING_GTEST="585ec31ea716f08233a815e680fc0d4699843938"
+GIT_TESTED_COMMIT_GN="9ffda3e8f3f7756bab67f49055296a89d43b4543"
+GIT_TESTED_COMMIT_BASE="bb89059924fe115f70c9eee3034234db14c12c68"
+GIT_TESTED_COMMIT_BUILD="adaf9e56105b814105e2d49bc4fa63e2cd4795f5"
+GIT_TESTED_COMMIT_BUILD_CONFIG="adaf9e56105b814105e2d49bc4fa63e2cd4795f5"
+GIT_TESTED_COMMIT_TESTING_GTEST="d8a16832a3dd620e59db8771a6004ffb043941d3"
 
 # Format a patch from the last commit with the following command: git format-patch --stdout -1 > file.patch
 # or from current branch against master branch: git format-patch --stdout master > file.patch
@@ -112,8 +114,8 @@ echo "reelase: $RELEASE_TYPE\n"
 # Get the sources
 #rm -fr gn-standalone
 if [ ! -d "gn-standalone" ]; then
-  git_clone gn-standalone/tools https://chromium.googlesource.com/chromium/src/tools/gn gn $GIT_TESTED_COMMIT_GN $GIT_TESTED_PATCH_GN
-  git_clone gn-standalone https://chromium.googlesource.com/chromium/src/base base $GIT_TESTED_COMMIT_BASE
+  git_clone gn-standalone/tools https://chromium.googlesource.com/chromium/src/tools/gn gn "$GIT_TESTED_COMMIT_GN" "$GIT_TESTED_PATCH_GN"
+  git_clone gn-standalone https://chromium.googlesource.com/chromium/src/base base "$GIT_TESTED_COMMIT_BASE"
 
   #mkdir -p third_party/libevent
   #cd third_party/libevent

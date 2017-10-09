@@ -1,41 +1,28 @@
-From c4b4f40956415ada0f5947326b7ef0dc3966cb6b Mon Sep 17 00:00:00 2001
-From: Ion Lupascu <ionlupascu@gmail.com>
-Date: Thu, 3 Aug 2017 21:29:40 +0100
-Subject: [PATCH] fix macos build
- https://bugs.chromium.org/p/chromium/issues/detail?id=725439#c5
-
----
- bootstrap/bootstrap.py | 8 ++++++--
- 1 file changed, 6 insertions(+), 2 deletions(-)
-
 diff --git a/bootstrap/bootstrap.py b/bootstrap/bootstrap.py
-index ff2ae57..dcba435 100755
+index 601d533..f154ed2 100755
 --- a/bootstrap/bootstrap.py
 +++ b/bootstrap/bootstrap.py
-@@ -436,6 +436,7 @@ def write_gn_ninja(path, root_gen_dir, options):
-       'base/memory/ref_counted_memory.cc',
-       'base/memory/singleton.cc',
-       'base/memory/shared_memory_handle.cc',
-+      'base/memory/shared_memory_tracker.cc',
-       'base/memory/weak_ptr.cc',
-       'base/message_loop/incoming_task_queue.cc',
-       'base/message_loop/message_loop.cc',
-@@ -603,10 +604,13 @@ def write_gn_ninja(path, root_gen_dir, options):
+@@ -536,7 +536,6 @@ def write_gn_ninja(path, root_gen_dir, options):
+       'base/threading/thread_local_storage.cc',
+       'base/threading/thread_restrictions.cc',
+       'base/threading/thread_task_runner_handle.cc',
+-      'base/threading/worker_pool.cc',
+       'base/time/clock.cc',
+       'base/time/default_clock.cc',
+       'base/time/default_tick_clock.cc',
+@@ -546,7 +545,6 @@ def write_gn_ninja(path, root_gen_dir, options):
+       'base/timer/timer.cc',
+       'base/trace_event/category_registry.cc',
+       'base/trace_event/event_name_filter.cc',
+-      'base/trace_event/freed_object_tracker.cc',
+       'base/trace_event/heap_profiler_allocation_context.cc',
+       'base/trace_event/heap_profiler_allocation_context_tracker.cc',
+       'base/trace_event/heap_profiler_allocation_register.cc',
+@@ -611,7 +609,6 @@ def write_gn_ninja(path, root_gen_dir, options):
+         'base/threading/platform_thread_internal_posix.cc',
+         'base/threading/platform_thread_posix.cc',
          'base/threading/thread_local_storage_posix.cc',
-         'base/threading/worker_pool_posix.cc',
+-        'base/threading/worker_pool_posix.cc',
          'base/time/time_conversion_posix.cc',
--        'base/time/time_exploded_posix.cc',
--        'base/time/time_now_posix.cc',
          'base/trace_event/heap_profiler_allocation_register_posix.cc',
      ])
-+    if not is_mac:
-+        static_libraries['base']['sources'].extend([
-+            'base/time/time_exploded_posix.cc',
-+            'base/time/time_now_posix.cc',
-+        ])
-     static_libraries['libevent'] = {
-         'sources': [
-             'base/third_party/libevent/buffer.c',
--- 
-2.8.3
-
