@@ -4,7 +4,11 @@ executable("webserver") {
   ]
 }
 
-executable("webclient.cpp") {
+executable("webclient") {
+  deps = [
+    "//src:native"
+  ]
+
   sources = [
     "webclient.cpp",
   ]

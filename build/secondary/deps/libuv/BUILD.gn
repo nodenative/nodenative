@@ -1,0 +1,151 @@
+config("libuv_common") {
+  include_dirs = [ "include" ]
+
+  if (!is_win) {
+    defines = [
+      "_LARGEFILE_SOURCE",
+      "_FILE_OFFSET_BITS=64",
+    ]
+  }
+
+  if (is_mac || is_ios) {
+    defines += [
+      "_DARWIN_USE_64_BIT_INODE=1"
+    ]
+  }
+
+  if (is_linux) {
+    defines += [
+      "_POSIX_C_SOURCE=200112"
+    ]
+  }
+
+  sources = [
+    "common.gypi",
+    "include/uv.h",
+    "include/tree.h",
+    "include/uv-errno.h",
+    "include/uv-threadpool.h",
+    "include/uv-version.h",
+    "src/fs-poll.c",
+    "src/heap-inl.h",
+    "src/inet.c",
+    "src/loop-watcher.c",
+    "src/queue.h",
+    "src/threadpool.c",
+    "src/timer.c",
+    "src/uv-common.c",
+    "src/uv-common.h",
+    "src/version."'
+  ]
+
+  if(target_os == "win") {
+    defines += [
+      "_WIN32_WINNT=0x0600",
+      "_GNU_SOURCE",
+    ]
+
+    sources += [
+      "include/uv-win.h",
+      "src/win/async.c",
+      "src/win/core.c",
+      "src/win/detect-wakeup.c",
+      "src/win/dl.c",
+      "src/win/error.c",
+      "src/win/fs.c",
+      "src/win/fs-event.c",
+      "src/win/getaddrinfo.c",
+      "src/win/getnameinfo.c",
+      "src/win/handle.c",
+      "src/win/handle-inl.h",
+      "src/win/internal.h",
+      "src/win/pipe.c",
+      "src/win/thread.c",
+      "src/win/poll.c",
+      "src/win/process.c",
+      "src/win/process-stdio.c",
+      "src/win/req.c",
+      "src/win/req-inl.h",
+      "src/win/signal.c",
+      "src/win/stream.c",
+      "src/win/stream-inl.h",
+      "src/win/tcp.c",
+      "src/win/tty.c",
+      "src/win/udp.c",
+      "src/win/util.c",
+      "src/win/winapi.c",
+      "src/win/winapi.h",
+      "src/win/winsock.c",
+      "src/win/winsock.h",
+    ]
+
+    libs = [
+      "advapi32.lib",
+      "iphlpapi.lib",
+      "psapi.lib",
+      "shell32.lib",
+      "user32.lib",
+      "userenv.lib",
+      "ws2_3.lib"'
+    ]
+  } else {
+    # POSIX
+    sources += [
+      "include/uv-unix.h",
+      "include/uv-linux.h",
+      "include/uv-sunos.h",
+      "include/uv-darwin.h",
+      "include/uv-bsd.h",
+      "include/uv-aix.h",
+      "src/unix/async.c",
+      "src/unix/atomic-ops.h",
+      "src/unix/core.c",
+      "src/unix/dl.c",
+      "src/unix/fs.c",
+      "src/unix/getaddrinfo.c",
+      "src/unix/getnameinfo.c",
+      "src/unix/internal.h",
+      "src/unix/loop.c",
+      "src/unix/pipe.c",
+      "src/unix/poll.c",
+      "src/unix/process.c",
+      "src/unix/signal.c",
+      "src/unix/spinlock.h",
+      "src/unix/stream.c",
+      "src/unix/tcp.c",
+      "src/unix/thread.c",
+      "src/unix/tty.c",
+      "src/unix/udp.c",
+    ]
+
+    libs = ["m"]
+    ldflags = [];
+
+    if (!(target_os == "android" || target_os == "os390")) {
+      ldflags += ["-pthreads"]
+    } else if ()
+  }
+}
+
+static_library("libuv_static") {
+  configs += [
+    ":libuv_common"
+  ]
+}
+
+shared_library("libuv_shared") {
+  configs += [
+    ":libuv_common"
+  ]
+
+  if (target_os = "os390") {
+    ldflags += [
+      "-Wl,DLL",
+      "-qexportall"
+    ]
+  } else if (target_os != "win") {
+    ldflags += ["-fPIC"]
+  }
+
+  if(target_os != "win" && target_os != "mac" && target_os != "")
+}
