@@ -2,7 +2,7 @@
 # find the root of the source tree and to set startup options.
 
 # The location of the build configuration file.
-buildconfig = "//build/config/BUILDCONFIG.gn"
+buildconfig = "//build/common/config/BUILDCONFIG.gn"
 
 # The secondary source root is a parallel directory tree where
 # GN build files are placed when they can not be placed directly

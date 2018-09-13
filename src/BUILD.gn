@@ -1,0 +1,13 @@
+import("//build/common/config/jumbo.gni")
+
+jumbo_static_library("node_native_static") {
+  configs += [ "//build/common/config:precompiled_headers" ]
+
+  sources = [
+
+  ]
+
+  deps = [
+      "//deps/libuv:libuv_static"
+  ]
+}

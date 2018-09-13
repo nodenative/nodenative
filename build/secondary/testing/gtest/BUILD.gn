@@ -11,8 +11,8 @@
 
 import("//build_overrides/gtest.gni")
 if (is_ios) {
-  import("//build/config/ios/ios_sdk.gni")
-  import("//build/buildflag_header.gni")
+  import("//build/common/config/ios/ios_sdk.gni")
+  import("//build/common/buildflag_header.gni")
 }
 
 config("gtest_config") {
@@ -123,11 +123,11 @@ static_library("gtest") {
   all_dependent_configs = [ ":gtest_config" ]
   public_configs = [ ":gtest_direct_config" ]
 
-  configs -= [ "//build/config/compiler:chromium_code" ]
+  configs -= [ "//build/common/config/compiler:extra_checks" ]
   configs += [
-    "//build/config/compiler:no_chromium_code",
+    "//build/common/config/compiler:no_extra_checks",
 
-    # Must be after no_chromium_code for warning flags to be ordered correctly.
+    # Must be after no_extra_checks for warning flags to be ordered correctly.
     ":gtest_warnings",
   ]
 }
