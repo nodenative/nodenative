@@ -1,11 +1,54 @@
 import("//build/common/config/jumbo.gni")
 
-jumbo_static_library("node_native_static") {
+jumbo_static_library("nodenative_static") {
   configs += [ "//build/common/config:precompiled_headers" ]
 
   sources = [
-
+    "async/ActionCallback.cpp",
+    "async/AsyncBase.cpp",
+    "async/FutureBase.cpp",
+    "async/FutureShared.cpp",
+    "async/FutureSharedResolver.cpp",
+    "base/Handle.cpp",
+    "base/Stream.cpp",
+    "crypto/PBKDF2.cpp",
+    "cyrpto/utils.cpp",
+    "crypto.cpp",
+    "fs.cpp",
+    "http/ClientRequest.cpp",
+    "http/ClientResponse.cpp",
+    "http/HttpUtils.cpp",
+    "http/IncomingMessage.cpp",
+    "http/MessageBase.cpp",
+    "http/OutgoingMessage.cpp",
+    "http/ServerConnection.cpp",
+    "http/Server.cpp",
+    "http/ServerPlugin.cpp",
+    "http/ServerRequest.cpp",
+    "http/ServerResponse.cpp",
+    "http/UrlObject.cpp",
+    "http.cpp",
+    "https.cpp",
+    "Loop.cpp",
+    "net/net_utils.cpp",
+    "net/Tcp.cpp",
+    "Pipe.cpp",
+    "Process.cpp",
+    "Regex.cpp",
+    "Timer.cpp",
+    "tls",
+    "UriTemplate.cpp",
+    "UriTemplateFormat.cpp",
+    "UriTemplateValue.cpp",
+    "worker/WorkerBase.cpp",
+    "worker/WorkerCallback.cpp",
   ]
+
+  if(target_os == "win") {
+    sources += ["helper/CallStack_win.cpp"]
+  } else {
+    sources += ["helper/CallStack_gcc.cpp"]
+  }
 
   deps = [
       "//deps/libuv:libuv_static"
