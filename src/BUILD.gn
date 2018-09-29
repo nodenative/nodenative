@@ -15,6 +15,8 @@ jumbo_static_library("nodenative_static") {
     "cyrpto/utils.cpp",
     "crypto.cpp",
     "fs.cpp",
+    "helper/CallStack_gcc.cpp",
+    "helper/CallStack_win.cpp",
     "http/ClientRequest.cpp",
     "http/ClientResponse.cpp",
     "http/HttpUtils.cpp",
@@ -43,12 +45,6 @@ jumbo_static_library("nodenative_static") {
     "worker/WorkerBase.cpp",
     "worker/WorkerCallback.cpp",
   ]
-
-  if(target_os == "win") {
-    sources += ["helper/CallStack_win.cpp"]
-  } else {
-    sources += ["helper/CallStack_gcc.cpp"]
-  }
 
   deps = [
       "//deps/libuv:libuv_static"

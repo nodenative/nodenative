@@ -1,6 +1,8 @@
 # This file is used by the experimental meta-buildsystem in src/tools/gn to
 # find the root of the source tree and to set startup options.
 
+import("//build/common/dotfile_settings.gni")
+
 # The location of the build configuration file.
 buildconfig = "//build/common/config/BUILDCONFIG.gn"
 
@@ -8,3 +10,21 @@ buildconfig = "//build/common/config/BUILDCONFIG.gn"
 # GN build files are placed when they can not be placed directly
 # in the source tree, e.g. for third party source trees.
 secondary_source = "//build/secondary/"
+
+# These are the targets to check headers by default.
+# The files in targets matching these patterns (see "gn help label_pattern" for format)
+# will have their includes checked for proper dependencies when you run either
+# "gn check" or "gn gen --check"
+check_targets = [
+  "//build/*",
+  "//src/*",
+  "//samples/*",
+  "//test/*"
+]
+
+# These are the list of GN files that run exec_script. This whitelist exists
+# to force additional review for new uses of exec_script, which is strongly
+# discouraged except for gypi_to_gn calls.
+exec_script_whitelist = 
+  build_dotfile_settings.exec_script_whitelist + [
+]
