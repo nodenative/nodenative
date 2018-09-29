@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 # source https://github.com/libuv/libuv/blob/master/gyp_uv.py
-import glob
 import platform
 import os
 import subprocess
@@ -12,7 +11,7 @@ try:
     import multiprocessing.synchronize
     gyp_parallel_support = True
 except ImportError:
-     gyp_parallel_support = False
+    gyp_parallel_support = False
 
 CC = os.environ.get('CC', 'cc')
 script_dir = os.path.dirname(__file__)
@@ -22,11 +21,17 @@ output_dir = os.path.join(os.path.abspath(project_root), 'out')
 
 root_gyp_lib = os.path.join(project_root, 'build', 'gyp')
 
-if(not os.path.exists(root_gyp_lib)):
+if not os.path.exists(root_gyp_lib):
     try:
-        print('build/gyp is missing, trying to clone from https://chromium.googlesource.com/external/gyp.git ...')
-        proc = subprocess.Popen(['git', 'clone', 'https://chromium.googlesource.com/external/gyp.git', root_gyp_lib], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        res = proc.communicate();
+        print('build/gyp is missing, trying to clone from \
+              https://chromium.googlesource.com/external/gyp.git ...')
+        proc = subprocess.Popen(['git',
+                                 'clone',
+                                 'https://chromium.googlesource.com/external/gyp.git',
+                                 root_gyp_lib],
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+        res = proc.communicate()
         if(res[1] and 'error' in res[1]):
             print('error when trying to clone build/gyp:' + res[1])
             sys.exit(42)
@@ -57,6 +62,9 @@ def compiler_version():
     proc = subprocess.Popen(CC.split() + ['-dumpversion'], stdout=subprocess.PIPE)
     version = proc.communicate()[0].split('.')
     version = map(int, version[:2])
+    if len(version) < 2:
+        version.append(0)
+    print "version:${0}, is_clang: ${1}\n".format(version, is_clang)
     version = tuple(version)
     return (version, is_clang)
 
@@ -89,7 +97,7 @@ def gyp_generate(args):
     # On Mac/make it will crash if it doesn't get an absolute path.
     if sys.platform == 'win32':
         args.append(os.path.join(gyps_dir, 'all.gyp'))
-        common_fn  = os.path.join(gyps_dir, 'common.gypi')
+        common_fn = os.path.join(gyps_dir, 'common.gypi')
         options_fn = os.path.join(gyps_dir, 'options.gypi')
         # we force vs 2013 over others which would otherwise be the default for
         # gyp.
@@ -98,7 +106,7 @@ def gyp_generate(args):
             os.environ['GYP_MSVS_VERSION'] = '2013'
     else:
         args.append(os.path.join(os.path.abspath(gyps_dir), 'all.gyp'))
-        common_fn  = os.path.join(os.path.abspath(gyps_dir), 'common.gypi')
+        common_fn = os.path.join(os.path.abspath(gyps_dir), 'common.gypi')
         options_fn = os.path.join(os.path.abspath(gyps_dir), 'options.gypi')
 
     if os.path.exists(common_fn):
@@ -189,7 +197,7 @@ if __name__ == '__main__':
         builderName = args[args.index('-f')+1]
     print('generator: {0}, builder: {1}'.format(generatorName, builderName))
 
-    if(generatorName == 'gyp'):
+    if generatorName == 'gyp':
         gyp_generate(args)
 
     print('generate time {0}'.format(time.time() - start))
@@ -200,11 +208,12 @@ if __name__ == '__main__':
         sub1_result = subprocess.call([builderName, '-C', 'out/Debug'])
         print('build in {0}'.format(time.time() - start_build))
         start_build = time.time()
-        if(sub1_result == 0):
+        if sub1_result == 0:
             sub1_result = subprocess.call([builderName, '-C', 'out/Release'])
             print('build in {0}'.format(time.time() - start_build))
         else:
-            print('first resolve errors from Debug mode and after it will try to build in release mode')
+            print('first resolve errors from Debug mode and after it \
+                  will try to build in release mode')
         sys.exit(sub1_result)
     elif builderName == 'make':
         subprocess.call([builderName, '-C', 'out'])
@@ -212,4 +221,3 @@ if __name__ == '__main__':
     else:
         print('unknown builder name {0}. Build it manually.'.format(builderName))
         sys.exit(42)
-
