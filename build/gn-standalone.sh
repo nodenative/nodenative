@@ -114,34 +114,21 @@ echo "reelase: $RELEASE_TYPE\n"
 # Get the sources
 #rm -fr gn-standalone
 if [ ! -d "gn-standalone" ]; then
-  git_clone gn-standalone/tools https://chromium.googlesource.com/chromium/src/tools/gn gn "$GIT_TESTED_COMMIT_GN" "$GIT_TESTED_PATCH_GN"
-  git_clone gn-standalone https://chromium.googlesource.com/chromium/src/base base "$GIT_TESTED_COMMIT_BASE"
-
-  #mkdir -p third_party/libevent
-  #cd third_party/libevent
-  #wget --no-check-certificate https://chromium.googlesource.com/chromium/chromium/+archive/master/third_party/libevent.tar.gz
-  #tar -xvzf libevent.tar.gz
-  #cd ../..
-
-  mkdir -p gn-standalone/third_party/apple_apsl
-  cd gn-standalone/third_party/apple_apsl
-  # copied from: https://github.com/google/shaka-packager/tree/master/packager/third_party/apple_apsl
-  wget https://raw.githubusercontent.com/google/shaka-packager/master/packager/third_party/apple_apsl/malloc.h
-  cd ../../../
-
-  git_clone gn-standalone https://chromium.googlesource.com/chromium/src/build build $GIT_TESTED_COMMIT_BUILD
-  git_clone gn-standalone https://chromium.googlesource.com/chromium/src/build/config config $GIT_TESTED_COMMIT_BUILD_CONFIG
-  git_clone gn-standalone/testing https://chromium.googlesource.com/chromium/testing/gtest gtest $GIT_TESTED_COMMIT_TESTING_GTEST
+  git_clone gn-standalone https://gn.googlesource.com/gn . "$GIT_TESTED_COMMIT_GN" "$GIT_TESTED_PATCH_GN"
 fi
 
 # Build
 echo "building..."
-cd gn-standalone/tools/gn
+cd gn-standalone/
 if hash python2 2>/dev/null; then
-  python2 ./bootstrap/bootstrap.py -s
+  python2 ./build/gen.py
+  ninja -C out
 else
-  python ./bootstrap/bootstrap.py -s
+  python ./build/gen.py
+  ninja -C out
 fi
 
+./out/gn_unittests
+
 echo "At this point, the resulting binary is at:\n"
-echo "gn-standalone/out/Release/gn"
+echo "gn-standalone/out/gn"

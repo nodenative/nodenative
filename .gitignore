@@ -22,6 +22,6 @@ file_test.dSYM
 core.*
 build/gyp
 build/gyp/*
-build/gn-standalone/*
+build/gn-standalone
 
 deps/gtest_build/*
